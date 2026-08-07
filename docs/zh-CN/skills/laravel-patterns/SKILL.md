@@ -1,34 +1,35 @@
 ---
 name: laravel-patterns
-description: Laravel架构模式、路由/控制器、Eloquent ORM、服务层、队列、事件、缓存以及用于生产应用的API资源。
-origin: ECC
+description: 面向生产级应用的 Laravel 架构模式、路由/控制器、Eloquent ORM、服务层、队列、事件、缓存以及 API resources。
+metadata:
+  origin: ECC
 ---
 
 # Laravel 开发模式
 
-适用于可扩展、可维护应用的生产级 Laravel 架构模式。
+面向可扩展、可维护应用的生产级 Laravel 架构模式。
 
-## 适用场景
+## 何时使用
 
-* 构建 Laravel Web 应用或 API
-* 构建控制器、服务和领域逻辑
-* 使用 Eloquent 模型和关系
-* 使用资源和分页设计 API
-* 添加队列、事件、缓存和后台任务
+- 构建 Laravel Web 应用或 API
+- 组织控制器、服务和领域逻辑的结构
+- 使用 Eloquent 模型与关联关系
+- 使用 resources 和分页设计 API
+- 添加队列、事件、缓存和后台作业
 
 ## 工作原理
 
-* 围绕清晰的边界（控制器 -> 服务/操作 -> 模型）构建应用。
-* 使用显式绑定和作用域绑定来保持路由可预测；同时仍强制执行授权以实现访问控制。
-* 倾向于使用类型化模型、转换器和作用域来保持领域逻辑一致。
-* 将 IO 密集型工作放在队列中，并缓存昂贵的读取操作。
-* 将配置集中在 `config/*` 中，并保持环境配置显式化。
+- 围绕清晰的边界组织应用结构（控制器 -> 服务/actions -> 模型）。
+- 使用显式绑定和作用域绑定以保持路由的可预测性；同时仍通过授权来强制执行访问控制。
+- 优先采用类型化模型、类型转换和作用域，以保持领域逻辑的一致性。
+- 将 IO 密集型工作放入队列，并缓存开销较大的读取操作。
+- 在 `config/*` 中集中管理配置，并保持各环境的显式性。
 
 ## 示例
 
 ### 项目结构
 
-使用具有清晰层级边界（HTTP、服务/操作、模型）的常规 Laravel 布局。
+使用常规的 Laravel 布局，具备清晰的分层边界（HTTP、服务/actions、模型）。
 
 ### 推荐布局
 
@@ -42,7 +43,7 @@ app/
 │   ├── Controllers/
 │   ├── Middleware/
 │   ├── Requests/       # 表单请求验证
-│   └── Resources/      # API 资源
+│   └── Resources/      # API resources
 ├── Jobs/
 ├── Models/
 ├── Policies/
@@ -63,9 +64,9 @@ routes/
 └── console.php
 ```
 
-### 控制器 -> 服务 -> 操作
+### 控制器 -> 服务 -> Actions
 
-保持控制器精简。将编排逻辑放在服务中，将单一职责逻辑放在操作中。
+保持控制器精简。将编排逻辑放在服务中，将单一用途的逻辑放在 action 中。
 
 ```php
 final class CreateOrderAction
@@ -98,7 +99,7 @@ final class OrdersController extends Controller
 
 ### 路由与控制器
 
-为了清晰起见，优先使用路由模型绑定和资源控制器。
+为清晰起见，优先使用路由模型绑定和资源控制器。
 
 ```php
 use Illuminate\Support\Facades\Route;
@@ -110,7 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 ### 路由模型绑定（作用域）
 
-使用作用域绑定来防止跨租户访问。
+使用作用域绑定以防止跨租户访问。
 
 ```php
 Route::scopeBindings()->group(function () {
@@ -118,11 +119,11 @@ Route::scopeBindings()->group(function () {
 });
 ```
 
-### 嵌套路由和绑定名称
+### 嵌套路由与绑定名称
 
-* 保持前缀和路径一致，避免双重嵌套（例如 `conversation` 与 `conversations`）。
-* 使用与绑定模型匹配的单一参数名（例如，`{conversation}` 对应 `Conversation`）。
-* 嵌套时优先使用作用域绑定以强制执行父子关系。
+- 保持前缀和路径一致，以避免重复嵌套（例如 `conversation` 与 `conversations`）。
+- 使用与所绑定模型匹配的单一参数名（例如 `Conversation` 使用 `{conversation}`）。
+- 嵌套时优先使用作用域绑定，以强制执行父子关系。
 
 ```php
 use App\Http\Controllers\Api\ConversationController;
@@ -145,7 +146,7 @@ Route::middleware('auth:sanctum')->prefix('conversations')->group(function () {
 });
 ```
 
-如果希望参数解析为不同的模型类，请定义显式绑定。对于自定义绑定逻辑，请使用 `Route::bind()` 或在模型上实现 `resolveRouteBinding()`。
+如果希望让某个参数解析为不同的模型类，请定义显式绑定。对于自定义绑定逻辑，请使用 `Route::bind()` 或在模型上实现 `resolveRouteBinding()`。
 
 ```php
 use App\Models\AiConversation;
@@ -156,7 +157,7 @@ Route::model('conversation', AiConversation::class);
 
 ### 服务容器绑定
 
-在服务提供者中将接口绑定到实现，以实现清晰的依赖关系连接。
+在服务提供器中将接口绑定到实现，以清晰地装配依赖关系。
 
 ```php
 use App\Repositories\EloquentOrderRepository;
@@ -200,9 +201,9 @@ final class Project extends Model
 }
 ```
 
-### 自定义转换器与值对象
+### 自定义类型转换与值对象
 
-使用枚举或值对象进行严格类型化。
+使用枚举或值对象以实现严格类型。
 
 ```php
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -222,7 +223,7 @@ protected function budgetCents(): Attribute
 }
 ```
 
-### 预加载以避免 N+1 问题
+### 通过预加载避免 N+1
 
 ```php
 $orders = Order::query()
@@ -231,7 +232,7 @@ $orders = Order::query()
     ->paginate(25);
 ```
 
-### 用于复杂筛选的查询对象
+### 用于复杂过滤的查询对象
 
 ```php
 final class ProjectQuery
@@ -261,8 +262,8 @@ final class ProjectQuery
 
 ### 全局作用域与软删除
 
-使用全局作用域进行默认筛选，并使用 `SoftDeletes` 处理可恢复的记录。
-对于同一筛选器，请使用全局作用域或命名作用域中的一种，除非你打算实现分层行为。
+对默认过滤使用全局作用域，对可恢复的记录使用 `SoftDeletes`。
+对于同一个过滤条件，使用全局作用域或命名作用域其中之一，不要两者并用，除非你有意实现分层行为。
 
 ```php
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -281,7 +282,7 @@ final class Project extends Model
 }
 ```
 
-### 用于可重用筛选器的查询作用域
+### 用于可复用过滤的查询作用域
 
 ```php
 use Illuminate\Database\Eloquent\Builder;
@@ -294,11 +295,11 @@ final class Project extends Model
     }
 }
 
-// In service, repository etc.
+// 在服务、仓储等中使用。
 $projects = Project::ownedBy($user->id)->get();
 ```
 
-### 用于多步更新的数据库事务
+### 用于多步骤更新的事务
 
 ```php
 use Illuminate\Support\Facades\DB;
@@ -309,13 +310,13 @@ DB::transaction(function (): void {
 });
 ```
 
-### 数据库迁移
+### 迁移
 
 ### 命名约定
 
-* 文件名使用时间戳：`YYYY_MM_DD_HHMMSS_create_users_table.php`
-* 迁移使用匿名类（无命名类）；文件名传达意图
-* 表名默认为 `snake_case` 且为复数形式
+- 文件名使用时间戳：`YYYY_MM_DD_HHMMSS_create_users_table.php`
+- 迁移使用匿名类（无具名类）；文件名即表达其意图
+- 表名默认使用 `snake_case` 并采用复数形式
 
 ### 迁移示例
 
@@ -346,7 +347,7 @@ return new class extends Migration
 
 ### 表单请求与验证
 
-将验证逻辑放在表单请求中，并将输入转换为 DTO。
+将验证保留在表单请求中，并将输入转换为 DTO。
 
 ```php
 use App\Models\Order;
@@ -378,9 +379,9 @@ final class StoreOrderRequest extends FormRequest
 }
 ```
 
-### API 资源
+### API Resources
 
-使用资源和分页保持 API 响应一致。
+使用 resources 和分页保持 API 响应的一致性。
 
 ```php
 $projects = Project::query()->active()->paginate(25);
@@ -397,19 +398,19 @@ return response()->json([
 ]);
 ```
 
-### 事件、任务和队列
+### 事件、作业与队列
 
-* 为副作用（邮件、分析）触发领域事件
-* 使用队列任务处理耗时工作（报告、导出、Webhook）
-* 优先使用具有重试和退避机制的幂等处理器
+- 针对副作用（邮件、数据分析）触发领域事件
+- 对耗时工作（报表、导出、webhook）使用队列作业
+- 优先使用带重试和退避的幂等处理器
 
 ### 缓存
 
-* 缓存读密集型端点和昂贵查询
-* 在模型事件（创建/更新/删除）时使缓存失效
-* 缓存相关数据时使用标签以便于失效
+- 缓存读密集的端点和开销较大的查询
+- 在模型事件（created/updated/deleted）时使缓存失效
+- 缓存相关数据时使用标签，以便于失效
 
 ### 配置与环境
 
-* 将机密信息保存在 `.env` 中，将配置保存在 `config/*.php` 中
-* 使用按环境配置覆盖，并在生产环境中使用 `config:cache`
+- 将密钥保存在 `.env` 中，配置保存在 `config/*.php` 中
+- 使用按环境的配置覆盖，并在生产环境中使用 `config:cache`

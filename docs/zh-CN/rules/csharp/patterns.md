@@ -3,12 +3,11 @@ paths:
   - "**/*.cs"
   - "**/*.csx"
 ---
-
 # C# 模式
 
-> 本文档在 [common/patterns.md](../common/patterns.md) 的基础上扩展了 C# 相关内容。
+> 本文件用 C# 专属内容扩展了 [common/patterns.md](../common/patterns.md)。
 
-## API 响应模式
+## API Response Pattern
 
 ```csharp
 public sealed record ApiResponse<T>(
@@ -18,7 +17,7 @@ public sealed record ApiResponse<T>(
     object? Meta = null);
 ```
 
-## 仓储模式
+## Repository Pattern
 
 ```csharp
 public interface IRepository<T>
@@ -31,9 +30,9 @@ public interface IRepository<T>
 }
 ```
 
-## 选项模式
+## Options Pattern
 
-使用强类型选项进行配置，而不是在整个代码库中读取原始字符串。
+使用强类型 options 进行配置，而不是在整个代码库中读取原始字符串。
 
 ```csharp
 public sealed class PaymentsOptions
@@ -44,8 +43,8 @@ public sealed class PaymentsOptions
 }
 ```
 
-## 依赖注入
+## Dependency Injection
 
-* 在服务边界上依赖于接口
-* 保持构造函数专注；如果某个服务需要太多依赖项，请拆分其职责
-* 有意识地注册生命周期：无状态/共享服务使用单例，请求数据使用作用域，轻量级纯工作者使用瞬时
+- 在服务边界处依赖接口
+- 保持构造函数聚焦；如果某个服务需要过多依赖，应拆分职责
+- 有意识地注册 lifetimes：singleton 用于无状态/共享服务，scoped 用于请求数据，transient 用于轻量级纯 worker

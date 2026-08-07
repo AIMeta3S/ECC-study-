@@ -1,37 +1,36 @@
 ---
-description: 为Rust强制执行TDD工作流。先写测试，然后实现。使用cargo-llvm-cov验证80%以上的覆盖率。
+description: 为 Rust 强制执行 TDD 工作流。先写测试，再实现代码。使用 cargo-llvm-cov 验证 80%+ 覆盖率。
 ---
 
 # Rust TDD 命令
 
-该命令使用 `#[test]`、rstest、proptest 和 mockall 来强制执行 Rust 代码的测试驱动开发方法。
+本命令使用 `#[test]`、rstest、proptest 和 mockall 为 Rust 代码强制执行测试驱动开发方法论。
 
-## 该命令的作用
+## 本命令的功能
 
-1. **定义类型/特征**：使用 `todo!()` 搭建函数签名
-2. **编写测试**：创建全面的测试模块（RED）
+1. **定义类型/Trait**：使用 `todo!()` 搭建函数签名
+2. **编写测试**：创建完整的测试模块（RED）
 3. **运行测试**：验证测试因正确的原因而失败
-4. **实现代码**：编写通过测试所需的最少代码（GREEN）
-5. **重构**：在保持测试通过的前提下进行改进
-6. **检查覆盖率**：使用 cargo-llvm-cov 确保 80%+ 的覆盖率
+4. **实现代码**：编写最少量的代码以通过测试（GREEN）
+5. **重构**：在保持测试通过（green）的同时改进代码
+6. **检查覆盖率**：使用 cargo-llvm-cov 确保 80%+ 覆盖率
 
 ## 何时使用
 
 在以下情况使用 `/rust-test`：
-
-* 实现新的 Rust 函数、方法或特征时
-* 为现有 Rust 代码添加测试覆盖时
-* 修复错误时（首先编写失败的测试）
-* 构建关键业务逻辑时
-* 学习 Rust 中的 TDD 工作流程时
+- 实现新的 Rust 函数、方法或 trait
+- 为现有 Rust 代码添加测试覆盖率
+- 修复 bug（先写失败的测试）
+- 构建关键业务逻辑
+- 学习 Rust 中的 TDD 工作流
 
 ## TDD 循环
 
 ```
-RED     -> 先编写失败的测试
-GREEN   -> 实现最小化代码以通过测试
-REFACTOR -> 改进代码，保持测试通过
-REPEAT  -> 下一个测试用例
+RED     -> Write failing test first
+GREEN   -> Implement minimal code to pass
+REFACTOR -> Improve code, tests stay green
+REPEAT  -> Next test case
 ```
 
 ## 示例会话
@@ -209,7 +208,7 @@ mod tests {
 }
 ```
 
-### 使用 rstest 进行参数化测试
+### 使用 rstest 的参数化测试
 
 ```rust
 use rstest::{rstest, fixture};
@@ -252,22 +251,22 @@ proptest! {
 ## 覆盖率命令
 
 ```bash
-# Summary report
+# 摘要报告
 cargo llvm-cov
 
-# HTML report
+# HTML 报告
 cargo llvm-cov --html
 
-# Fail if below threshold
+# 低于阈值则失败
 cargo llvm-cov --fail-under-lines 80
 
-# Run specific test
+# 运行指定测试
 cargo test test_name
 
-# Run with output
+# 运行并显示输出
 cargo test -- --nocapture
 
-# Run without stopping on first failure
+# 不在首次失败时停止
 cargo test --no-fail-fast
 ```
 
@@ -276,36 +275,34 @@ cargo test --no-fail-fast
 | 代码类型 | 目标 |
 |-----------|--------|
 | 关键业务逻辑 | 100% |
-| 公共 API | 90%+ |
+| Public API | 90%+ |
 | 通用代码 | 80%+ |
-| 生成的 / FFI 绑定 | 排除 |
+| 生成的代码 / FFI 绑定 | 排除 |
 
 ## TDD 最佳实践
 
-**应做：**
+**应该：**
+- 在编写任何实现之前先写测试
+- 每次修改后运行测试
+- 使用 `assert_eq!` 而非 `assert!`，以获得更好的错误信息
+- 在返回 `Result` 的测试中使用 `?`，以获得更简洁的输出
+- 测试行为，而非实现
+- 包含边界情况（空值、边界、错误路径）
 
-* **首先**编写测试，在任何实现之前
-* 每次更改后运行测试
-* 使用 `assert_eq!` 而非 `assert!` 以获得更好的错误信息
-* 在返回 `Result` 的测试中使用 `?` 以获得更清晰的输出
-* 测试行为，而非实现
-* 包含边界情况（空值、边界值、错误路径）
-
-**不应做：**
-
-* 在测试之前编写实现
-* 跳过 RED 阶段
-* 在 `Result::is_err()` 可用时使用 `#[should_panic]`
-* 在测试中使用 `sleep()` — 应使用通道或 `tokio::time::pause()`
-* 模拟一切 — 在可行时优先使用集成测试
+**不应该：**
+- 在编写测试之前编写实现
+- 跳过 RED 阶段
+- 在 `Result::is_err()` 可用时使用 `#[should_panic]`
+- 在测试中使用 `sleep()` —— 应使用 channel 或 `tokio::time::pause()`
+- mock 一切 —— 在可行时优先使用集成测试
 
 ## 相关命令
 
-* `/rust-build` - 修复构建错误
-* `/rust-review` - 在实现后审查代码
-* `/verify` - 运行完整的验证循环
+- `/rust-build` - 修复构建错误
+- `/rust-review` - 在实现完成后审查代码
+- `verification-loop` skill - 运行完整验证循环
 
-## 相关
+## 相关资源
 
-* 技能：`skills/rust-testing/`
-* 技能：`skills/rust-patterns/`
+- Skill：`skills/rust-testing/`
+- Skill：`skills/rust-patterns/`

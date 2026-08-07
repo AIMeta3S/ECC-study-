@@ -6,18 +6,17 @@ paths:
   - "**/*.psgi"
   - "**/*.cgi"
 ---
+# Perl Hooks
 
-# Perl 钩子
+> 本文件用 Perl 特定内容扩展 [common/hooks.md](../common/hooks.md)。
 
-> 本文件在 [common/hooks.md](../common/hooks.md) 的基础上扩展了 Perl 相关的内容。
-
-## PostToolUse 钩子
+## PostToolUse Hooks
 
 在 `~/.claude/settings.json` 中配置：
 
-* **perltidy**：编辑后自动格式化 `.pl` 和 `.pm` 文件
-* **perlcritic**：编辑 `.pm` 文件后运行代码检查
+- **perltidy**：编辑后自动格式化 `.pl` 和 `.pm` 文件
+- **perlcritic**：编辑 `.pm` 文件后运行 lint 检查
 
-## 警告
+## Warnings
 
-* 警告在非脚本 `.pm` 文件中使用 `print` — 应使用 `say` 或日志模块（例如，`Log::Any`）
+- 对非脚本 `.pm` 文件中的 `print` 发出警告 — 改用 `say` 或日志模块（如 `Log::Any`）

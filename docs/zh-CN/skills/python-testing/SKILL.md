@@ -1,48 +1,49 @@
 ---
 name: python-testing
-description: 使用pytest的Python测试策略，包括TDD方法、夹具、模拟、参数化和覆盖率要求。
-origin: ECC
+description: 使用 pytest 的 Python 测试策略，涵盖 TDD 方法论、fixtures、mocking、parametrization 与 coverage 要求。
+metadata:
+  origin: ECC
 ---
 
 # Python 测试模式
 
-使用 pytest、TDD 方法论和最佳实践的 Python 应用程序全面测试策略。
+使用 pytest、TDD 方法论与最佳实践的 Python 应用全面测试策略。
 
-## 何时激活
+## 何时启用
 
-* 编写新的 Python 代码（遵循 TDD：红、绿、重构）
-* 为 Python 项目设计测试套件
-* 审查 Python 测试覆盖率
-* 设置测试基础设施
+- 编写新的 Python 代码时（遵循 TDD：red、green、refactor）
+- 为 Python 项目设计 test suite 时
+- 审查 Python 测试 coverage 时
+- 搭建测试基础设施时
 
 ## 核心测试理念
 
-### 测试驱动开发 (TDD)
+### Test-Driven Development (TDD)
 
 始终遵循 TDD 循环：
 
-1. **红**：为期望的行为编写一个失败的测试
-2. **绿**：编写最少的代码使测试通过
-3. **重构**：在保持测试通过的同时改进代码
+1. **RED**：为期望行为编写一个失败的测试
+2. **GREEN**：编写最少代码使测试通过
+3. **REFACTOR**：在保持测试 green 的前提下改进代码
 
 ```python
-# Step 1: Write failing test (RED)
+# 步骤 1：编写失败测试（RED）
 def test_add_numbers():
     result = add(2, 3)
     assert result == 5
 
-# Step 2: Write minimal implementation (GREEN)
+# 步骤 2：编写最少实现（GREEN）
 def add(a, b):
     return a + b
 
-# Step 3: Refactor if needed (REFACTOR)
+# 步骤 3：如需要则重构（REFACTOR）
 ```
 
-### 覆盖率要求
+### Coverage 要求
 
-* **目标**：80%+ 代码覆盖率
-* **关键路径**：需要 100% 覆盖率
-* 使用 `pytest --cov` 来测量覆盖率
+- **目标**：80% 以上的 code coverage
+- **关键路径**：要求 100% coverage
+- 使用 `pytest --cov` 度量 coverage
 
 ```bash
 pytest --cov=mypackage --cov-report=term-missing --cov-report=html
@@ -56,16 +57,16 @@ pytest --cov=mypackage --cov-report=term-missing --cov-report=html
 import pytest
 
 def test_addition():
-    """Test basic addition."""
+    """测试基本加法。"""
     assert 2 + 2 == 4
 
 def test_string_uppercase():
-    """Test string uppercasing."""
+    """测试字符串大写转换。"""
     text = "hello"
     assert text.upper() == "HELLO"
 
 def test_list_append():
-    """Test list append."""
+    """测试列表追加。"""
     items = [1, 2, 3]
     items.append(4)
     assert 4 in items
@@ -75,95 +76,95 @@ def test_list_append():
 ### 断言
 
 ```python
-# Equality
+# 相等
 assert result == expected
 
-# Inequality
+# 不等
 assert result != unexpected
 
-# Truthiness
-assert result  # Truthy
-assert not result  # Falsy
-assert result is True  # Exactly True
-assert result is False  # Exactly False
-assert result is None  # Exactly None
+# 真值性
+assert result  # 真值
+assert not result  # 假值
+assert result is True  # 严格为 True
+assert result is False  # 严格为 False
+assert result is None  # 严格为 None
 
-# Membership
+# 成员归属
 assert item in collection
 assert item not in collection
 
-# Comparisons
+# 大小比较
 assert result > 0
 assert 0 <= result <= 100
 
-# Type checking
+# 类型检查
 assert isinstance(result, str)
 
-# Exception testing (preferred approach)
+# 异常测试（推荐方式）
 with pytest.raises(ValueError):
     raise ValueError("error message")
 
-# Check exception message
+# 检查异常消息
 with pytest.raises(ValueError, match="invalid input"):
     raise ValueError("invalid input provided")
 
-# Check exception attributes
+# 检查异常属性
 with pytest.raises(ValueError) as exc_info:
     raise ValueError("error message")
 assert str(exc_info.value) == "error message"
 ```
 
-## 夹具
+## Fixtures
 
-### 基本夹具使用
+### 基本 Fixture 用法
 
 ```python
 import pytest
 
 @pytest.fixture
 def sample_data():
-    """Fixture providing sample data."""
+    """提供样本数据的 fixture。"""
     return {"name": "Alice", "age": 30}
 
 def test_sample_data(sample_data):
-    """Test using the fixture."""
+    """使用该 fixture 的测试。"""
     assert sample_data["name"] == "Alice"
     assert sample_data["age"] == 30
 ```
 
-### 带设置/拆卸的夹具
+### 带 Setup/Teardown 的 Fixture
 
 ```python
 @pytest.fixture
 def database():
-    """Fixture with setup and teardown."""
+    """带 setup 与 teardown 的 fixture。"""
     # Setup
     db = Database(":memory:")
     db.create_tables()
     db.insert_test_data()
 
-    yield db  # Provide to test
+    yield db  # 提供给测试
 
     # Teardown
     db.close()
 
 def test_database_query(database):
-    """Test database operations."""
+    """测试数据库操作。"""
     result = database.query("SELECT * FROM users")
     assert len(result) > 0
 ```
 
-### 夹具作用域
+### Fixture 作用域
 
 ```python
-# Function scope (default) - runs for each test
+# Function scope（默认）——每个测试都运行
 @pytest.fixture
 def temp_file():
     with open("temp.txt", "w") as f:
         yield f
     os.remove("temp.txt")
 
-# Module scope - runs once per module
+# Module scope——每个模块运行一次
 @pytest.fixture(scope="module")
 def module_db():
     db = Database(":memory:")
@@ -171,7 +172,7 @@ def module_db():
     yield db
     db.close()
 
-# Session scope - runs once per test session
+# Session scope——每个测试会话运行一次
 @pytest.fixture(scope="session")
 def shared_resource():
     resource = ExpensiveResource()
@@ -179,20 +180,20 @@ def shared_resource():
     resource.cleanup()
 ```
 
-### 带参数的夹具
+### 带参数的 Fixture
 
 ```python
 @pytest.fixture(params=[1, 2, 3])
 def number(request):
-    """Parameterized fixture."""
+    """参数化 fixture。"""
     return request.param
 
 def test_numbers(number):
-    """Test runs 3 times, once for each parameter."""
+    """测试运行 3 次，每个参数各一次。"""
     assert number > 0
 ```
 
-### 使用多个夹具
+### 使用多个 Fixtures
 
 ```python
 @pytest.fixture
@@ -204,26 +205,26 @@ def admin():
     return User(id=2, name="Admin", role="admin")
 
 def test_user_admin_interaction(user, admin):
-    """Test using multiple fixtures."""
+    """使用多个 fixtures 的测试。"""
     assert admin.can_manage(user)
 ```
 
-### 自动使用夹具
+### Autouse Fixtures
 
 ```python
 @pytest.fixture(autouse=True)
 def reset_config():
-    """Automatically runs before every test."""
+    """每个测试前自动运行。"""
     Config.reset()
     yield
     Config.cleanup()
 
 def test_without_fixture_call():
-    # reset_config runs automatically
+    # reset_config 自动运行
     assert Config.get_setting("debug") is False
 ```
 
-### 使用 Conftest.py 共享夹具
+### 使用 Conftest.py 共享 Fixtures
 
 ```python
 # tests/conftest.py
@@ -231,14 +232,14 @@ import pytest
 
 @pytest.fixture
 def client():
-    """Shared fixture for all tests."""
+    """所有测试共享的 fixture。"""
     app = create_app(testing=True)
     with app.test_client() as client:
         yield client
 
 @pytest.fixture
 def auth_headers(client):
-    """Generate auth headers for API testing."""
+    """为 API 测试生成 auth headers。"""
     response = client.post("/api/login", json={
         "username": "test",
         "password": "test"
@@ -247,9 +248,9 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 ```
 
-## 参数化
+## Parametrization
 
-### 基本参数化
+### 基本 Parametrization
 
 ```python
 @pytest.mark.parametrize("input,expected", [
@@ -258,7 +259,7 @@ def auth_headers(client):
     ("PyThOn", "PYTHON"),
 ])
 def test_uppercase(input, expected):
-    """Test runs 3 times with different inputs."""
+    """测试用不同输入运行 3 次。"""
     assert input.upper() == expected
 ```
 
@@ -272,11 +273,11 @@ def test_uppercase(input, expected):
     (100, 200, 300),
 ])
 def test_add(a, b, expected):
-    """Test addition with multiple inputs."""
+    """多输入加法测试。"""
     assert add(a, b) == expected
 ```
 
-### 带 ID 的参数化
+### 带 IDs 的 Parametrize
 
 ```python
 @pytest.mark.parametrize("input,expected", [
@@ -285,16 +286,16 @@ def test_add(a, b, expected):
     ("@no-domain.com", False),
 ], ids=["valid-email", "missing-at", "missing-domain"])
 def test_email_validation(input, expected):
-    """Test email validation with readable test IDs."""
+    """带可读 test IDs 的邮箱验证测试。"""
     assert is_valid_email(input) is expected
 ```
 
-### 参数化夹具
+### Parametrized Fixtures
 
 ```python
 @pytest.fixture(params=["sqlite", "postgresql", "mysql"])
 def db(request):
-    """Test against multiple database backends."""
+    """针对多种数据库后端的测试。"""
     if request.param == "sqlite":
         return Database(":memory:")
     elif request.param == "postgresql":
@@ -303,50 +304,50 @@ def db(request):
         return Database("mysql://localhost/test")
 
 def test_database_operations(db):
-    """Test runs 3 times, once for each database."""
+    """测试运行 3 次，每种数据库各一次。"""
     result = db.query("SELECT 1")
     assert result is not None
 ```
 
-## 标记器和测试选择
+## Markers 与测试选择
 
-### 自定义标记器
+### 自定义 Markers
 
 ```python
-# Mark slow tests
+# 标记 slow 测试
 @pytest.mark.slow
 def test_slow_operation():
     time.sleep(5)
 
-# Mark integration tests
+# 标记 integration 测试
 @pytest.mark.integration
 def test_api_integration():
     response = requests.get("https://api.example.com")
     assert response.status_code == 200
 
-# Mark unit tests
+# 标记 unit 测试
 @pytest.mark.unit
 def test_unit_logic():
     assert calculate(2, 3) == 5
 ```
 
-### 运行特定测试
+### 运行指定测试
 
 ```bash
-# Run only fast tests
+# 只运行快速测试
 pytest -m "not slow"
 
-# Run only integration tests
+# 只运行 integration 测试
 pytest -m integration
 
-# Run integration or slow tests
+# 运行 integration 或 slow 测试
 pytest -m "integration or slow"
 
-# Run tests marked as unit but not slow
+# 运行标记为 unit 但非 slow 的测试
 pytest -m "unit and not slow"
 ```
 
-### 在 pytest.ini 中配置标记器
+### 在 pytest.ini 中配置 Markers
 
 ```ini
 [pytest]
@@ -357,16 +358,16 @@ markers =
     django: marks tests as requiring Django
 ```
 
-## 模拟和补丁
+## Mocking 与 Patching
 
-### 模拟函数
+### Mocking 函数
 
 ```python
 from unittest.mock import patch, Mock
 
 @patch("mypackage.external_api_call")
 def test_with_mock(api_call_mock):
-    """Test with mocked external API."""
+    """使用 mock 的外部 API 进行测试。"""
     api_call_mock.return_value = {"status": "success"}
 
     result = my_function()
@@ -375,12 +376,12 @@ def test_with_mock(api_call_mock):
     assert result["status"] == "success"
 ```
 
-### 模拟返回值
+### Mocking 返回值
 
 ```python
 @patch("mypackage.Database.connect")
 def test_database_connection(connect_mock):
-    """Test with mocked database connection."""
+    """使用 mock 的数据库连接进行测试。"""
     connect_mock.return_value = MockConnection()
 
     db = Database()
@@ -389,12 +390,12 @@ def test_database_connection(connect_mock):
     connect_mock.assert_called_once_with("localhost")
 ```
 
-### 模拟异常
+### Mocking 异常
 
 ```python
 @patch("mypackage.api_call")
 def test_api_error_handling(api_call_mock):
-    """Test error handling with mocked exception."""
+    """使用 mock 异常测试错误处理。"""
     api_call_mock.side_effect = ConnectionError("Network error")
 
     with pytest.raises(ConnectionError):
@@ -403,12 +404,12 @@ def test_api_error_handling(api_call_mock):
     api_call_mock.assert_called_once()
 ```
 
-### 模拟上下文管理器
+### Mocking Context Managers
 
 ```python
 @patch("builtins.open", new_callable=mock_open)
 def test_file_reading(mock_file):
-    """Test file reading with mocked open."""
+    """使用 mock 的 open 测试文件读取。"""
     mock_file.return_value.read.return_value = "file content"
 
     result = read_file("test.txt")
@@ -422,21 +423,21 @@ def test_file_reading(mock_file):
 ```python
 @patch("mypackage.DBConnection", autospec=True)
 def test_autospec(db_mock):
-    """Test with autospec to catch API misuse."""
+    """使用 autospec 测试以捕获 API 误用。"""
     db = db_mock.return_value
     db.query("SELECT * FROM users")
 
-    # This would fail if DBConnection doesn't have query method
+    # 如果 DBConnection 没有 query 方法，此处会失败
     db_mock.assert_called_once()
 ```
 
-### 模拟类实例
+### Mock 类实例
 
 ```python
 class TestUserService:
     @patch("mypackage.UserRepository")
     def test_create_user(self, repo_mock):
-        """Test user creation with mocked repository."""
+        """使用 mock 的 repository 测试用户创建。"""
         repo_mock.return_value.save.return_value = User(id=1, name="Alice")
 
         service = UserService(repo_mock.return_value)
@@ -446,67 +447,67 @@ class TestUserService:
         repo_mock.return_value.save.assert_called_once()
 ```
 
-### 模拟属性
+### Mock Property
 
 ```python
 @pytest.fixture
 def mock_config():
-    """Create a mock with a property."""
+    """创建带 property 的 mock。"""
     config = Mock()
     type(config).debug = PropertyMock(return_value=True)
     type(config).api_key = PropertyMock(return_value="test-key")
     return config
 
 def test_with_mock_config(mock_config):
-    """Test with mocked config properties."""
+    """使用 mock 的 config properties 进行测试。"""
     assert mock_config.debug is True
     assert mock_config.api_key == "test-key"
 ```
 
-## 测试异步代码
+## 测试 Async 代码
 
-### 使用 pytest-asyncio 进行异步测试
+### 使用 pytest-asyncio 的 Async 测试
 
 ```python
 import pytest
 
 @pytest.mark.asyncio
 async def test_async_function():
-    """Test async function."""
+    """测试 async 函数。"""
     result = await async_add(2, 3)
     assert result == 5
 
 @pytest.mark.asyncio
 async def test_async_with_fixture(async_client):
-    """Test async with async fixture."""
+    """使用 async fixture 测试 async。"""
     response = await async_client.get("/api/users")
     assert response.status_code == 200
 ```
 
-### 异步夹具
+### Async Fixture
 
 ```python
 @pytest.fixture
 async def async_client():
-    """Async fixture providing async test client."""
+    """提供 async 测试 client 的 async fixture。"""
     app = create_app()
     async with app.test_client() as client:
         yield client
 
 @pytest.mark.asyncio
 async def test_api_endpoint(async_client):
-    """Test using async fixture."""
+    """使用 async fixture 的测试。"""
     response = await async_client.get("/api/data")
     assert response.status_code == 200
 ```
 
-### 模拟异步函数
+### Mocking Async 函数
 
 ```python
 @pytest.mark.asyncio
 @patch("mypackage.async_api_call")
 async def test_async_mock(api_call_mock):
-    """Test async function with mock."""
+    """使用 mock 测试 async 函数。"""
     api_call_mock.return_value = {"status": "ok"}
 
     result = await my_async_function()
@@ -521,12 +522,12 @@ async def test_async_mock(api_call_mock):
 
 ```python
 def test_divide_by_zero():
-    """Test that dividing by zero raises ZeroDivisionError."""
+    """测试除以零会抛出 ZeroDivisionError。"""
     with pytest.raises(ZeroDivisionError):
         divide(10, 0)
 
 def test_custom_exception():
-    """Test custom exception with message."""
+    """测试带消息的自定义异常。"""
     with pytest.raises(ValueError, match="invalid input"):
         validate_input("invalid")
 ```
@@ -535,7 +536,7 @@ def test_custom_exception():
 
 ```python
 def test_exception_with_details():
-    """Test exception with custom attributes."""
+    """测试带自定义属性的异常。"""
     with pytest.raises(CustomError) as exc_info:
         raise CustomError("error", code=400)
 
@@ -552,7 +553,7 @@ import tempfile
 import os
 
 def test_file_processing():
-    """Test file processing with temp file."""
+    """使用临时文件测试文件处理。"""
     with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
         f.write("test content")
         temp_path = f.name
@@ -564,24 +565,24 @@ def test_file_processing():
         os.unlink(temp_path)
 ```
 
-### 使用 pytest 的 tmp\_path 夹具进行测试
+### 使用 pytest 的 tmp_path Fixture 测试
 
 ```python
 def test_with_tmp_path(tmp_path):
-    """Test using pytest's built-in temp path fixture."""
+    """使用 pytest 内置 tmp_path fixture 的测试。"""
     test_file = tmp_path / "test.txt"
     test_file.write_text("hello world")
 
     result = process_file(str(test_file))
     assert result == "hello world"
-    # tmp_path automatically cleaned up
+    # tmp_path 自动清理
 ```
 
-### 使用 tmpdir 夹具进行测试
+### 使用 tmpdir Fixture 测试
 
 ```python
 def test_with_tmpdir(tmpdir):
-    """Test using pytest's tmpdir fixture."""
+    """使用 pytest 的 tmpdir fixture 测试。"""
     test_file = tmpdir.join("test.txt")
     test_file.write("data")
 
@@ -597,16 +598,16 @@ def test_with_tmpdir(tmpdir):
 tests/
 ├── conftest.py                 # 共享 fixtures
 ├── __init__.py
-├── unit/                       # 单元测试
+├── unit/                       # Unit tests
 │   ├── __init__.py
 │   ├── test_models.py
 │   ├── test_utils.py
 │   └── test_services.py
-├── integration/                # 集成测试
+├── integration/                # Integration tests
 │   ├── __init__.py
 │   ├── test_api.py
 │   └── test_database.py
-└── e2e/                        # 端到端测试
+└── e2e/                        # End-to-end tests
     ├── __init__.py
     └── test_user_flow.py
 ```
@@ -615,20 +616,20 @@ tests/
 
 ```python
 class TestUserService:
-    """Group related tests in a class."""
+    """将相关测试组织在一个类中。"""
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        """Setup runs before each test in this class."""
+        """该类中每个测试前运行 setup。"""
         self.service = UserService()
 
     def test_create_user(self):
-        """Test user creation."""
+        """测试用户创建。"""
         user = self.service.create_user("Alice")
         assert user.name == "Alice"
 
     def test_delete_user(self):
-        """Test user deletion."""
+        """测试用户删除。"""
         user = User(id=1, name="Bob")
         self.service.delete_user(user)
         assert not self.service.user_exists(1)
@@ -636,31 +637,31 @@ class TestUserService:
 
 ## 最佳实践
 
-### 应该做
+### 推荐做法
 
-* **遵循 TDD**：在代码之前编写测试（红-绿-重构）
-* **测试单一事物**：每个测试应验证一个单一行为
-* **使用描述性名称**：`test_user_login_with_invalid_credentials_fails`
-* **使用夹具**：用夹具消除重复
-* **模拟外部依赖**：不要依赖外部服务
-* **测试边界情况**：空输入、None 值、边界条件
-* **目标 80%+ 覆盖率**：关注关键路径
-* **保持测试快速**：使用标记来分离慢速测试
+- **遵循 TDD**：先写测试再写代码（red-green-refactor）
+- **只测一件事**：每个测试应验证单一行为
+- **使用描述性命名**：`test_user_login_with_invalid_credentials_fails`
+- **使用 fixtures**：用 fixtures 消除重复
+- **Mock 外部依赖**：不依赖外部服务
+- **测试边界情况**：空输入、None 值、边界条件
+- **追求 80% 以上 coverage**：聚焦关键路径
+- **保持测试快速**：用 markers 分离慢测试
 
-### 不要做
+### 避免做法
 
-* **不要测试实现**：测试行为，而非内部实现
-* **不要在测试中使用复杂的条件语句**：保持测试简单
-* **不要忽略测试失败**：所有测试必须通过
-* **不要测试第三方代码**：相信库能正常工作
-* **不要在测试之间共享状态**：测试应该是独立的
-* **不要在测试中捕获异常**：使用 `pytest.raises`
-* **不要使用 print 语句**：使用断言和 pytest 输出
-* **不要编写过于脆弱的测试**：避免过度具体的模拟
+- **不要测试实现细节**：测行为而非内部
+- **不要在测试中使用复杂条件**：保持测试简单
+- **不要忽视测试失败**：所有测试必须通过
+- **不要测试第三方代码**：信任库能正常工作
+- **不要在测试间共享状态**：测试应相互独立
+- **不要在测试中捕获异常**：使用 `pytest.raises`
+- **不要使用 print 语句**：使用断言和 pytest 输出
+- **不要编写过于脆弱的测试**：避免过度具体的 mocks
 
 ## 常见模式
 
-### 测试 API 端点 (FastAPI/Flask)
+### 测试 API 端点（FastAPI/Flask）
 
 ```python
 @pytest.fixture
@@ -687,7 +688,7 @@ def test_create_user(client):
 ```python
 @pytest.fixture
 def db_session():
-    """Create a test database session."""
+    """创建测试数据库会话。"""
     session = Session(bind=engine)
     session.begin_nested()
     yield session
@@ -765,52 +766,52 @@ markers = [
 ## 运行测试
 
 ```bash
-# Run all tests
+# 运行所有测试
 pytest
 
-# Run specific file
+# 运行指定文件
 pytest tests/test_utils.py
 
-# Run specific test
+# 运行指定测试
 pytest tests/test_utils.py::test_function
 
-# Run with verbose output
+# 详细输出运行
 pytest -v
 
-# Run with coverage
+# 带 coverage 运行
 pytest --cov=mypackage --cov-report=html
 
-# Run only fast tests
+# 只运行快速测试
 pytest -m "not slow"
 
-# Run until first failure
+# 运行直到首次失败
 pytest -x
 
-# Run and stop on N failures
+# 运行并在 N 次失败时停止
 pytest --maxfail=3
 
-# Run last failed tests
+# 运行上次失败的测试
 pytest --lf
 
-# Run tests with pattern
+# 按模式运行测试
 pytest -k "test_user"
 
-# Run with debugger on failure
+# 失败时进入 debugger 运行
 pytest --pdb
 ```
 
 ## 快速参考
 
-| 模式 | 用法 |
+| 模式 | 用途 |
 |---------|-------|
 | `pytest.raises()` | 测试预期异常 |
-| `@pytest.fixture()` | 创建可重用的测试夹具 |
-| `@pytest.mark.parametrize()` | 使用多个输入运行测试 |
-| `@pytest.mark.slow` | 标记慢速测试 |
-| `pytest -m "not slow"` | 跳过慢速测试 |
-| `@patch()` | 模拟函数和类 |
-| `tmp_path` 夹具 | 自动临时目录 |
-| `pytest --cov` | 生成覆盖率报告 |
-| `assert` | 简单且可读的断言 |
+| `@pytest.fixture()` | 创建可复用的测试 fixtures |
+| `@pytest.mark.parametrize()` | 用多组输入运行测试 |
+| `@pytest.mark.slow` | 标记 slow 测试 |
+| `pytest -m "not slow"` | 跳过 slow 测试 |
+| `@patch()` | Mock 函数与类 |
+| `tmp_path` fixture | 自动临时目录 |
+| `pytest --cov` | 生成 coverage 报告 |
+| `assert` | 简洁可读的断言 |
 
-**记住**：测试也是代码。保持它们干净、可读且可维护。好的测试能发现错误；优秀的测试能预防错误。
+**记住**：测试也是代码。保持它们整洁、可读、可维护。好的测试能发现 bug；优秀的测试能预防 bug。

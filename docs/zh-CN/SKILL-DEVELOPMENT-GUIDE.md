@@ -22,7 +22,7 @@
 Skill 是 **知识模块**，Claude Code 根据上下文自动加载。它们提供：
 
 - **领域专业知识**：框架模式、语言习惯用法、最佳实践
-- **工作流定义**：常见任务的分步流程
+- **工作流定义**：常见 task 的分步流程
 - **参考资料**：代码片段、检查清单、决策树
 - **上下文注入**：当特定条件满足时激活
 
@@ -31,7 +31,7 @@ Skill 是 **知识模块**，Claude Code 根据上下文自动加载。它们提
 ### Skill 何时激活
 
 Skill 在以下情况激活：
-- 用户任务与 Skill 的领域匹配
+- 用户 task 与 Skill 的领域匹配
 - Claude Code 检测到相关上下文
 - 某个命令引用了该 Skill
 - 某个 Agent 需要领域知识
@@ -41,7 +41,7 @@ Skill 在以下情况激活：
 | 组件 | 用途 | 激活方式 |
 |-----------|---------|------------|
 | **Skill** | 知识库 | 基于上下文（自动） |
-| **Agent** | 任务执行器 | 显式委派 |
+| **Agent** | task 执行器 | 显式委派 |
 | **Command** | 用户操作 | 用户调用（`/command`） |
 | **Hook** | 自动化 | 事件触发 |
 | **Rule** | 始终生效的指南 | 始终激活 |
@@ -250,7 +250,7 @@ description: Django 模型、视图、URL 和模板的最佳实践。
 
 ### 工作流 Skill
 
-定义常见开发任务的分步流程。
+定义常见开发 task 的分步流程。
 
 **示例：** `tdd-workflow`、`code-review-workflow`、`deployment-checklist`
 
@@ -313,7 +313,7 @@ description: REST 和 GraphQL API 设计模式、版本控制和最佳实践。
 
 - 创建新的 React 组件
 - 重构现有组件
-- 调试 React 状态问题
+- 调试 React 状态 issues
 - 审查 React 代码的最佳实践
 ```
 
@@ -490,10 +490,10 @@ description: [语言]的编码标准和最佳实践。
 ```markdown
 ---
 name: task-workflow
-description: [任务]的分步工作流。
+description: [task] 的分步工作流。
 ---
 
-# [任务] 工作流
+# [Task] 工作流
 
 ## 何时激活
 
@@ -582,7 +582,7 @@ description: [API/库]的快速参考。
 
 2. **用 Claude Code 测试**：
    ```
-   你："我需要 [应该触发你的 Skill 的任务]"
+   你："我需要 [应该触发你的 Skill 的 task]"
 
    Claude 应该引用你的 Skill 的模式。
    ```

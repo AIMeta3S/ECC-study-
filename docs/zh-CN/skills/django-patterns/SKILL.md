@@ -1,20 +1,21 @@
 ---
 name: django-patterns
-description: Django架构模式，使用DRF设计REST API，ORM最佳实践，缓存，信号，中间件，以及生产级Django应用程序。
-origin: ECC
+description: Django 架构模式、基于 DRF 的 REST API 设计、ORM 最佳实践、缓存、signals、middleware 以及生产级 Django 应用。
+metadata:
+  origin: ECC
 ---
 
 # Django 开发模式
 
-适用于可扩展、可维护应用程序的生产级 Django 架构模式。
+面向可扩展、可维护应用的生产级 Django 架构模式。
 
 ## 何时激活
 
-* 构建 Django Web 应用程序时
-* 设计 Django REST Framework API 时
-* 使用 Django ORM 和模型时
-* 设置 Django 项目结构时
-* 实现缓存、信号、中间件时
+- 构建 Django Web 应用
+- 设计 Django REST Framework API
+- 使用 Django ORM 和模型
+- 搭建 Django 项目结构
+- 实现缓存、signals、middleware
 
 ## 项目结构
 
@@ -27,9 +28,9 @@ myproject/
 │   ├── settings/
 │   │   ├── __init__.py
 │   │   ├── base.py          # 基础设置
-│   │   ├── development.py   # 开发环境设置
-│   │   ├── production.py    # 生产环境设置
-│   │   └── test.py          # 测试环境设置
+│   │   ├── development.py   # 开发设置
+│   │   ├── production.py    # 生产设置
+│   │   └── test.py          # 测试设置
 │   ├── urls.py
 │   ├── wsgi.py
 │   └── asgi.py
@@ -72,7 +73,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    # Local apps
+    # 本地应用
     'apps.users',
     'apps.products',
 ]
@@ -129,7 +130,7 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Logging
+# 日志
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -160,7 +161,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(AbstractUser):
-    """Custom user model extending AbstractUser."""
+    """继承 AbstractUser 的自定义用户模型。"""
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
     birth_date = models.DateField(null=True, blank=True)
@@ -181,7 +182,7 @@ class User(AbstractUser):
         return f"{self.first_name} {self.last_name}".strip()
 
 class Product(models.Model):
-    """Product model with proper field configuration."""
+    """具有正确字段配置的 Product 模型。"""
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=250)
     description = models.TextField(blank=True)
@@ -231,73 +232,73 @@ class Product(models.Model):
 from django.db import models
 
 class ProductQuerySet(models.QuerySet):
-    """Custom QuerySet for Product model."""
+    """Product 模型的自定义 QuerySet。"""
 
     def active(self):
-        """Return only active products."""
+        """仅返回活跃的产品。"""
         return self.filter(is_active=True)
 
     def with_category(self):
-        """Select related category to avoid N+1 queries."""
+        """关联查询 category 以避免 N+1 查询。"""
         return self.select_related('category')
 
     def with_tags(self):
-        """Prefetch tags for many-to-many relationship."""
+        """为多对多关系预取 tags。"""
         return self.prefetch_related('tags')
 
     def in_stock(self):
-        """Return products with stock > 0."""
+        """返回库存 > 0 的产品。"""
         return self.filter(stock__gt=0)
 
     def search(self, query):
-        """Search products by name or description."""
+        """按名称或描述搜索产品。"""
         return self.filter(
             models.Q(name__icontains=query) |
             models.Q(description__icontains=query)
         )
 
 class Product(models.Model):
-    # ... fields ...
+    # ... 字段 ...
 
-    objects = ProductQuerySet.as_manager()  # Use custom QuerySet
+    objects = ProductQuerySet.as_manager()  # 使用自定义 QuerySet
 
-# Usage
+# 用法
 Product.objects.active().with_category().in_stock()
 ```
 
-### 管理器方法
+### Manager 方法
 
 ```python
 class ProductManager(models.Manager):
-    """Custom manager for complex queries."""
+    """用于复杂查询的自定义 Manager。"""
 
     def get_or_none(self, **kwargs):
-        """Return object or None instead of DoesNotExist."""
+        """返回对象或 None，而非抛出 DoesNotExist。"""
         try:
             return self.get(**kwargs)
         except self.model.DoesNotExist:
             return None
 
     def create_with_tags(self, name, price, tag_names):
-        """Create product with associated tags."""
+        """创建带有关联 tags 的产品。"""
         product = self.create(name=name, price=price)
         tags = [Tag.objects.get_or_create(name=name)[0] for name in tag_names]
         product.tags.set(tags)
         return product
 
     def bulk_update_stock(self, product_ids, quantity):
-        """Bulk update stock for multiple products."""
+        """批量更新多个产品的库存。"""
         return self.filter(id__in=product_ids).update(stock=quantity)
 
-# In model
+# 在模型中
 class Product(models.Model):
-    # ... fields ...
+    # ... 字段 ...
     custom = ProductManager()
 ```
 
 ## Django REST Framework 模式
 
-### 序列化器模式
+### Serializer 模式
 
 ```python
 from rest_framework import serializers
@@ -305,7 +306,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import Product, User
 
 class ProductSerializer(serializers.ModelSerializer):
-    """Serializer for Product model."""
+    """Product 模型的 Serializer。"""
 
     category_name = serializers.CharField(source='category.name', read_only=True)
     average_rating = serializers.FloatField(read_only=True)
@@ -321,26 +322,26 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'slug', 'created_at']
 
     def get_discount_price(self, obj):
-        """Calculate discount price if applicable."""
+        """若适用，计算折扣价格。"""
         if hasattr(obj, 'discount') and obj.discount:
             return obj.price * (1 - obj.discount.percent / 100)
         return obj.price
 
     def validate_price(self, value):
-        """Ensure price is non-negative."""
+        """确保价格为非负数。"""
         if value < 0:
             raise serializers.ValidationError("Price cannot be negative.")
         return value
 
 class ProductCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating products."""
+    """用于创建产品的 Serializer。"""
 
     class Meta:
         model = Product
         fields = ['name', 'description', 'price', 'stock', 'category']
 
     def validate(self, data):
-        """Custom validation for multiple fields."""
+        """针对多个字段的自定义校验。"""
         if data['price'] > 10000 and data['stock'] > 100:
             raise serializers.ValidationError(
                 "Cannot have high-value products with large stock."
@@ -348,7 +349,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         return data
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for user registration."""
+    """用于用户注册的 Serializer。"""
 
     password = serializers.CharField(
         write_only=True,
@@ -363,7 +364,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ['email', 'username', 'password', 'password_confirm']
 
     def validate(self, data):
-        """Validate passwords match."""
+        """校验密码是否匹配。"""
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({
                 "password_confirm": "Password fields didn't match."
@@ -371,7 +372,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Create user with hashed password."""
+        """创建带哈希密码的用户。"""
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         user = User.objects.create(**validated_data)
@@ -395,7 +396,7 @@ from .filters import ProductFilter
 from .services import ProductService
 
 class ProductViewSet(viewsets.ModelViewSet):
-    """ViewSet for Product model."""
+    """Product 模型的 ViewSet。"""
 
     queryset = Product.objects.select_related('category').prefetch_related('tags')
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
@@ -406,25 +407,25 @@ class ProductViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_serializer_class(self):
-        """Return appropriate serializer based on action."""
+        """根据 action 返回合适的 serializer。"""
         if self.action == 'create':
             return ProductCreateSerializer
         return ProductSerializer
 
     def perform_create(self, serializer):
-        """Save with user context."""
+        """带用户上下文保存。"""
         serializer.save(created_by=self.request.user)
 
     @action(detail=False, methods=['get'])
     def featured(self, request):
-        """Return featured products."""
+        """返回特色产品。"""
         featured = self.queryset.filter(is_featured=True)[:10]
         serializer = self.get_serializer(featured, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def purchase(self, request, pk=None):
-        """Purchase a product."""
+        """购买产品。"""
         product = self.get_object()
         service = ProductService()
         result = service.purchase(product, request.user)
@@ -432,14 +433,14 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_products(self, request):
-        """Return products created by current user."""
+        """返回当前用户创建的产品。"""
         products = self.queryset.filter(created_by=request.user)
         page = self.paginate_queryset(products)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 ```
 
-### 自定义操作
+### 自定义 Action
 
 ```python
 from rest_framework.decorators import api_view, permission_classes
@@ -449,7 +450,7 @@ from rest_framework.response import Response
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_cart(request):
-    """Add product to user cart."""
+    """将产品加入用户购物车。"""
     product_id = request.data.get('product_id')
     quantity = request.data.get('quantity', 1)
 
@@ -471,7 +472,7 @@ def add_to_cart(request):
     return Response({'message': 'Added to cart'}, status=status.HTTP_201_CREATED)
 ```
 
-## 服务层模式
+## Service Layer 模式
 
 ```python
 # apps/orders/services.py
@@ -480,12 +481,12 @@ from django.db import transaction
 from .models import Order, OrderItem
 
 class OrderService:
-    """Service layer for order-related business logic."""
+    """订单相关业务逻辑的 Service Layer。"""
 
     @staticmethod
     @transaction.atomic
     def create_order(user, cart: Cart) -> Order:
-        """Create order from cart."""
+        """从购物车创建订单。"""
         order = Order.objects.create(
             user=user,
             total_price=cart.total_price
@@ -499,15 +500,15 @@ class OrderService:
                 price=item.product.price
             )
 
-        # Clear cart
+        # 清空购物车
         cart.items.all().delete()
 
         return order
 
     @staticmethod
     def process_payment(order: Order, payment_data: dict) -> bool:
-        """Process payment for order."""
-        # Integration with payment gateway
+        """处理订单支付。"""
+        # 与支付网关集成
         payment = PaymentGateway.charge(
             amount=order.total_price,
             token=payment_data['token']
@@ -516,7 +517,7 @@ class OrderService:
         if payment.success:
             order.status = Order.Status.PAID
             order.save()
-            # Send confirmation email
+            # 发送确认邮件
             OrderService.send_confirmation_email(order)
             return True
 
@@ -524,8 +525,8 @@ class OrderService:
 
     @staticmethod
     def send_confirmation_email(order: Order):
-        """Send order confirmation email."""
-        # Email sending logic
+        """发送订单确认邮件。"""
+        # 邮件发送逻辑
         pass
 ```
 
@@ -537,7 +538,7 @@ class OrderService:
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 
-@method_decorator(cache_page(60 * 15), name='dispatch')  # 15 minutes
+@method_decorator(cache_page(60 * 15), name='dispatch')  # 15 分钟
 class ProductListView(generic.ListView):
     model = Product
     template_name = 'products/list.html'
@@ -549,23 +550,23 @@ class ProductListView(generic.ListView):
 ```django
 {% load cache %}
 {% cache 500 sidebar %}
-    ... expensive sidebar content ...
+    ... 昂贵的侧边栏内容 ...
 {% endcache %}
 ```
 
-### 低级缓存
+### 底层缓存
 
 ```python
 from django.core.cache import cache
 
 def get_featured_products():
-    """Get featured products with caching."""
+    """获取特色产品（带缓存）。"""
     cache_key = 'featured_products'
     products = cache.get(cache_key)
 
     if products is None:
         products = list(Product.objects.filter(is_featured=True))
-        cache.set(cache_key, products, timeout=60 * 15)  # 15 minutes
+        cache.set(cache_key, products, timeout=60 * 15)  # 15 分钟
 
     return products
 ```
@@ -583,14 +584,14 @@ def get_popular_categories():
         categories = list(Category.objects.annotate(
             product_count=Count('products')
         ).filter(product_count__gt=10).order_by('-product_count')[:20])
-        cache.set(cache_key, categories, timeout=60 * 60)  # 1 hour
+        cache.set(cache_key, categories, timeout=60 * 60)  # 1 小时
 
     return categories
 ```
 
-## 信号
+## Signals
 
-### 信号模式
+### Signal 模式
 
 ```python
 # apps/users/signals.py
@@ -603,13 +604,13 @@ User = get_user_model()
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    """Create profile when user is created."""
+    """当用户创建时创建 profile。"""
     if created:
         Profile.objects.create(user=instance)
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    """Save profile when user is saved."""
+    """当用户保存时保存 profile。"""
     instance.profile.save()
 
 # apps/users/apps.py
@@ -620,13 +621,13 @@ class UsersConfig(AppConfig):
     name = 'apps.users'
 
     def ready(self):
-        """Import signals when app is ready."""
+        """当 app 准备就绪时导入 signals。"""
         import apps.users.signals
 ```
 
-## 中间件
+## Middleware
 
-### 自定义中间件
+### 自定义 Middleware
 
 ```python
 # middleware/active_user_middleware.py
@@ -634,24 +635,24 @@ import time
 from django.utils.deprecation import MiddlewareMixin
 
 class ActiveUserMiddleware(MiddlewareMixin):
-    """Middleware to track active users."""
+    """用于跟踪活跃用户的 middleware。"""
 
     def process_request(self, request):
-        """Process incoming request."""
+        """处理入站请求。"""
         if request.user.is_authenticated:
-            # Update last active time
+            # 更新最后活跃时间
             request.user.last_active = timezone.now()
             request.user.save(update_fields=['last_active'])
 
 class RequestLoggingMiddleware(MiddlewareMixin):
-    """Middleware for logging requests."""
+    """用于记录请求日志的 middleware。"""
 
     def process_request(self, request):
-        """Log request start time."""
+        """记录请求开始时间。"""
         request.start_time = time.time()
 
     def process_response(self, request, response):
-        """Log request duration."""
+        """记录请求耗时。"""
         if hasattr(request, 'start_time'):
             duration = time.time() - request.start_time
             logger.info(f'{request.method} {request.path} - {response.status_code} - {duration:.3f}s')
@@ -663,17 +664,17 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 ### N+1 查询预防
 
 ```python
-# Bad - N+1 queries
+# 反例 - N+1 查询
 products = Product.objects.all()
 for product in products:
-    print(product.category.name)  # Separate query for each product
+    print(product.category.name)  # 每个产品单独查询
 
-# Good - Single query with select_related
+# 正例 - 使用 select_related 的单次查询
 products = Product.objects.select_related('category').all()
 for product in products:
     print(product.category.name)
 
-# Good - Prefetch for many-to-many
+# 正例 - 针对多对多的 prefetch
 products = Product.objects.prefetch_related('tags').all()
 for product in products:
     for tag in product.tags.all():
@@ -700,19 +701,19 @@ class Product(models.Model):
 ### 批量操作
 
 ```python
-# Bulk create
+# 批量创建
 Product.objects.bulk_create([
     Product(name=f'Product {i}', price=10.00)
     for i in range(1000)
 ])
 
-# Bulk update
+# 批量更新
 products = Product.objects.all()[:100]
 for product in products:
     product.is_active = True
 Product.objects.bulk_update(products, ['is_active'])
 
-# Bulk delete
+# 批量删除
 Product.objects.filter(stock=0).delete()
 ```
 
@@ -720,15 +721,15 @@ Product.objects.filter(stock=0).delete()
 
 | 模式 | 描述 |
 |---------|-------------|
-| 拆分设置 | 分离开发/生产/测试设置 |
-| 自定义 QuerySet | 可重用的查询方法 |
-| 服务层 | 业务逻辑分离 |
+| Split settings | 分离开发/生产/测试设置 |
+| Custom QuerySet | 可复用的查询方法 |
+| Service Layer | 业务逻辑分离 |
 | ViewSet | REST API 端点 |
-| 序列化器验证 | 请求/响应转换 |
-| select\_related | 外键优化 |
-| prefetch\_related | 多对多优化 |
-| 缓存优先 | 缓存昂贵操作 |
-| 信号 | 事件驱动操作 |
-| 中间件 | 请求/响应处理 |
+| Serializer validation | 请求/响应转换 |
+| select_related | 外键优化 |
+| prefetch_related | 多对多优化 |
+| Cache first | 缓存昂贵操作 |
+| Signals | 事件驱动动作 |
+| Middleware | 请求/响应处理 |
 
-请记住：Django 提供了许多快捷方式，但对于生产应用程序来说，结构和组织比简洁的代码更重要。为可维护性而构建。
+切记：Django 提供了许多快捷方式，但对于生产级应用，结构和组织比简洁的代码更重要。为可维护性而构建。

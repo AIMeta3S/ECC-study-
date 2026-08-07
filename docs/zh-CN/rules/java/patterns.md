@@ -2,14 +2,13 @@
 paths:
   - "**/*.java"
 ---
-
 # Java 模式
 
-> 本文档扩展了 [common/patterns.md](../common/patterns.md) 中的内容，增加了 Java 特有的部分。
+> 本文件在 [common/patterns.md](../common/patterns.md) 基础上扩展 Java 专属内容。
 
-## 仓储模式
+## Repository Pattern
 
-将数据访问封装在接口之后：
+将数据访问封装到接口背后：
 
 ```java
 public interface OrderRepository {
@@ -20,11 +19,11 @@ public interface OrderRepository {
 }
 ```
 
-具体的实现类处理存储细节（JPA、JDBC、用于测试的内存存储等）。
+具体实现负责处理存储细节（JPA、JDBC、用于测试的内存实现）。
 
-## 服务层
+## Service Layer
 
-业务逻辑放在服务类中；保持控制器和仓储层的精简：
+将业务逻辑放在 service 类中；让 controller 和 repository 保持精简：
 
 ```java
 public class OrderService {
@@ -45,12 +44,12 @@ public class OrderService {
 }
 ```
 
-## 构造函数注入
+## Constructor Injection
 
-始终使用构造函数注入 —— 绝不使用字段注入：
+始终使用 constructor injection — 永远不要使用 field injection：
 
 ```java
-// GOOD — constructor injection (testable, immutable)
+// 推荐 — constructor injection（可测试、不可变）
 public class NotificationService {
     private final EmailSender emailSender;
 
@@ -59,16 +58,16 @@ public class NotificationService {
     }
 }
 
-// BAD — field injection (untestable without reflection, requires framework magic)
+// 避免 — field injection（不借助反射则无法测试，依赖框架魔法）
 public class NotificationService {
-    @Inject // or @Autowired
+    @Inject // 或 @Autowired
     private EmailSender emailSender;
 }
 ```
 
 ## DTO 映射
 
-使用记录（record）作为 DTO。在服务层/控制器边界进行映射：
+对 DTO 使用 record。在 service/controller 边界进行映射：
 
 ```java
 public record OrderResponse(Long id, String customer, BigDecimal total) {
@@ -78,9 +77,9 @@ public record OrderResponse(Long id, String customer, BigDecimal total) {
 }
 ```
 
-## 建造者模式
+## Builder Pattern
 
-用于具有多个可选参数的对象：
+适用于拥有多个可选参数的对象：
 
 ```java
 public class SearchCriteria {
@@ -111,7 +110,7 @@ public class SearchCriteria {
 }
 ```
 
-## 使用密封类型构建领域模型
+## 用于领域模型的 Sealed Types
 
 ```java
 public sealed interface PaymentResult permits PaymentSuccess, PaymentFailure {
@@ -119,16 +118,16 @@ public sealed interface PaymentResult permits PaymentSuccess, PaymentFailure {
     record PaymentFailure(String errorCode, String message) implements PaymentResult {}
 }
 
-// Exhaustive handling (Java 21+)
+// 穷尽处理（Java 21+）
 String message = switch (result) {
     case PaymentSuccess s -> "Paid: " + s.transactionId();
     case PaymentFailure f -> "Failed: " + f.errorCode();
 };
 ```
 
-## API 响应封装
+## API Response Envelope
 
-统一的 API 响应格式：
+统一的 API 响应：
 
 ```java
 public record ApiResponse<T>(boolean success, T data, String error) {
@@ -141,8 +140,8 @@ public record ApiResponse<T>(boolean success, T data, String error) {
 }
 ```
 
-## 参考
+## 参考资料
 
-有关 Spring Boot 架构模式，请参见技能：`springboot-patterns`。
-有关使用 Camel 和 Panache 的 Quarkus 架构模式，请参见技能：`quarkus-patterns`。
-有关实体设计和查询优化，请参见技能：`jpa-patterns`。
+参见 skill：`springboot-patterns`，了解 Spring Boot 架构模式。
+参见 skill：`quarkus-patterns`，了解涉及 REST、Panache 和消息机制的 Quarkus 架构模式。
+参见 skill：`jpa-patterns`，了解实体设计与查询优化。

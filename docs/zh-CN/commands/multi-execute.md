@@ -1,22 +1,26 @@
-# 执行 - 多模型协同执行
+---
+description: 执行多模型实现计划，同时保持 Claude 作为唯一的文件系统写入者。
+---
 
-多模型协同执行 - 从计划获取原型 → Claude 重构并实施 → 多模型审计与交付。
+# Execute - 多模型协同执行
 
-> **前提条件：** 此命令需要外部的 `ccg-workflow` 运行时，它**不**包含在基础 ECC 安装中。请运行 `npx ccg-workflow` 进行初始化，以配置此命令所依赖的 `~/.claude/bin/codeagent-wrapper` 和 `~/.claude/.ccg/prompts/*` 角色文件。没有该运行时，此命令将无法正常运行。
+多模型协同执行 - 从计划获取原型 → Claude 重构并实现 → 多模型审计与交付。
+
+> **前提条件：** 需要外部的 `ccg-workflow` 运行时，它**不**属于基础 ECC 安装的一部分。使用 `npx ccg-workflow` 初始化，以配置 `~/.claude/bin/codeagent-wrapper` 和本命令依赖的 `~/.claude/.ccg/prompts/*` 角色文件。没有该运行时，本命令无法正确运行。
 
 $ARGUMENTS
 
-***
+---
 
 ## 核心协议
 
-* **语言协议**：与工具/模型交互时使用**英语**，与用户沟通时使用用户的语言
-* **代码主权**：外部模型**零文件系统写入权限**，所有修改由 Claude 执行
-* **脏原型重构**：将 Codex/Gemini 统一差异视为“脏原型”，必须重构为生产级代码
-* **止损机制**：当前阶段输出未经验证前，不得进入下一阶段
-* **前提条件**：仅在用户明确回复“Y”到 `/ccg:plan` 输出后执行（如果缺失，必须先确认）
+- **语言协议**：与工具/模型交互时使用**英文**，与用户沟通时使用用户的语言
+- **代码主权**：外部模型**零文件系统写入权限**，所有修改由 Claude 完成
+- **脏原型重构**：将 Codex/Gemini 的 Unified Diff 视为"脏原型"，必须重构为生产级代码
+- **止损机制**：当前阶段输出未通过验证前，不得进入下一阶段
+- **前提条件**：仅在用户对 `/ccg:plan` 输出明确回复 "Y" 后才执行（若缺失，必须先确认）
 
-***
+---
 
 ## 多模型调用规范
 
@@ -35,7 +39,7 @@ OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF",
   run_in_background: true,
   timeout: 3600000,
-  description: "简要描述"
+  description: "Brief description"
 })
 
 # 新建会话调用 - 实现原型
@@ -50,47 +54,46 @@ OUTPUT: Unified Diff Patch ONLY. Strictly prohibit any actual modifications.
 EOF",
   run_in_background: true,
   timeout: 3600000,
-  description: "简要描述"
+  description: "Brief description"
 })
 ```
 
-**审计调用语法**（代码审查 / 审计）：
+**审计调用语法**（Code Review / 审计）：
 
 ```
 Bash({
   command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> {{GEMINI_MODEL_FLAG}}resume <SESSION_ID> - \"$PWD\" <<'EOF'
 ROLE_FILE: <role prompt path>
 <TASK>
-Scope: 审计最终的代码变更。
+Scope: Audit the final code changes.
 Inputs:
-- 已应用的补丁 (git diff / final unified diff)
-- 涉及的文件 (必要时提供相关摘录)
+- The applied patch (git diff / final unified diff)
+- The touched files (relevant excerpts if needed)
 Constraints:
-- 请勿修改任何文件。
-- 请勿输出假设有文件系统访问权限的工具命令。
+- Do NOT modify any files.
+- Do NOT output tool commands that assume filesystem access.
 </TASK>
 OUTPUT:
-1) 一个按优先级排序的问题列表 (严重程度, 文件, 理由)
-2) 具体的修复方案；如果需要更改代码，请包含在一个用围栏代码块包裹的 Unified Diff Patch 中。
+1) A prioritized list of issues (severity, file, rationale)
+2) Concrete fixes; if code changes are needed, include a Unified Diff Patch in a fenced code block.
 EOF",
   run_in_background: true,
   timeout: 3600000,
-  description: "简要描述"
+  description: "Brief description"
 })
 ```
 
 **模型参数说明**：
+- `{{GEMINI_MODEL_FLAG}}`：使用 `--backend gemini` 时，替换为 `--gemini-model gemini-3-pro-preview`（注意末尾空格）；codex 使用空字符串
 
-* `{{GEMINI_MODEL_FLAG}}`：当使用 `--backend gemini` 时，替换为 `--gemini-model gemini-3-pro-preview`（注意尾随空格）；对于 codex 使用空字符串
-
-**角色提示**：
+**角色提示词**：
 
 | 阶段 | Codex | Gemini |
 |-------|-------|--------|
-| 实施 | `~/.claude/.ccg/prompts/codex/architect.md` | `~/.claude/.ccg/prompts/gemini/frontend.md` |
+| 实现 | `~/.claude/.ccg/prompts/codex/architect.md` | `~/.claude/.ccg/prompts/gemini/frontend.md` |
 | 审查 | `~/.claude/.ccg/prompts/codex/reviewer.md` | `~/.claude/.ccg/prompts/gemini/reviewer.md` |
 
-**会话重用**：如果 `/ccg:plan` 提供了 SESSION\_ID，使用 `resume <SESSION_ID>` 来重用上下文。
+**会话复用**：如果 `/ccg:plan` 提供了 SESSION_ID，使用 `resume <SESSION_ID>` 复用上下文。
 
 **等待后台任务**（最大超时 600000ms = 10 分钟）：
 
@@ -98,89 +101,85 @@ EOF",
 TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 ```
 
-**重要**：
+**重要提示**：
+- 必须指定 `timeout: 600000`，否则默认 30 秒会导致过早超时
+- 如果 10 分钟后仍未完成，继续用 `TaskOutput` 轮询，**绝不终止进程**
+- 如果因超时跳过等待，**必须调用 `AskUserQuestion` 询问用户是继续等待还是终止任务**
 
-* 必须指定 `timeout: 600000`，否则默认 30 秒会导致过早超时
-* 如果 10 分钟后仍未完成，继续使用 `TaskOutput` 轮询，**切勿终止进程**
-* 如果因超时而跳过等待，**必须调用 `AskUserQuestion` 询问用户是继续等待还是终止任务**
-
-***
+---
 
 ## 执行工作流
 
 **执行任务**：$ARGUMENTS
 
-### 阶段 0：读取计划
+### Phase 0：读取计划
 
-`[Mode: Prepare]`
+`[模式：准备]`
 
 1. **识别输入类型**：
-   * 计划文件路径（例如 `.claude/plan/xxx.md`）
-   * 直接任务描述
+   - 计划文件路径（如 `.claude/plan/xxx.md`）
+   - 直接任务描述
 
 2. **读取计划内容**：
-   * 如果提供了计划文件路径，读取并解析
-   * 提取：任务类型、实施步骤、关键文件、SESSION\_ID
+   - 如果提供的是计划文件路径，读取并解析
+   - 提取：任务类型、实现步骤、关键文件、SESSION_ID
 
 3. **执行前确认**：
-   * 如果输入是“直接任务描述”或计划缺少 `SESSION_ID` / 关键文件：先与用户确认
-   * 如果无法确认用户已回复“Y”到计划：在继续前必须再次确认
+   - 如果输入是"直接任务描述"或计划缺少 `SESSION_ID` / 关键文件：先与用户确认
+   - 如果无法确认用户对计划回复过 "Y"：继续前必须再次确认
 
 4. **任务类型路由**：
 
-   | 任务类型 | 检测 | 路由 |
+   | 任务类型 | 检测特征 | 路由 |
    |-----------|-----------|-------|
    | **前端** | 页面、组件、UI、样式、布局 | Gemini |
    | **后端** | API、接口、数据库、逻辑、算法 | Codex |
-   | **全栈** | 包含前端和后端 | Codex ∥ Gemini 并行 |
+   | **全栈** | 同时包含前端和后端 | Codex ∥ Gemini 并行 |
 
-***
+---
 
-### 阶段 1：快速上下文检索
+### Phase 1：快速上下文检索
 
-`[Mode: Retrieval]`
+`[模式：检索]`
 
 **如果 ace-tool MCP 可用**，使用它进行快速上下文检索：
 
-基于计划中的“关键文件”列表，调用 `mcp__ace-tool__search_context`：
+根据计划中的"关键文件"列表，调用 `mcp__ace-tool__search_context`：
 
 ```
 mcp__ace-tool__search_context({
-  query: "<基于计划内容的语义查询，包括关键文件、模块、函数名>",
+  query: "<semantic query based on plan content, including key files, modules, function names>",
   project_root_path: "$PWD"
 })
 ```
 
 **检索策略**：
+- 从计划的"关键文件"表中提取目标路径
+- 构建覆盖以下内容的语义查询：入口文件、依赖模块、相关类型定义
+- 如果结果不足，追加 1-2 轮递归检索
 
-* 从计划的“关键文件”表中提取目标路径
-* 构建语义查询，涵盖：入口文件、依赖模块、相关类型定义
-* 如果结果不足，添加 1-2 次递归检索
+**如果 ace-tool MCP 不可用**，使用 Claude Code 内置工具作为回退方案：
+1. **Glob**：从计划的"关键文件"表中查找目标文件（如 `Glob("src/components/**/*.tsx")`）
+2. **Grep**：在全代码库中搜索关键符号、函数名、类型定义
+3. **Read**：读取发现的文件以收集完整上下文
+4. **Task（Explore agent）**：如需更大范围的探索，使用 `Task` 并设置 `subagent_type: "Explore"`
 
-**如果 ace-tool MCP 不可用**，使用 Claude Code 内置工具作为后备方案：
+**检索完成后**：
+- 整理检索到的代码片段
+- 确认实现所需的上下文已完整
+- 进入 Phase 3
 
-1. **Glob**：从计划的“关键文件”表中查找目标文件（例如，`Glob("src/components/**/*.tsx")`）
-2. **Grep**：在代码库中搜索关键符号、函数名、类型定义
-3. **Read**：读取发现的文件以收集完整的上下文
-4. **Task (探索代理)**：对于更广泛的探索，使用 `Task` 和 `subagent_type: "Explore"`
+---
 
-**检索后**：
+### Phase 3：原型获取
 
-* 组织检索到的代码片段
-* 确认实施所需的完整上下文
-* 进入阶段 3
+`[模式：原型]`
 
-***
+**根据任务类型路由**：
 
-### 阶段 3：原型获取
+#### 路径 A：前端/UI/样式 → Gemini
 
-`[Mode: Prototype]`
-
-**基于任务类型路由**：
-
-#### 路由 A：前端/UI/样式 → Gemini
-
-**限制**：上下文 < 32k 令牌
+**限制**：上下文 < 32k tokens
 
 1. 调用 Gemini（使用 `~/.claude/.ccg/prompts/gemini/frontend.md`）
 2. 输入：计划内容 + 检索到的上下文 + 目标文件
@@ -189,86 +188,86 @@ mcp__ace-tool__search_context({
 5. **警告**：忽略 Gemini 的后端逻辑建议
 6. 如果计划包含 `GEMINI_SESSION`：优先使用 `resume <GEMINI_SESSION>`
 
-#### 路由 B：后端/逻辑/算法 → Codex
+#### 路径 B：后端/逻辑/算法 → Codex
 
 1. 调用 Codex（使用 `~/.claude/.ccg/prompts/codex/architect.md`）
 2. 输入：计划内容 + 检索到的上下文 + 目标文件
 3. 输出：`Unified Diff Patch ONLY. Strictly prohibit any actual modifications.`
-4. **Codex 是后端逻辑权威，利用其逻辑推理和调试能力**
+4. **Codex 是后端逻辑权威，善用其逻辑推理和 debug 能力**
 5. 如果计划包含 `CODEX_SESSION`：优先使用 `resume <CODEX_SESSION>`
 
-#### 路由 C：全栈 → 并行调用
+#### 路径 C：全栈 → 并行调用
 
 1. **并行调用**（`run_in_background: true`）：
-   * Gemini：处理前端部分
-   * Codex：处理后端部分
+   - Gemini：处理前端部分
+   - Codex：处理后端部分
 2. 使用 `TaskOutput` 等待两个模型的完整结果
-3. 每个模型使用计划中相应的 `SESSION_ID` 作为 `resume`（如果缺失则创建新会话）
+3. 各自使用计划中对应的 `SESSION_ID` 进行 `resume`（如缺失则新建会话）
 
-**遵循上面 `IMPORTANT` 中的 `Multi-Model Call Specification` 指令**
+**遵循上文"多模型调用规范"中的"重要提示"指令**
 
-***
+---
 
-### 阶段 4：代码实施
+### Phase 4：代码实现
 
-`[Mode: Implement]`
+`[模式：实现]`
 
-**Claude 作为代码主权执行以下步骤**：
+**Claude 作为代码主权者执行以下步骤**：
 
-1. **读取差异**：解析 Codex/Gemini 返回的统一差异补丁
+1. **读取 Diff**：解析 Codex/Gemini 返回的 Unified Diff Patch
 
-2. **心智沙盒**：
-   * 模拟将差异应用到目标文件
-   * 检查逻辑一致性
-   * 识别潜在冲突或副作用
+2. **心智沙箱**：
+   - 模拟将 Diff 应用到目标文件
+   - 检查逻辑一致性
+   - 识别潜在冲突或副作用
 
 3. **重构与清理**：
-   * 将“脏原型”重构为**高度可读、可维护、企业级代码**
-   * 移除冗余代码
-   * 确保符合项目现有代码标准
-   * **除非必要，不要生成注释/文档**，代码应具有自解释性
+   - 将"脏原型"重构为**高可读性、可维护的企业级代码**
+   - 移除冗余代码
+   - 确保符合项目现有代码规范
+   - **除非必要，不要生成注释/文档**，代码应当自解释
 
 4. **最小范围**：
-   * 更改仅限于需求范围
-   * **强制审查**副作用
-   * 进行针对性修正
+   - 修改仅限于需求范围
+   - 对副作用进行**强制审查**
+   - 进行针对性修正
 
-5. **应用更改**：
-   * 使用编辑/写入工具执行实际修改
-   * **仅修改必要代码**，绝不影响用户的其他现有功能
+5. **应用修改**：
+   - 使用 Edit/Write 工具执行实际修改
+   - **只修改必要的代码**，绝不影响用户的其他现有功能
 
 6. **自验证**（强烈推荐）：
-   * 运行项目现有的 lint / 类型检查 / 测试（优先考虑最小相关范围）
-   * 如果失败：先修复回归问题，然后进入阶段 5
+   - 运行项目现有的 lint / typecheck / tests（优先最小相关范围）
+   - 如果失败：先修复回归问题，再进入 Phase 5
 
-***
+---
 
-### 阶段 5：审计与交付
+### Phase 5：审计与交付
 
-`[Mode: Audit]`
+`[模式：审计]`
 
 #### 5.1 自动审计
 
-**更改生效后，必须立即并行调用** Codex 和 Gemini 进行代码审查：
+**修改生效后，必须立即并行调用** Codex 和 Gemini 进行 Code Review：
 
 1. **Codex 审查**（`run_in_background: true`）：
-   * ROLE\_FILE：`~/.claude/.ccg/prompts/codex/reviewer.md`
-   * 输入：更改的差异 + 目标文件
-   * 重点：安全性、性能、错误处理、逻辑正确性
+   - ROLE_FILE：`~/.claude/.ccg/prompts/codex/reviewer.md`
+   - 输入：变更的 Diff + 目标文件
+   - 关注点：安全性、性能、错误处理、逻辑正确性
 
 2. **Gemini 审查**（`run_in_background: true`）：
-   * ROLE\_FILE：`~/.claude/.ccg/prompts/gemini/reviewer.md`
-   * 输入：更改的差异 + 目标文件
-   * 重点：可访问性、设计一致性、用户体验
+   - ROLE_FILE：`~/.claude/.ccg/prompts/gemini/reviewer.md`
+   - 输入：变更的 Diff + 目标文件
+   - 关注点：可访问性、设计一致性、用户体验
 
-使用 `TaskOutput` 等待两个模型的完整审查结果。优先重用阶段 3 的会话（`resume <SESSION_ID>`）以确保上下文一致性。
+使用 `TaskOutput` 等待两个模型的完整审查结果。优先复用 Phase 3 的会话（`resume <SESSION_ID>`）以保持上下文一致。
 
 #### 5.2 整合与修复
 
 1. 综合 Codex + Gemini 的审查反馈
 2. 按信任规则权衡：后端遵循 Codex，前端遵循 Gemini
 3. 执行必要的修复
-4. 根据需要重复阶段 5.1（直到风险可接受）
+4. 根据需要重复 Phase 5.1（直到风险可接受）
 
 #### 5.3 交付确认
 
@@ -280,44 +279,43 @@ mcp__ace-tool__search_context({
 ### 变更摘要
 | 文件 | 操作 | 描述 |
 |------|-----------|-------------|
-| path/to/file.ts | 已修改 | 描述 |
+| path/to/file.ts | 修改 | 描述 |
 
 ### 审计结果
-- Codex: <通过/发现 N 个问题>
-- Gemini: <通过/发现 N 个问题>
+- Codex：<通过/发现 N 个 issue>
+- Gemini：<通过/发现 N 个 issue>
 
 ### 建议
 1. [ ] <建议的测试步骤>
 2. [ ] <建议的验证步骤>
-
 ```
 
-***
+---
 
 ## 关键规则
 
-1. **代码主权** – 所有文件修改由 Claude 执行，外部模型零写入权限
+1. **代码主权** – 所有文件修改由 Claude 完成，外部模型零写入权限
 2. **脏原型重构** – Codex/Gemini 输出视为草稿，必须重构
 3. **信任规则** – 后端遵循 Codex，前端遵循 Gemini
-4. **最小更改** – 仅修改必要代码，无副作用
-5. **强制审计** – 更改后必须执行多模型代码审查
+4. **最小修改** – 只修改必要的代码，无副作用
+5. **强制审计** – 修改后必须进行多模型 Code Review
 
-***
+---
 
-## 使用方法
+## 用法
 
 ```bash
-# Execute plan file
+# 执行计划文件
 /ccg:execute .claude/plan/feature-name.md
 
-# Execute task directly (for plans already discussed in context)
+# 直接执行任务（用于已在上下文中讨论过的计划）
 /ccg:execute implement user authentication based on previous plan
 ```
 
-***
+---
 
 ## 与 /ccg:plan 的关系
 
-1. `/ccg:plan` 生成计划 + SESSION\_ID
-2. 用户用“Y”确认
-3. `/ccg:execute` 读取计划，重用 SESSION\_ID，执行实施
+1. `/ccg:plan` 生成计划 + SESSION_ID
+2. 用户以 "Y" 确认
+3. `/ccg:execute` 读取计划，复用 SESSION_ID，执行实现

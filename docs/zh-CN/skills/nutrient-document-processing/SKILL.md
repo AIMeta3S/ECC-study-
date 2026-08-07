@@ -1,43 +1,46 @@
 ---
 name: nutrient-document-processing
-description: 使用Nutrient DWS API处理、转换、OCR识别、提取、编辑、签名和填写文档。支持PDF、DOCX、XLSX、PPTX、HTML和图像格式。
-origin: ECC
+description: 使用 Nutrient DWS API 处理、转换、OCR、提取、脱敏、签名和填写文档。支持 PDF、DOCX、XLSX、PPTX、HTML 和图片。
+metadata:
+  origin: ECC
 ---
 
-# 文档处理
+# Nutrient 文档处理
 
-使用 [Nutrient DWS Processor API](https://www.nutrient.io/api/) 处理文档。转换格式、提取文本和表格、对扫描文档进行 OCR、编辑 PII、添加水印、数字签名以及填写 PDF 表单。
+> **注意：** 本 skill 集成 Nutrient 商业 API。使用前请查阅其条款。
 
-## 设置
+使用 [Nutrient DWS Processor API](https://www.nutrient.io/api/) 处理文档。转换格式、提取文本和表格、对扫描文档进行 OCR、脱敏 PII、添加水印、数字签名以及填写 PDF 表单。
 
-在 **[nutrient.io](https://dashboard.nutrient.io/sign_up/?product=processor)** 获取一个免费的 API 密钥
+## 环境配置
+
+在 **[nutrient.io](https://dashboard.nutrient.io/sign_up/?product=processor)** 获取免费 API key
 
 ```bash
 export NUTRIENT_API_KEY="pdf_live_..."
 ```
 
-所有请求都以 multipart POST 形式发送到 `https://api.nutrient.io/build`，并附带一个 `instructions` JSON 字段。
+所有请求以 multipart POST 方式发送到 `https://api.nutrient.io/build`，并包含一个 `instructions` JSON 字段。
 
 ## 操作
 
 ### 转换文档
 
 ```bash
-# DOCX to PDF
+# DOCX 转 PDF
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.docx=@document.docx" \
   -F 'instructions={"parts":[{"file":"document.docx"}]}' \
   -o output.pdf
 
-# PDF to DOCX
+# PDF 转 DOCX
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
   -F 'instructions={"parts":[{"file":"document.pdf"}],"output":{"type":"docx"}}' \
   -o output.docx
 
-# HTML to PDF
+# HTML 转 PDF
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "index.html=@index.html" \
@@ -50,14 +53,14 @@ curl -X POST https://api.nutrient.io/build \
 ### 提取文本和数据
 
 ```bash
-# Extract plain text
+# 提取纯文本
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
   -F 'instructions={"parts":[{"file":"document.pdf"}],"output":{"type":"text"}}' \
   -o output.txt
 
-# Extract tables as Excel
+# 将表格提取为 Excel
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
@@ -68,7 +71,7 @@ curl -X POST https://api.nutrient.io/build \
 ### OCR 扫描文档
 
 ```bash
-# OCR to searchable PDF (supports 100+ languages)
+# OCR 生成可搜索的 PDF（支持 100+ 种语言）
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "scanned.pdf=@scanned.pdf" \
@@ -76,19 +79,19 @@ curl -X POST https://api.nutrient.io/build \
   -o searchable.pdf
 ```
 
-支持语言：通过 ISO 639-2 代码支持 100 多种语言（例如，`eng`, `deu`, `fra`, `spa`, `jpn`, `kor`, `chi_sim`, `chi_tra`, `ara`, `hin`, `rus`）。完整的语言名称如 `english` 或 `german` 也适用。查看 [完整的 OCR 语言表](https://www.nutrient.io/guides/document-engine/ocr/language-support/) 以获取所有支持的代码。
+语言：通过 ISO 639-2 代码支持 100+ 种语言（例如 `eng`、`deu`、`fra`、`spa`、`jpn`、`kor`、`chi_sim`、`chi_tra`、`ara`、`hin`、`rus`）。也支持完整的语言名称，如 `english` 或 `german`。请查阅[完整 OCR 语言表](https://www.nutrient.io/guides/document-engine/ocr/language-support/)获取所有受支持的代码。
 
-### 编辑敏感信息
+### 脱敏敏感信息
 
 ```bash
-# Pattern-based (SSN, email)
+# 基于模式（SSN、邮箱）
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
   -F 'instructions={"parts":[{"file":"document.pdf"}],"actions":[{"type":"redaction","strategy":"preset","strategyOptions":{"preset":"social-security-number"}},{"type":"redaction","strategy":"preset","strategyOptions":{"preset":"email-address"}}]}' \
   -o redacted.pdf
 
-# Regex-based
+# 基于正则表达式
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
@@ -111,7 +114,7 @@ curl -X POST https://api.nutrient.io/build \
 ### 数字签名
 
 ```bash
-# Self-signed CMS signature
+# 自签名 CMS 签名
 curl -X POST https://api.nutrient.io/build \
   -H "Authorization: Bearer $NUTRIENT_API_KEY" \
   -F "document.pdf=@document.pdf" \
@@ -129,9 +132,9 @@ curl -X POST https://api.nutrient.io/build \
   -o filled.pdf
 ```
 
-## MCP 服务器（替代方案）
+## MCP Server（替代方案）
 
-对于原生工具集成，请使用 MCP 服务器代替 curl：
+如需原生 tool 集成，请使用 MCP server 而非 curl：
 
 ```json
 {
@@ -148,18 +151,18 @@ curl -X POST https://api.nutrient.io/build \
 }
 ```
 
-## 使用场景
+## 适用场景
 
-* 在格式之间转换文档（PDF, DOCX, XLSX, PPTX, HTML, 图像）
-* 从 PDF 中提取文本、表格或键值对
-* 对扫描文档或图像进行 OCR
-* 在共享文档前编辑 PII
-* 为草稿或机密文档添加水印
-* 数字签署合同或协议
-* 以编程方式填写 PDF 表单
+- 在不同格式之间转换文档（PDF、DOCX、XLSX、PPTX、HTML、图片）
+- 从 PDF 中提取文本、表格或 key-value pair
+- 对扫描文档或图片进行 OCR
+- 在共享文档前对 PII 进行脱敏
+- 给草稿或机密文档添加水印
+- 对合同或协议进行数字签名
+- 以编程方式填写 PDF 表单
 
 ## 链接
 
-* [API 游乐场](https://dashboard.nutrient.io/processor-api/playground/)
-* [完整 API 文档](https://www.nutrient.io/guides/dws-processor/)
-* [npm MCP 服务器](https://www.npmjs.com/package/@nutrient-sdk/dws-mcp-server)
+- [API Playground](https://dashboard.nutrient.io/processor-api/playground/)
+- [完整 API 文档](https://www.nutrient.io/guides/dws-processor/)
+- [npm MCP Server](https://www.npmjs.com/package/@nutrient-sdk/dws-mcp-server)

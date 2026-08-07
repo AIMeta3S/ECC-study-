@@ -1,29 +1,29 @@
 ---
 name: kotlin-patterns
-description: 惯用的Kotlin模式、最佳实践和约定，用于构建健壮、高效且可维护的Kotlin应用程序，包括协程、空安全和DSL构建器。
-origin: ECC
+description: 地道的 Kotlin 模式、最佳实践和约定，用于构建健壮、高效、可维护的 Kotlin 应用，涵盖 coroutines、null safety 和 DSL builder。
+metadata:
+  origin: ECC
 ---
 
 # Kotlin 开发模式
 
-适用于构建健壮、高效、可维护应用程序的惯用 Kotlin 模式与最佳实践。
+地道的 Kotlin 模式与最佳实践，用于构建健壮、高效、可维护的应用。
 
-## 使用时机
+## 何时使用
 
-* 编写新的 Kotlin 代码
-* 审查 Kotlin 代码
-* 重构现有的 Kotlin 代码
-* 设计 Kotlin 模块或库
-* 配置 Gradle Kotlin DSL 构建
+- 编写新的 Kotlin 代码
+- 审查 Kotlin 代码
+- 重构现有 Kotlin 代码
+- 设计 Kotlin module 或 library
+- 配置 Gradle Kotlin DSL 构建
 
 ## 工作原理
 
-本技能在七个关键领域强制执行惯用的 Kotlin 约定：使用类型系统和安全调用运算符实现空安全；通过数据类的 `val` 和 `copy()` 实现不可变性；使用密封类和接口实现穷举类型层次结构；使用协程和 `Flow` 实现结构化并发；使用扩展函数在不使用继承的情况下添加行为；使用 `@DslMarker` 和 lambda 接收器构建类型安全的 DSL；以及使用 Gradle Kotlin DSL 进行构建配置。
+本 skill 在七个关键领域强制执行地道的 Kotlin 约定：使用 type system 和 safe-call operator 实现的 null safety、通过 data class 上的 `val` 和 `copy()` 实现的 immutability、用于 exhaustive type 层级的 sealed class 和 sealed interface、使用 coroutines 和 `Flow` 的 structured concurrency、无需 inheritance 即可添加行为的 extension function、使用 `@DslMarker` 和 lambda receiver 的类型安全的 DSL builder，以及用于构建配置的 Gradle Kotlin DSL。
 
 ## 示例
 
-**使用 Elvis 运算符实现空安全：**
-
+**使用 Elvis operator 实现 null safety：**
 ```kotlin
 fun getUserEmail(userId: String): String {
     val user = userRepository.findById(userId)
@@ -31,8 +31,7 @@ fun getUserEmail(userId: String): String {
 }
 ```
 
-**使用密封类处理穷举结果：**
-
+**用于 exhaustive 结果的 sealed class：**
 ```kotlin
 sealed class Result<out T> {
     data class Success<T>(val data: T) : Result<T>()
@@ -41,8 +40,7 @@ sealed class Result<out T> {
 }
 ```
 
-**使用 async/await 实现结构化并发：**
-
+**使用 async/await 的 structured concurrency：**
 ```kotlin
 suspend fun fetchUserWithPosts(userId: String): UserProfile =
     coroutineScope {
@@ -54,58 +52,58 @@ suspend fun fetchUserWithPosts(userId: String): UserProfile =
 
 ## 核心原则
 
-### 1. 空安全
+### 1. Null Safety
 
-Kotlin 的类型系统区分可空和不可空类型。充分利用它。
+Kotlin 的 type system 区分 nullable 和 non-nullable 类型。充分利用这一点。
 
 ```kotlin
-// Good: Use non-nullable types by default
+// Good: 默认使用 non-nullable 类型
 fun getUser(id: String): User {
     return userRepository.findById(id)
         ?: throw UserNotFoundException("User $id not found")
 }
 
-// Good: Safe calls and Elvis operator
+// Good: Safe call 和 Elvis operator
 fun getUserEmail(userId: String): String {
     val user = userRepository.findById(userId)
     return user?.email ?: "unknown@example.com"
 }
 
-// Bad: Force-unwrapping nullable types
+// Bad: 强制解包 nullable 类型
 fun getUserEmail(userId: String): String {
     val user = userRepository.findById(userId)
-    return user!!.email // Throws NPE if null
+    return user!!.email // 如果为 null 则抛出 NPE
 }
 ```
 
-### 2. 默认不可变性
+### 2. 默认 Immutability
 
-优先使用 `val` 而非 `var`，优先使用不可变集合而非可变集合。
+优先使用 `val` 而非 `var`，优先使用 immutable 集合而非 mutable 集合。
 
 ```kotlin
-// Good: Immutable data
+// Good: Immutable 数据
 data class User(
     val id: String,
     val name: String,
     val email: String,
 )
 
-// Good: Transform with copy()
+// Good: 使用 copy() 转换
 fun updateEmail(user: User, newEmail: String): User =
     user.copy(email = newEmail)
 
-// Good: Immutable collections
+// Good: Immutable 集合
 val users: List<User> = listOf(user1, user2)
 val filtered = users.filter { it.email.isNotBlank() }
 
-// Bad: Mutable state
-var currentUser: User? = null // Avoid mutable global state
-val mutableUsers = mutableListOf<User>() // Avoid unless truly needed
+// Bad: Mutable 状态
+var currentUser: User? = null // 避免 mutable 全局状态
+val mutableUsers = mutableListOf<User>() // 除非确实需要，否则避免使用
 ```
 
-### 3. 表达式体和单表达式函数
+### 3. Expression Body 和 Single-Expression Function
 
-使用表达式体编写简洁、可读的函数。
+使用 expression body 编写简洁、可读的 function。
 
 ```kotlin
 // Good: Expression body
@@ -117,7 +115,7 @@ fun formatFullName(first: String, last: String): String =
 fun User.displayName(): String =
     name.ifBlank { email.substringBefore('@') }
 
-// Good: When as expression
+// Good: when 作为 expression
 fun statusMessage(code: Int): String = when (code) {
     200 -> "OK"
     404 -> "Not Found"
@@ -125,25 +123,25 @@ fun statusMessage(code: Int): String = when (code) {
     else -> "Unknown status: $code"
 }
 
-// Bad: Unnecessary block body
+// Bad: 不必要的 block body
 fun isAdult(age: Int): Boolean {
     return age >= 18
 }
 ```
 
-### 4. 数据类用于值对象
+### 4. 用于 Value Object 的 Data Class
 
-使用数据类表示主要包含数据的类型。
+对于主要承载数据的类型，使用 data class。
 
 ```kotlin
-// Good: Data class with copy, equals, hashCode, toString
+// Good: 带有 copy、equals、hashCode、toString 的 data class
 data class CreateUserRequest(
     val name: String,
     val email: String,
     val role: Role = Role.USER,
 )
 
-// Good: Value class for type safety (zero overhead at runtime)
+// Good: 用于 type safety 的 value class（运行时零开销）
 @JvmInline
 value class UserId(val value: String) {
     init {
@@ -161,12 +159,12 @@ value class Email(val value: String) {
 fun getUser(id: UserId): User = userRepository.findById(id)
 ```
 
-## 密封类和接口
+## Sealed Class 和 Sealed Interface
 
-### 建模受限的层次结构
+### 建模受限的层级
 
 ```kotlin
-// Good: Sealed class for exhaustive when
+// Good: 用于 exhaustive when 的 sealed class
 sealed class Result<out T> {
     data class Success<T>(val data: T) : Result<T>()
     data class Failure(val error: AppError) : Result<Nothing>()
@@ -186,7 +184,7 @@ fun <T> Result<T>.getOrThrow(): T = when (this) {
 }
 ```
 
-### 用于 API 响应的密封接口
+### 用于 API 响应的 Sealed Interface
 
 ```kotlin
 sealed interface ApiError {
@@ -212,30 +210,30 @@ fun ApiError.toStatusCode(): Int = when (this) {
 }
 ```
 
-## 作用域函数
+## Scope Function
 
-### 何时使用各个函数
+### 各自的使用场景
 
 ```kotlin
-// let: Transform nullable or scoped result
+// let: 转换 nullable 或带作用域的结果
 val length: Int? = name?.let { it.trim().length }
 
-// apply: Configure an object (returns the object)
+// apply: 配置一个对象（返回该对象）
 val user = User().apply {
     name = "Alice"
     email = "alice@example.com"
 }
 
-// also: Side effects (returns the object)
+// also: Side effect（返回该对象）
 val user = createUser(request).also { logger.info("Created user: ${it.id}") }
 
-// run: Execute a block with receiver (returns result)
+// run: 使用 receiver 执行一个 block（返回结果）
 val result = connection.run {
     prepareStatement(sql)
     executeQuery()
 }
 
-// with: Non-extension form of run
+// with: run 的非 extension 形式
 val csv = with(StringBuilder()) {
     appendLine("name,email")
     users.forEach { appendLine("${it.name},${it.email}") }
@@ -243,29 +241,29 @@ val csv = with(StringBuilder()) {
 }
 ```
 
-### 反模式
+### Anti-Pattern
 
 ```kotlin
-// Bad: Nesting scope functions
+// Bad: 嵌套 scope function
 user?.let { u ->
     u.address?.let { addr ->
         addr.city?.let { city ->
-            println(city) // Hard to read
+            println(city) // 难以阅读
         }
     }
 }
 
-// Good: Chain safe calls instead
+// Good: 改为链式 safe call
 val city = user?.address?.city
 city?.let { println(it) }
 ```
 
-## 扩展函数
+## Extension Function
 
-### 在不使用继承的情况下添加功能
+### 无需 Inheritance 即可添加功能
 
 ```kotlin
-// Good: Domain-specific extensions
+// Good: 领域相关的 extension
 fun String.toSlug(): String =
     lowercase()
         .replace(Regex("[^a-z0-9\\s-]"), "")
@@ -275,12 +273,12 @@ fun String.toSlug(): String =
 fun Instant.toLocalDate(zone: ZoneId = ZoneId.systemDefault()): LocalDate =
     atZone(zone).toLocalDate()
 
-// Good: Collection extensions
+// Good: 集合相关的 extension
 fun <T> List<T>.second(): T = this[1]
 
 fun <T> List<T>.secondOrNull(): T? = getOrNull(1)
 
-// Good: Scoped extensions (not polluting global namespace)
+// Good: 带作用域的 extension（不污染全局 namespace）
 class UserService {
     private fun User.isActive(): Boolean =
         status == Status.ACTIVE && lastLogin.isAfter(Instant.now().minus(30, ChronoUnit.DAYS))
@@ -289,12 +287,12 @@ class UserService {
 }
 ```
 
-## 协程
+## Coroutines
 
-### 结构化并发
+### Structured Concurrency
 
 ```kotlin
-// Good: Structured concurrency with coroutineScope
+// Good: 使用 coroutineScope 的 structured concurrency
 suspend fun fetchUserWithPosts(userId: String): UserProfile =
     coroutineScope {
         val userDeferred = async { userService.getUser(userId) }
@@ -306,7 +304,7 @@ suspend fun fetchUserWithPosts(userId: String): UserProfile =
         )
     }
 
-// Good: supervisorScope when children can fail independently
+// Good: 当子 coroutine 可能独立失败时使用 supervisorScope
 suspend fun fetchDashboard(userId: String): Dashboard =
     supervisorScope {
         val user = async { userService.getUser(userId) }
@@ -333,10 +331,10 @@ suspend fun fetchDashboard(userId: String): Dashboard =
     }
 ```
 
-### Flow 用于响应式流
+### 用于 Reactive Stream 的 Flow
 
 ```kotlin
-// Good: Cold flow with proper error handling
+// Good: 带有正确错误处理的 cold flow
 fun observeUsers(): Flow<List<User>> = flow {
     while (currentCoroutineContext().isActive) {
         val users = userRepository.findAll()
@@ -348,7 +346,7 @@ fun observeUsers(): Flow<List<User>> = flow {
     emit(emptyList())
 }
 
-// Good: Flow operators
+// Good: Flow operator
 fun searchUsers(query: Flow<String>): Flow<List<User>> =
     query
         .debounce(300.milliseconds)
@@ -361,33 +359,33 @@ fun searchUsers(query: Flow<String>): Flow<List<User>> =
 ### 取消与清理
 
 ```kotlin
-// Good: Respect cancellation
+// Good: 响应取消
 suspend fun processItems(items: List<Item>) {
     items.forEach { item ->
-        ensureActive() // Check cancellation before expensive work
+        ensureActive() // 在耗时操作前检查取消状态
         processItem(item)
     }
 }
 
-// Good: Cleanup with try/finally
+// Good: 使用 try/finally 进行清理
 suspend fun acquireAndProcess() {
     val resource = acquireResource()
     try {
         resource.process()
     } finally {
         withContext(NonCancellable) {
-            resource.release() // Always release, even on cancellation
+            resource.release() // 总是释放，即使在取消时
         }
     }
 }
 ```
 
-## 委托
+## Delegation
 
-### 属性委托
+### Property Delegation
 
 ```kotlin
-// Lazy initialization
+// Lazy 初始化
 val expensiveData: List<User> by lazy {
     userRepository.findAll()
 }
@@ -397,7 +395,7 @@ var name: String by Delegates.observable("initial") { _, old, new ->
     logger.info("Name changed from '$old' to '$new'")
 }
 
-// Map-backed properties
+// Map-backed property
 class Config(private val map: Map<String, Any?>) {
     val host: String by map
     val port: Int by map
@@ -407,15 +405,15 @@ class Config(private val map: Map<String, Any?>) {
 val config = Config(mapOf("host" to "localhost", "port" to 8080, "debug" to true))
 ```
 
-### 接口委托
+### Interface Delegation
 
 ```kotlin
-// Good: Delegate interface implementation
+// Good: Delegate interface 实现
 class LoggingUserRepository(
     private val delegate: UserRepository,
     private val logger: Logger,
 ) : UserRepository by delegate {
-    // Only override what you need to add logging to
+    // 只重写需要添加日志的方法
     override suspend fun findById(id: String): User? {
         logger.info("Finding user by id: $id")
         return delegate.findById(id).also {
@@ -425,12 +423,12 @@ class LoggingUserRepository(
 }
 ```
 
-## DSL 构建器
+## DSL Builder
 
-### 类型安全构建器
+### Type-Safe Builder
 
 ```kotlin
-// Good: DSL with @DslMarker
+// Good: 使用 @DslMarker 的 DSL
 @DslMarker
 annotation class HtmlDsl
 
@@ -451,7 +449,7 @@ class HTML {
 
 fun html(init: HTML.() -> Unit): HTML = HTML().apply(init)
 
-// Usage
+// 使用示例
 val page = html {
     head { title("My Page") }
     body {
@@ -461,7 +459,7 @@ val page = html {
 }
 ```
 
-### 配置 DSL
+### Configuration DSL
 
 ```kotlin
 data class ServerConfig(
@@ -494,7 +492,7 @@ class ServerConfigBuilder {
 fun serverConfig(init: ServerConfigBuilder.() -> Unit): ServerConfig =
     ServerConfigBuilder().apply(init).build()
 
-// Usage
+// 使用示例
 val config = serverConfig {
     host = "0.0.0.0"
     port = 443
@@ -503,10 +501,10 @@ val config = serverConfig {
 }
 ```
 
-## 用于惰性求值的序列
+## 用于 Lazy Evaluation 的 Sequence
 
 ```kotlin
-// Good: Use sequences for large collections with multiple operations
+// Good: 对有多个操作的大型集合使用 sequence
 val result = users.asSequence()
     .filter { it.isActive }
     .map { it.email }
@@ -514,7 +512,7 @@ val result = users.asSequence()
     .take(10)
     .toList()
 
-// Good: Generate infinite sequences
+// Good: 生成无限 sequence
 val fibonacci: Sequence<Long> = sequence {
     var a = 0L
     var b = 1L
@@ -534,7 +532,7 @@ val first20 = fibonacci.take(20).toList()
 ### build.gradle.kts 配置
 
 ```kotlin
-// Check for latest versions: https://kotlinlang.org/docs/releases.html
+// 检查最新版本：https://kotlinlang.org/docs/releases.html
 plugins {
     kotlin("jvm") version "2.3.10"
     kotlin("plugin.serialization") version "2.3.10"
@@ -569,7 +567,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    // Testing
+    // 测试
     testImplementation("io.kotest:kotest-runner-junit5:6.1.4")
     testImplementation("io.kotest:kotest-assertions-core:6.1.4")
     testImplementation("io.kotest:kotest-property:6.1.4")
@@ -590,10 +588,10 @@ detekt {
 
 ## 错误处理模式
 
-### 用于领域操作的 Result 类型
+### 用于 Domain Operation 的 Result 类型
 
 ```kotlin
-// Good: Use Kotlin's Result or a custom sealed class
+// Good: 使用 Kotlin 的 Result 或自定义 sealed class
 suspend fun createUser(request: CreateUserRequest): Result<User> = runCatching {
     require(request.name.isNotBlank()) { "Name cannot be blank" }
     require('@' in request.email) { "Invalid email format" }
@@ -607,7 +605,7 @@ suspend fun createUser(request: CreateUserRequest): Result<User> = runCatching {
     user
 }
 
-// Good: Chain results
+// Good: 链式处理 result
 val displayName = createUser(request)
     .map { it.name }
     .getOrElse { "Unknown" }
@@ -616,7 +614,7 @@ val displayName = createUser(request)
 ### require, check, error
 
 ```kotlin
-// Good: Preconditions with clear messages
+// Good: 带清晰消息的前置条件
 fun withdraw(account: Account, amount: Money): Account {
     require(amount.value > 0) { "Amount must be positive: $amount" }
     check(account.balance >= amount) { "Insufficient balance: ${account.balance} < $amount" }
@@ -627,25 +625,25 @@ fun withdraw(account: Account, amount: Money): Account {
 
 ## 集合操作
 
-### 惯用的集合处理
+### 地道的集合处理
 
 ```kotlin
-// Good: Chained operations
+// Good: 链式操作
 val activeAdminEmails: List<String> = users
     .filter { it.role == Role.ADMIN && it.isActive }
     .sortedBy { it.name }
     .map { it.email }
 
-// Good: Grouping and aggregation
+// Good: 分组与聚合
 val usersByRole: Map<Role, List<User>> = users.groupBy { it.role }
 
 val oldestByRole: Map<Role, User?> = users.groupBy { it.role }
     .mapValues { (_, users) -> users.minByOrNull { it.createdAt } }
 
-// Good: Associate for map creation
+// Good: 使用 associate 创建 map
 val usersById: Map<UserId, User> = users.associateBy { it.id }
 
-// Good: Partition for splitting
+// Good: 使用 partition 进行拆分
 val (active, inactive) = users.partition { it.isActive }
 ```
 
@@ -653,62 +651,62 @@ val (active, inactive) = users.partition { it.isActive }
 
 | 惯用法 | 描述 |
 |-------|-------------|
-| `val` 优于 `var` | 优先使用不可变变量 |
-| `data class` | 用于具有 equals/hashCode/copy 的值对象 |
-| `sealed class/interface` | 用于受限的类型层次结构 |
-| `value class` | 用于零开销的类型安全包装器 |
-| 表达式 `when` | 穷举模式匹配 |
-| 安全调用 `?.` | 空安全的成员访问 |
-| Elvis `?:` | 为可空类型提供默认值 |
-| `let`/`apply`/`also`/`run`/`with` | 用于编写简洁代码的作用域函数 |
-| 扩展函数 | 在不使用继承的情况下添加行为 |
-| `copy()` | 数据类上的不可变更新 |
-| `require`/`check` | 前置条件断言 |
-| 协程 `async`/`await` | 结构化并发执行 |
-| `Flow` | 冷响应式流 |
-| `sequence` | 惰性求值 |
-| 委托 `by` | 在不使用继承的情况下重用实现 |
+| `val` 优于 `var` | 优先使用 immutable 变量 |
+| `data class` | 用于带 equals/hashCode/copy 的 value object |
+| `sealed class/interface` | 用于受限的 type 层级 |
+| `value class` | 用于零开销的 type-safe wrapper |
+| Expression `when` | Exhaustive pattern matching |
+| Safe call `?.` | Null-safe 成员访问 |
+| Elvis `?:` | nullable 的默认值 |
+| `let`/`apply`/`also`/`run`/`with` | 用于编写整洁代码的 scope function |
+| Extension function | 无需 inheritance 即可添加行为 |
+| `copy()` | 对 data class 进行 immutable 更新 |
+| `require`/`check` | Precondition 断言 |
+| Coroutine `async`/`await` | Structured 并发执行 |
+| `Flow` | Cold reactive stream |
+| `sequence` | Lazy evaluation |
+| Delegation `by` | 无需 inheritance 即可复用实现 |
 
-## 应避免的反模式
+## 需要避免的 Anti-Pattern
 
 ```kotlin
-// Bad: Force-unwrapping nullable types
+// Bad: 强制解包 nullable 类型
 val name = user!!.name
 
-// Bad: Platform type leakage from Java
-fun getLength(s: String) = s.length // Safe
-fun getLength(s: String?) = s?.length ?: 0 // Handle nulls from Java
+// Bad: 来自 Java 的 platform type 泄漏
+fun getLength(s: String) = s.length // 安全
+fun getLength(s: String?) = s?.length ?: 0 // 处理来自 Java 的 null
 
-// Bad: Mutable data classes
+// Bad: Mutable data class
 data class MutableUser(var name: String, var email: String)
 
-// Bad: Using exceptions for control flow
+// Bad: 使用 exception 进行控制流
 try {
     val user = findUser(id)
 } catch (e: NotFoundException) {
-    // Don't use exceptions for expected cases
+    // 不要对预期情况使用 exception
 }
 
-// Good: Use nullable return or Result
+// Good: 使用 nullable 返回值或 Result
 val user: User? = findUserOrNull(id)
 
-// Bad: Ignoring coroutine scope
-GlobalScope.launch { /* Avoid GlobalScope */ }
+// Bad: 忽略 coroutine scope
+GlobalScope.launch { /* 避免 GlobalScope */ }
 
-// Good: Use structured concurrency
+// Good: 使用 structured concurrency
 coroutineScope {
-    launch { /* Properly scoped */ }
+    launch { /* 作用域正确 */ }
 }
 
-// Bad: Deeply nested scope functions
+// Bad: 深度嵌套的 scope function
 user?.let { u ->
     u.address?.let { a ->
         a.city?.let { c -> process(c) }
     }
 }
 
-// Good: Direct null-safe chain
+// Good: 直接使用 null-safe 链式调用
 user?.address?.city?.let { process(it) }
 ```
 
-**请记住**：Kotlin 代码应简洁但可读。利用类型系统确保安全，优先使用不可变性，并使用协程处理并发。如有疑问，让编译器帮助你。
+**记住**：Kotlin 代码应当简洁但可读。利用 type system 获取安全性，优先使用 immutability，并使用 coroutines 处理并发。如有疑问，让编译器帮助你。

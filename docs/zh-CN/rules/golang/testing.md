@@ -4,18 +4,17 @@ paths:
   - "**/go.mod"
   - "**/go.sum"
 ---
-
 # Go 测试
 
-> 本文档在 [common/testing.md](../common/testing.md) 的基础上扩展了 Go 特定的内容。
+> 本文件在 [common/testing.md](../common/testing.md) 基础上扩展了 Go 特定内容。
 
 ## 框架
 
-使用标准的 `go test` 并采用 **表格驱动测试**。
+使用标准的 `go test` 配合 **table-driven tests**。
 
-## 竞态检测
+## 竞争检测
 
-始终使用 `-race` 标志运行：
+始终使用 `-race` flag 运行：
 
 ```bash
 go test -race ./...
@@ -29,4 +28,4 @@ go test -cover ./...
 
 ## 参考
 
-查看技能：`golang-testing` 以获取详细的 Go 测试模式和辅助工具。
+参见 skill：`golang-testing`，获取详细的 Go 测试模式与辅助函数。

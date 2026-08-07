@@ -1,160 +1,161 @@
 ---
 name: ecc-tools-cost-audit
-description: 证据优先的ECC工具燃烧和计费审计工作流。用于调查ECC工具仓库中的失控PR创建、配额绕过、高级模型泄漏、重复作业或GitHub App成本激增。
-origin: ECC
+description: 证据优先的 ECC Tools burn 与 billing 审计工作流。当需要调查 ECC Tools 仓库中失控的 PR 创建、quota 绕过、premium-model 泄漏、重复 job 或 GitHub App 成本飙升时使用。
+metadata:
+  origin: ECC
 ---
 
-# ECC 工具成本审计
+# ECC Tools Cost Audit
 
-当用户怀疑 ECC Tools GitHub App 正在消耗成本、过度创建 PR、绕过使用限制，或将免费用户引导至付费分析路径时，使用此技能。
+当用户怀疑 ECC Tools GitHub App 正在产生成本消耗、过度创建 PR、绕过 usage limit，或将免费用户路由到 premium 分析路径时，使用此 skill。
 
-这是一个针对兄弟仓库 [ECC-Tools](../../../../ECC-Tools) 的聚焦操作者工作流。它不是通用的计费技能，也不是仓库范围的代码审查。
+这是针对同级 [ECC-Tools](../../ECC-Tools) 仓库的专注运维工作流。它不是通用的 billing skill，也不是全仓库范围的 code review。
 
-## 技能栈
+## Skill Stack
 
-在相关情况下，将这些 ECC 原生技能拉入工作流：
+在相关时将以下 ECC 原生 skill 拉入工作流：
 
-* `autonomous-loops` 用于跨 webhook、队列、计费和重试的有界多步骤审计
-* `agentic-engineering` 用于将请求路径追踪为离散的、可证明的单元
-* `customer-billing-ops` 当需要清晰分离仓库行为和客户影响计算时
-* `search-first` 在发明辅助函数或重新实现仓库本地工具之前
-* `security-review` 当涉及认证、使用限制、授权或密钥时
-* `verification-loop` 用于证明重试安全性和精确的修复后状态
-* `tdd-workflow` 当修复需要在 worker、路由器或计费路径中添加回归测试覆盖时
+- `autonomous-loops` 用于跨越 webhook、queue、billing 与 retry 的有界多步骤审计
+- `agentic-engineering` 用于将请求路径追踪为离散、可证明的单元
+- `customer-billing-ops` 当仓库行为与客户影响计算必须清晰分离时使用
+- `search-first` 在自行发明 helper 或重新实现仓库本地工具之前使用
+- `security-review` 当涉及 auth、usage gate、entitlement 或 secret 时使用
+- `verification-loop` 用于证明重跑安全性与修复后的确切状态
+- `tdd-workflow` 当修复需要在 worker、router 或 billing 路径中获得回归覆盖时使用
 
-## 使用时机
+## When To Use
 
-* 用户提及 ECC Tools 消耗率、PR 递归、过度创建的 PR、使用限制绕过或付费模型泄漏
-* 任务位于兄弟仓库 `ECC-Tools` 中，并依赖于 webhook 处理器、队列 worker、使用预留、PR 创建逻辑或付费网关强制执行
-* 客户报告称应用创建了过多 PR、计费错误，或分析了代码但未产生可用结果
+- 用户提到 ECC Tools burn rate、PR 递归、过度创建的 PR、usage-limit 绕过或 premium-model 泄漏
+- 任务位于同级 `ECC-Tools` 仓库，且依赖 webhook handler、queue worker、usage 预留、PR 创建逻辑或 paid-gate 强制执行
+- 客户报告称 app 创建了过多 PR、错误计费，或分析了代码却未产生可用结果
 
-## 范围约束
+## Scope Guardrails
 
-* 在兄弟仓库 `ECC-Tools` 中工作，而非 `everything-claude-code`
-* 除非用户明确要求修复，否则以只读方式开始
-* 在追踪分析消耗时，不要修改无关的计费、结账或 UI 流程
-* 将应用生成的分支和应用生成的 PR 视为红旗递归路径，除非被证明并非如此
-* 明确区分三件事：
-  * 仓库侧消耗的根本原因
-  * 面向客户的计费影响
-  * 需要纳入待办事项跟踪的产品或授权缺口
+- 在同级 `ECC-Tools` 仓库中工作，而不是在 `everything-claude-code` 中
+- 除非用户明确要求修复，否则以只读方式开始
+- 在追踪分析 burn 时，不要修改无关的 billing、checkout 或 UI 流程
+- 将 app 生成的 branch 和 app 生成的 PR 视为危险信号的递归路径，直到证明并非如此
+- 明确区分三件事：
+  - 仓库侧 burn 根因
+  - 面向客户的 billing 影响
+  - 需要 backlog 跟进的产品或 entitlement 缺口
 
-## 工作流
+## Workflow
 
 ### 1. 冻结仓库范围
 
-* 切换到兄弟仓库 `ECC-Tools`
-* 首先检查分支和本地差异
-* 确定审计的具体范围：
-  * webhook 路由器
-  * 队列生产者
-  * 队列消费者
-  * PR 创建路径
-  * 使用预留 / 计费路径
-  * 模型路由路径
+- 切换到同级 `ECC-Tools` 仓库
+- 先检查 branch 与本地 diff
+- 明确审计的具体范围：
+  - webhook router
+  - queue producer
+  - queue consumer
+  - PR 创建路径
+  - usage 预留 / billing 路径
+  - 模型路由路径
 
-### 2. 在理论化之前追踪入口
+### 2. 先追踪入口，再做推测
 
-* 首先检查 `src/index.*` 或主入口点
-* 在提出修复建议之前，映射每个入队路径
-* 确认哪些 GitHub 事件共享一个队列类型
-* 确认 push、pull\_request、synchronize、comment 或手动重新运行事件是否会汇聚到同一个昂贵的路径上
+- 先检查 `src/index.*` 或主 entrypoint
+- 在提出修复建议之前映射每条 enqueue 路径
+- 确认哪些 GitHub 事件共享同一 queue 类型
+- 确认 push、pull_request、synchronize、comment 或手动重跑事件是否会汇聚到同一条昂贵路径
 
-### 3. 追踪 Worker 和副作用
+### 3. 追踪 worker 与副作用
 
-* 检查处理分析的队列消费者或定时 worker
-* 确认排队的分析是否总是以以下方式结束：
-  * PR 创建
-  * 分支创建
-  * 文件更新
-  * 付费模型调用
-  * 使用量增加
-* 如果分析可能消耗令牌，然后在输出持久化之前失败，则将其归类为“消耗但输出中断”
+- 检查处理分析的 queue consumer 或定时 worker
+- 确认排队分析是否总是以以下方式结束：
+  - 创建 PR
+  - 创建 branch
+  - 文件更新
+  - premium model 调用
+  - usage 递增
+- 如果分析可能先消耗 token 然后在输出持久化之前失败，将其归类为 burn-with-broken-output
 
-### 4. 审计高信号消耗路径
+### 4. 审计高信号 burn 路径
 
 #### PR 倍增
 
-* 检查 PR 辅助函数和分支命名
-* 检查去重、synchronize 事件处理以及现有 PR 的复用
-* 如果应用生成的分支可以重新进入分析，则将其视为优先级为 0 的递归风险
+- 检查 PR helper 与 branch 命名
+- 检查去重、synchronize 事件处理以及现有 PR 复用
+- 如果 app 生成的 branch 可以重新进入分析，将其视为 priority-0 递归风险
 
-#### 配额绕过
+#### Quota 绕过
 
-* 检查配额检查的位置与使用量预留或增加的位置
-* 如果在入队前检查配额，但仅在 worker 内部计费使用量，则将并发的前门通过视为真正的竞态条件
+- 检查 quota 检查位置与 usage 预留或递增位置
+- 如果在 enqueue 之前检查 quota，但仅在 worker 内部扣费，则将并发的入口通过视为真实竞态
 
-#### 付费模型泄漏
+#### Premium-model 泄漏
 
-* 检查模型选择、层级分支和提供商路由
-* 验证当存在付费密钥时，免费或受限用户是否仍能访问付费分析器
+- 检查模型选择、tier 分支与 provider 路由
+- 验证当存在 premium key 时，免费或达上限的用户是否仍能命中 premium analyzer
 
-#### 重试消耗
+#### Retry burn
 
-* 检查重试循环、重复的队列任务和确定性失败重试
-* 如果相同的非临时性错误可以反复消耗分析资源，则先修复此问题，再进行质量改进
+- 检查 retry 循环、重复 queue job 与确定性失败重跑
+- 如果同一个非瞬时错误会反复消耗分析，请在质量改进之前先修复它
 
-### 5. 按消耗顺序修复
+### 5. 按 burn 顺序修复
 
-如果用户要求代码更改，请按以下顺序优先修复：
+如果用户要求代码变更，请按以下顺序优先修复：
 
-1. 阻止自动 PR 倍增
-2. 阻止配额绕过
-3. 阻止付费模型泄漏
-4. 阻止重复任务扇出和无意义的重试
-5. 弥补重试/更新安全缺口
+1. 停止自动 PR 倍增
+2. 停止 quota 绕过
+3. 停止 premium 泄漏
+4. 停止重复 job 扇出与无意义 retry
+5. 关闭重跑/更新安全缺口
 
-除非同一根本原因明显跨越多个文件，否则将修复范围限制在一到三个直接修复。
+将本轮修复限制在一到三处直接修改，除非同一根因明确跨越多个文件。
 
-### 6. 以最小的验证步骤进行验证
+### 6. 用最小的证明步骤验证
 
-* 仅重新运行覆盖已更改路径的目标测试或集成片段
-* 验证消耗路径现在是否：
-  * 被阻止
-  * 已去重
-  * 降级为更便宜的分析
-  * 或提前被拒绝
-* 准确说明最终状态：
-  * 本地已更改
-  * 本地已验证
-  * 已推送
-  * 已部署
-  * 仍被阻止
+- 仅重跑覆盖已变更路径的目标 test 或 integration 切片
+- 验证 burn 路径当前是否：
+  - 已阻止
+  - 已去重
+  - 已降级为更便宜的分析
+  - 或已提前拒绝
+- 准确陈述最终状态：
+  - 已本地变更
+  - 已本地验证
+  - 已 push
+  - 已 deploy
+  - 仍受阻
 
-## 高信号故障模式
+## 高信号失败模式
 
-### 1. 所有触发器使用同一队列类型
+### 1. 所有触发器共用一种 queue 类型
 
-如果推送、PR 同步和手动审计都入队相同的任务，并且 worker 总是创建 PR，那么分析就等于 PR 垃圾信息。
+如果 push、PR sync 与手动审计都 enqueue 同一 job，而 worker 总是创建 PR，则分析等同于 PR 垃圾轰炸。
 
-### 2. 入队后预留使用量
+### 2. enqueue 之后的 usage 预留
 
-如果在入口处检查使用量，但仅在 worker 中增加，则并发请求可能全部通过关卡并超出配额。
+如果在入口检查 usage，但仅在 worker 中递增，则并发请求可能全部通过 gate 并超出 quota。
 
-### 3. 免费层级走付费路径
+### 3. 免费层命中 premium 路径
 
-如果存在密钥时，免费的排队任务仍能路由到 Anthropic 或其他付费提供商，即使客户从未看到付费结果，这也是真实的支出泄漏。
+如果免费的排队 job 在 key 存在时仍能路由到 Anthropic 或其他 premium provider，这就是真实的支出泄漏——即使用户从未看到 premium 结果。
 
-### 4. 应用生成的分支重新进入 Webhook
+### 4. app 生成的 branch 重新进入 webhook
 
-如果 `pull_request.synchronize`、分支推送或评论触发的运行在应用拥有的分支上触发，则应用可以递归分析自己的输出。
+如果 `pull_request.synchronize`、branch push 或 comment 触发的运行在 app 拥有的 branch 上触发，app 可能递归地分析自身输出。
 
-### 5. 在持久化安全之前执行昂贵操作
+### 5. 在持久化安全之前执行昂贵工作
 
-如果系统可能消耗令牌，然后在 PR 创建、文件更新或分支冲突时失败，则是在消耗成本而不产生价值。
+如果系统可能先消耗 token 然后在 PR 创建、文件更新或 branch 冲突时失败，它就是在不交付价值的情况下消耗成本。
 
-## 陷阱
+## Pitfalls
 
-* 不要一开始就广泛浏览仓库；先确定 webhook -> 队列 -> worker 的路径
-* 不要将客户计费推断与基于代码的产品事实混为一谈
-* 在最高消耗路径被控制之前，不要修复价值较低的质量问题
-* 在重新运行狭窄的验证步骤之前，不要声称消耗问题已修复
-* 除非用户要求，否则不要推送或部署
-* 如果无关的仓库本地更改正在进行中，不要触碰它们
+- 不要以宽泛的仓库漫游开始；先理清 webhook -> queue -> worker
+- 不要将客户 billing 推断与有代码支撑的产品事实混为一谈
+- 在最高 burn 路径得到控制之前，不要修复低价值质量问题
+- 在狭窄的证明步骤被重跑之前，不要声称 burn 已修复
+- 除非用户要求，否则不要 push 或 deploy
+- 不要触碰正在进行中的无关仓库本地变更
 
-## 验证
+## Verification
 
-* 根本原因需引用确切的文件路径和代码区域
-* 修复按消耗影响排序，而非代码整洁度
-* 需指明验证命令的名称
-* 最终状态需区分本地更改、验证、推送和部署
+- 根因引用确切的文件路径与代码区域
+- 修复按 burn 影响排序，而非代码整洁度
+- 证明命令已命名
+- 最终状态区分本地变更、验证、push 与 deployment

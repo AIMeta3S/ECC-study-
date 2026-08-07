@@ -1,49 +1,53 @@
 ---
 name: search-first
-description: 研究优先于编码的工作流程。在编写自定义代码之前，搜索现有的工具、库和模式。调用研究员代理。
-origin: ECC
+description: 先调研后编码的工作流。在编写自定义代码之前，先搜索现有的工具、库和模式。调用 researcher agent。
+metadata:
+  origin: ECC
 ---
 
-# /search-first — 编码前先研究
+# /search-first — 先调研再编码
 
-系统化“在实现之前先寻找现有解决方案”的工作流程。
+将"先搜索现有解决方案、再进行实现"的工作流系统化。
 
-## 触发时机
+## 触发条件
 
-在以下情况使用此技能：
+在以下情况使用此 skill：
+- 开始一个可能已有现成解决方案的新功能
+- 添加依赖或集成
+- 用户要求"添加 X 功能"，而你正准备编写代码
+- 在创建新的 utility、helper 或抽象之前
 
-* 开始一项很可能已有解决方案的新功能
-* 添加依赖项或集成
-* 用户要求“添加 X 功能”而你准备开始编写代码
-* 在创建新的实用程序、助手或抽象之前
-
-## 工作流程
+## 工作流
 
 ```
 ┌─────────────────────────────────────────────┐
-│  1. 需求分析                               │
-│     确定所需功能                          │
-│     识别语言/框架限制                     │
+│  0. TOOL AVAILABILITY PREFLIGHT             │
+│     Check search channels before relying on │
+│     them; report skipped channels honestly   │
 ├─────────────────────────────────────────────┤
-│  2. 并行搜索（研究员代理）                │
+│  1. NEED ANALYSIS                           │
+│     Define what functionality is needed      │
+│     Identify language/framework constraints  │
+├─────────────────────────────────────────────┤
+│  2. PARALLEL SEARCH (researcher agent)      │
 │     ┌──────────┐ ┌──────────┐ ┌──────────┐  │
 │     │  npm /   │ │  MCP /   │ │  GitHub / │  │
-│     │  PyPI    │ │  技能    │ │  网络     │  │
+│     │  PyPI    │ │  Skills  │ │  Web      │  │
 │     └──────────┘ └──────────┘ └──────────┘  │
 ├─────────────────────────────────────────────┤
-│  3. 评估                                   │
-│     对候选方案进行评分（功能、维护、      │
-│     社区、文档、许可证、依赖）            │
+│  3. EVALUATE                                │
+│     Score candidates (functionality, maint, │
+│     community, docs, license, deps)         │
 ├─────────────────────────────────────────────┤
-│  4. 决策                                   │
+│  4. DECIDE                                  │
 │     ┌─────────┐  ┌──────────┐  ┌─────────┐  │
-│     │  采用   │  │  扩展    │  │  构建   │  │
-│     │ 原样    │  │  /包装   │  │  定制   │  │
+│     │  Adopt  │  │  Extend  │  │  Build   │  │
+│     │ as-is   │  │  /Wrap   │  │  Custom  │  │
 │     └─────────┘  └──────────┘  └─────────┘  │
 ├─────────────────────────────────────────────┤
-│  5. 实施                                   │
-│     安装包 / 配置 MCP /                    │
-│     编写最小化自定义代码                   │
+│  5. IMPLEMENT                               │
+│     Install package / Configure MCP /       │
+│     Write minimal custom code               │
 └─────────────────────────────────────────────┘
 ```
 
@@ -51,125 +55,127 @@ origin: ECC
 
 | 信号 | 行动 |
 |--------|--------|
-| 完全匹配，维护良好，MIT/Apache 许可证 | **采纳** — 直接安装并使用 |
-| 部分匹配，基础良好 | **扩展** — 安装 + 编写薄封装层 |
-| 多个弱匹配 | **组合** — 组合 2-3 个小包 |
-| 未找到合适的 | **构建** — 编写自定义代码，但需基于研究 |
+| 完全匹配、维护良好、MIT/Apache 许可证 | **Adopt** — 直接安装并使用 |
+| 部分匹配、基础良好 | **Extend** — 安装 + 编写薄封装 |
+| 多个弱匹配 | **Compose** — 组合 2-3 个小包 |
+| 未找到合适的 | **Build** — 编写自定义代码，但以调研为依据 |
 
-## 使用方法
+## 如何使用
+
+### 步骤 0：工具可用性预检
+
+这是 agent 指导，不是可执行的 setup 脚本。只检查与当前任务和项目相关的渠道。
+
+| 渠道 | 检查方式 | 缺失时 |
+|---------|-------|------------|
+| 仓库搜索 | `rg --files` 和有针对性的 `rg` 查询 | 声明仅检查了可见文件 |
+| Package registry | `npm --version`、`python -m pip --version` 或项目 package manager | 使用 web/docs 搜索，避免声称已覆盖 registry |
+| GitHub CLI | `gh auth status` | 仅使用公开 web 或本地 git history |
+| MCP/docs 工具 | 可用 tool 列表或本地 MCP 配置 | 回退到官方 docs/web 搜索 |
+| Skills 目录 | `ls ~/.claude/skills ~/.codex/skills`（如适用） | 说明没有可用的本地 skill 目录 |
 
 ### 快速模式（内联）
 
-在编写实用程序或添加功能之前，在脑中过一遍：
+在编写 utility 或添加功能之前，先在脑中过一遍：
 
-0. 这已经在仓库中存在吗？ → 首先通过相关模块/测试检查 `rg`
-1. 这是一个常见问题吗？ → 搜索 npm/PyPI
-2. 有对应的 MCP 吗？ → 检查 `~/.claude/settings.json` 并进行搜索
-3. 有对应的技能吗？ → 检查 `~/.claude/skills/`
-4. 有 GitHub 上的实现/模板吗？ → 在编写全新代码之前，先运行 GitHub 代码搜索以查找维护中的开源项目
+0. 这在仓库中是否已存在？→ 先用 `rg` 搜索相关的 modules/tests
+1. 这是一个常见问题吗？→ 搜索 npm/PyPI
+2. 是否有现成的 MCP？→ 检查 `~/.claude/settings.json` 并搜索
+3. 是否有现成的 skill？→ 检查 `~/.claude/skills/`
+4. 是否有现成的 GitHub 实现/模板？→ 在编写全新代码之前，先运行 GitHub 代码搜索查找有维护的 OSS
 
-### 完整模式（代理）
+### 完整模式（agent）
 
-对于非平凡的功能，启动研究员代理：
+对于非 trivial 的功能，启动 researcher agent：
 
 ```
-任务（子代理类型="通用型"，提示="
-  研究现有工具用于：[描述]
-  语言/框架：[语言]
-  约束：[任何]
+Agent(subagent_type="general-purpose", prompt="
+  Research existing tools for: [DESCRIPTION]
+  Language/framework: [LANG]
+  Constraints: [ANY]
 
-  搜索：npm/PyPI、MCP 服务器、Claude Code 技能、GitHub
-  返回：结构化对比与推荐
+  Search: npm/PyPI, MCP servers, Claude Code skills, GitHub
+  Return: Structured comparison with recommendation
 ")
 ```
 
-## 按类别搜索快捷方式
+较老的 Claude Code 文档可能称之为 `Task(...)`；请使用当前活跃 harness 所暴露的 agent/subagent tool 名称。
+
+## 按类别的搜索快捷参考
 
 ### 开发工具
-
-* Linting → `eslint`, `ruff`, `textlint`, `markdownlint`
-* Formatting → `prettier`, `black`, `gofmt`
-* Testing → `jest`, `pytest`, `go test`
-* Pre-commit → `husky`, `lint-staged`, `pre-commit`
+- Linting → `eslint`、`ruff`、`textlint`、`markdownlint`
+- Formatting → `prettier`、`black`、`gofmt`
+- Testing → `jest`、`pytest`、`go test`
+- Pre-commit → `husky`、`lint-staged`、`pre-commit`
 
 ### AI/LLM 集成
-
-* Claude SDK → 使用 Context7 获取最新文档
-* 提示词管理 → 检查 MCP 服务器
-* 文档处理 → `unstructured`, `pdfplumber`, `mammoth`
+- Claude SDK → 用 Context7 获取最新 docs
+- Prompt 管理 → 检查 MCP servers
+- 文档处理 → `unstructured`、`pdfplumber`、`mammoth`
 
 ### 数据与 API
-
-* HTTP 客户端 → `httpx` (Python), `ky`/`got` (Node)
-* 验证 → `zod` (TS), `pydantic` (Python)
-* 数据库 → 首先检查是否有 MCP 服务器
+- HTTP 客户端 → `httpx`（Python）、`ky`/`undici`（Node）
+- 校验 → `zod`（TS）、`pydantic`（Python）
+- Database → 先检查是否有 MCP server
 
 ### 内容与发布
-
-* Markdown 处理 → `remark`, `unified`, `markdown-it`
-* 图片优化 → `sharp`, `imagemin`
+- Markdown 处理 → `remark`、`unified`、`markdown-it`
+- 图像优化 → `sharp`、`imagemin`
 
 ## 集成点
 
-### 与规划器代理
+### 与 planner agent 配合
+planner 应在 Phase 1（架构评审）之前调用 researcher：
+- researcher 识别可用的工具
+- planner 将它们纳入实现计划
+- 避免在计划中"重复造轮子"
 
-规划器应在阶段 1（架构评审）之前调用研究员：
+### 与 architect agent 配合
+architect 应就以下事项咨询 researcher：
+- 技术栈决策
+- 集成模式发现
+- 现有参考架构
 
-* 研究员识别可用的工具
-* 规划器将它们纳入实施计划
-* 避免在计划中“重新发明轮子”
-
-### 与架构师代理
-
-架构师应向研究员咨询：
-
-* 技术栈决策
-* 集成模式发现
-* 现有参考架构
-
-### 与迭代检索技能
-
-结合进行渐进式发现：
-
-* 循环 1：广泛搜索 (npm, PyPI, MCP)
-* 循环 2：详细评估顶级候选方案
-* 循环 3：测试与项目约束的兼容性
+### 与 iterative-retrieval skill 配合
+组合使用以实现渐进式发现：
+- Cycle 1：广度搜索（npm、PyPI、MCP）
+- Cycle 2：详细评估排名靠前的候选
+- Cycle 3：测试与项目约束的兼容性
 
 ## 示例
 
-### 示例 1：“添加死链检查”
-
+### 示例 1："添加死链检查"
 ```
-需求：检查 Markdown 文件中的失效链接
-搜索：npm "markdown dead link checker"
-发现：textlint-rule-no-dead-link（评分：9/10）
-行动：采纳 — npm install textlint-rule-no-dead-link
-结果：无需自定义代码，经过实战检验的解决方案
-```
-
-### 示例 2：“添加 HTTP 客户端包装器”
-
-```
-需求：具备重试和超时处理能力的弹性 HTTP 客户端
-搜索：npm "http client retry"、PyPI "httpx retry"
-发现：got（Node）带重试插件、httpx（Python）带内置重试功能
-行动：采用——直接使用 got/httpx 并配置重试
-结果：零定制代码，生产验证的库
+Need: Check markdown files for broken links
+Search: npm "markdown dead link checker"
+Found: textlint-rule-no-dead-link (score: 9/10)
+Action: ADOPT — npm install textlint-rule-no-dead-link
+Result: Zero custom code, battle-tested solution
 ```
 
-### 示例 3：“添加配置文件 linter”
-
+### 示例 2："添加 HTTP 客户端封装"
 ```
-需求：根据模式验证项目配置文件
-搜索：npm "config linter schema"、"json schema validator cli"
-发现：ajv-cli（评分：8/10）
-操作：采用 + 扩展 —— 安装 ajv-cli，编写项目特定的模式
-结果：1 个包 + 1 个模式文件，无需自定义验证逻辑
+Need: Resilient HTTP client with retries and timeout handling
+Search: npm "http client retry", PyPI "httpx retry"
+Found: got (Node) with retry plugin, httpx (Python) with built-in retry
+Action: ADOPT — use got/httpx directly with retry config
+Result: Zero custom code, production-proven libraries
+```
+
+### 示例 3："添加配置文件 linter"
+```
+Need: Validate project config files against a schema
+Search: npm "config linter schema", "json schema validator cli"
+Found: ajv-cli (score: 8/10)
+Action: ADOPT + EXTEND — install ajv-cli, write project-specific schema
+Result: 1 package + 1 schema file, no custom validation logic
 ```
 
 ## 反模式
 
-* **直接跳转到编码**：不检查是否存在就编写实用程序
-* **忽略 MCP**：不检查 MCP 服务器是否已提供该能力
-* **过度定制**：对库进行如此厚重的包装以至于失去了其优势
-* **依赖项膨胀**：为了一个小功能安装一个庞大的包
+- **急于写代码**：尚未检查是否已存在就编写 utility
+- **忽视 MCP**：不检查是否已有 MCP server 提供该能力
+- **静默跳过**：当某个搜索渠道不可用时却报告"未找到"
+- **过度定制**：对库封装得过重，使其丧失原有优势
+- **依赖膨胀**：为一个小功能安装庞大的 package

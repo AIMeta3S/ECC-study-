@@ -396,45 +396,10 @@ This will automatically select the next pending phase and create an implementati
 
 ---
 
-## Question Flow Summary
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  INITIATE: "What do you want to build?"                 │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  FOUNDATION: Who, What, Why, Why now, How to measure    │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  GROUNDING: Market research, competitor analysis        │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  DEEP DIVE: Vision, Primary user, JTBD, Constraints     │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  GROUNDING: Technical feasibility, codebase exploration │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  DECISIONS: MVP, Must-haves, Hypothesis, Out of scope   │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  GENERATE: Write PRD to .claude/PRPs/prds/              │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Integration with ECC
+## Next Steps
 
 After PRD generation:
 - Use `/prp-plan` to create implementation plans from PRD phases
-- Use `/plan` for simpler planning without PRD structure
 - Use `/save-session` to preserve PRD context across sessions
 
 ## Success Criteria
@@ -444,4 +409,5 @@ After PRD generation:
 - **HYPOTHESIS_CLEAR**: Testable hypothesis with measurable outcome
 - **SCOPE_BOUNDED**: Clear must-haves and explicit out-of-scope
 - **QUESTIONS_ACKNOWLEDGED**: Uncertainties are listed, not hidden
+- **FEASIBILITY_ASSESSED**: Feasibility rated HIGH/MEDIUM/LOW with evidence (codebase references or cited research), and key technical risks identified (or marked TBD)
 - **ACTIONABLE**: A skeptic could understand why this is worth building

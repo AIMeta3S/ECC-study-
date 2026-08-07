@@ -1,43 +1,42 @@
 ---
-description: 逐步修复 Kotlin/Gradle 构建错误、编译器警告和依赖项问题。调用 kotlin-build-resolver 代理进行最小化、精准的修复。
+description: 增量修复 Kotlin/Gradle build 错误、编译器警告和依赖问题。调用 kotlin-build-resolver agent 执行最小化的精准修复。
 ---
 
-# Kotlin 构建与修复
+# Kotlin Build 与修复
 
-此命令调用 **kotlin-build-resolver** 代理，以最小的改动增量修复 Kotlin 构建错误。
+本命令调用 **kotlin-build-resolver** agent，以最小改动增量修复 Kotlin build 错误。
 
-## 此命令的作用
+## 本命令的作用
 
 1. **运行诊断**：执行 `./gradlew build`、`detekt`、`ktlintCheck`
-2. **解析错误**：按文件分组并按严重性排序
-3. **增量修复**：每次修复一个错误
-4. **验证每次修复**：每次更改后重新运行构建
-5. **报告摘要**：显示已修复的内容和剩余问题
+2. **解析错误**：按文件分组并按严重程度排序
+3. **增量修复**：一次修复一个错误
+4. **验证每处修复**：每次改动后重新运行 build
+5. **报告总结**：展示已修复内容和剩余问题
 
 ## 何时使用
 
 在以下情况使用 `/kotlin-build`：
-
-* `./gradlew build` 因错误而失败
-* Kotlin 编译器报告错误
-* `./gradlew detekt` 报告违规
-* Gradle 依赖项解析失败
-* 拉取更改后导致构建失败
+- `./gradlew build` 报错失败
+- Kotlin 编译器报告错误
+- `./gradlew detekt` 报告违规
+- Gradle 依赖解析失败
+- 拉取破坏 build 的改动之后
 
 ## 运行的诊断命令
 
 ```bash
-# Primary build check
+# 主要 build 检查
 ./gradlew build 2>&1
 
-# Static analysis
+# 静态分析
 ./gradlew detekt 2>&1 || echo "detekt not configured"
 ./gradlew ktlintCheck 2>&1 || echo "ktlint not configured"
 
-# Dependency issues
+# 依赖问题
 ./gradlew dependencies --configuration runtimeClasspath 2>&1 | head -100
 
-# Optional deep refresh when caches or dependency metadata are suspect
+# 当缓存或依赖元数据可疑时的可选深度刷新
 ./gradlew build --refresh-dependencies
 ```
 
@@ -47,9 +46,9 @@ description: 逐步修复 Kotlin/Gradle 构建错误、编译器警告和依赖�
 User: /kotlin-build
 
 Agent:
-# Kotlin Build Resolution
+# Kotlin Build 解决
 
-## Initial Diagnostics
+## 初始诊断
 
 ```bash
 $ ./gradlew build
@@ -58,119 +57,118 @@ e: src/main/kotlin/com/example/routes/UserRoutes.kt:42:9 Type mismatch: inferred
 e: src/main/kotlin/com/example/routes/UserRoutes.kt:58:5 'when' expression must be exhaustive
 ```
 
-Errors found: 3
+发现错误：3
 
-## Fix 1: Unresolved Reference
+## 修复 1：Unresolved Reference
 
-File: src/main/kotlin/com/example/service/UserService.kt:25
-Error: Unresolved reference: UserRepository
-Cause: Missing import
+文件：src/main/kotlin/com/example/service/UserService.kt:25
+错误：Unresolved reference: UserRepository
+原因：缺少 import
 
 ```kotlin
-// Added import
+// 添加的 import
 import com.example.repository.UserRepository
 ```
 
 ```bash
 $ ./gradlew build
-# 2 errors remaining
+# 剩余 2 个错误
 ```
 
-## Fix 2: Type Mismatch
+## 修复 2：Type Mismatch
 
-File: src/main/kotlin/com/example/routes/UserRoutes.kt:42
-Error: Type mismatch: inferred type is String but Int was expected
+文件：src/main/kotlin/com/example/routes/UserRoutes.kt:42
+错误：Type mismatch: inferred type is String but Int was expected
 
 ```kotlin
-// Changed
+// 由
 val count = call.parameters["count"]
-// To
+// 改为
 val count = call.parameters["count"]?.toIntOrNull()
     ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid count")
 ```
 
 ```bash
 $ ./gradlew build
-# 1 error remaining
+# 剩余 1 个错误
 ```
 
-## Fix 3: Non-Exhaustive When
+## 修复 3：Non-Exhaustive When
 
-File: src/main/kotlin/com/example/routes/UserRoutes.kt:58
-Error: 'when' expression must be exhaustive
+文件：src/main/kotlin/com/example/routes/UserRoutes.kt:58
+错误：'when' expression must be exhaustive
 
 ```kotlin
-// Added missing branch
+// 添加缺失的分支
 when (user.role) {
     Role.ADMIN -> handleAdmin(user)
     Role.USER -> handleUser(user)
-    Role.MODERATOR -> handleModerator(user) // Added
+    Role.MODERATOR -> handleModerator(user) // 已添加
 }
 ```
 
 ```bash
 $ ./gradlew build
-# Build successful!
+# Build 成功！
 ```
 
-## Final Verification
+## 最终验证
 
 ```bash
 $ ./gradlew detekt
-# No issues
+# 无问题
 
 $ ./gradlew test
-# All tests passed
+# 所有测试通过
 ```
 
-## Summary
+## 总结
 
-| Metric | Count |
+| 指标 | 数量 |
 |--------|-------|
-| Build errors fixed | 3 |
-| Detekt issues fixed | 0 |
-| Files modified | 2 |
-| Remaining issues | 0 |
+| 已修复 build 错误 | 3 |
+| 已修复 Detekt 问题 | 0 |
+| 已修改文件 | 2 |
+| 剩余问题 | 0 |
 
-Build Status: PASS: SUCCESS
+Build 状态：PASS: SUCCESS
 ````
 
-## 常见的已修复错误
+## 常见已修复错误
 
-| 错误 | 典型修复方法 |
+| 错误 | 典型修复 |
 |-------|-------------|
-| `Unresolved reference: X` | 添加导入或依赖项 |
+| `Unresolved reference: X` | 添加 import 或依赖 |
 | `Type mismatch` | 修复类型转换或赋值 |
-| `'when' must be exhaustive` | 添加缺失的密封类分支 |
+| `'when' must be exhaustive` | 添加缺失的 sealed class 分支 |
 | `Suspend function can only be called from coroutine` | 添加 `suspend` 修饰符 |
 | `Smart cast impossible` | 使用局部 `val` 或 `let` |
 | `None of the following candidates is applicable` | 修复参数类型 |
-| `Could not resolve dependency` | 修复版本或添加仓库 |
+| `Could not resolve dependency` | 修复版本或添加 repository |
 
 ## 修复策略
 
-1. **首先修复构建错误** - 代码必须能够编译
-2. **其次修复 Detekt 违规** - 修复代码质量问题
-3. **再次修复 ktlint 警告** - 修复格式问题
-4. **一次修复一个** - 验证每次更改
-5. **最小化改动** - 不进行重构，仅修复问题
+1. **先修复 build 错误** - 代码必须能编译
+2. **其次处理 Detekt 违规** - 修复代码质量问题
+3. **再处理 ktlint 警告** - 修复格式问题
+4. **一次一处修复** - 验证每次改动
+5. **最小改动** - 不重构，只修复
 
 ## 停止条件
 
-代理将在以下情况下停止并报告：
-
-* 同一错误尝试修复 3 次后仍然存在
-* 修复引入了更多错误
-* 需要进行架构性更改
-* 缺少外部依赖项
+agent 将在以下情况停止并报告：
+- 同一错误在 3 次尝试后仍然存在
+- 修复引入了更多错误
+- 需要架构层面的改动
+- 缺少外部依赖
 
 ## 相关命令
 
-* `/kotlin-test` - 构建成功后运行测试
-* `/kotlin-review` - 审查代码质量
-* `/verify` - 完整的验证循环
+- `/kotlin-test` - 在 build 成功后运行测试
+- `/kotlin-review` - 审查代码质量
+- `verification-loop` skill - 完整的验证循环
 
 ## 相关
 
-* 代理：`agents/kotlin-build-resolver.md`
-* 技能：`skills/kotlin-patterns/`
+- Agent：`agents/kotlin-build-resolver.md`
+- Skill：`skills/kotlin-patterns/`

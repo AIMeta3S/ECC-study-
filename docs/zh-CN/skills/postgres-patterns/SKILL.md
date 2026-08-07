@@ -1,22 +1,23 @@
 ---
 name: postgres-patterns
-description: 用于查询优化、模式设计、索引和安全性的PostgreSQL数据库模式。基于Supabase最佳实践。
-origin: ECC
+description: PostgreSQL 数据库模式，涵盖查询优化、schema 设计、索引与安全。基于 Supabase 最佳实践。
+metadata:
+  origin: ECC
 ---
 
 # PostgreSQL 模式
 
-PostgreSQL 最佳实践快速参考。如需详细指导，请使用 `database-reviewer` 智能体。
+PostgreSQL 最佳实践速查。如需详细指导，请使用 `database-reviewer` agent。
 
 ## 何时激活
 
-* 编写 SQL 查询或迁移时
-* 设计数据库模式时
-* 排查慢查询时
-* 实施行级安全性时
-* 设置连接池时
+- 编写 SQL 查询或 migration
+- 设计数据库 schema
+- 排查慢查询
+- 实现 Row Level Security
+- 设置 connection pooling
 
-## 快速参考
+## 速查参考
 
 ### 索引速查表
 
@@ -27,51 +28,46 @@ PostgreSQL 最佳实践快速参考。如需详细指导，请使用 `database-r
 | `WHERE a = x AND b > y` | 复合索引 | `CREATE INDEX idx ON t (a, b)` |
 | `WHERE jsonb @> '{}'` | GIN | `CREATE INDEX idx ON t USING gin (col)` |
 | `WHERE tsv @@ query` | GIN | `CREATE INDEX idx ON t USING gin (col)` |
-| 时间序列范围查询 | BRIN | `CREATE INDEX idx ON t USING brin (col)` |
+| 时序范围 | BRIN | `CREATE INDEX idx ON t USING brin (col)` |
 
-### 数据类型快速参考
+### 数据类型速查参考
 
-| 使用场景 | 正确类型 | 避免使用 |
+| 使用场景 | 正确类型 | 避免 |
 |----------|-------------|-------|
-| ID | `bigint` | `int`，随机 UUID |
+| ID | `bigint` | `int`、随机 UUID |
 | 字符串 | `text` | `varchar(255)` |
 | 时间戳 | `timestamptz` | `timestamp` |
-| 货币 | `numeric(10,2)` | `float` |
-| 标志位 | `boolean` | `varchar`，`int` |
+| 金额 | `numeric(10,2)` | `float` |
+| 标志位 | `boolean` | `varchar`、`int` |
 
 ### 常见模式
 
 **复合索引顺序：**
-
 ```sql
--- Equality columns first, then range columns
+-- 等值列在前，范围列在后
 CREATE INDEX idx ON orders (status, created_at);
--- Works for: WHERE status = 'pending' AND created_at > '2024-01-01'
+-- 适用于：WHERE status = 'pending' AND created_at > '2024-01-01'
 ```
 
 **覆盖索引：**
-
 ```sql
 CREATE INDEX idx ON users (email) INCLUDE (name, created_at);
--- Avoids table lookup for SELECT email, name, created_at
+-- 避免 SELECT email, name, created_at 时的表回查
 ```
 
 **部分索引：**
-
 ```sql
 CREATE INDEX idx ON users (email) WHERE deleted_at IS NULL;
--- Smaller index, only includes active users
+-- 更小的索引，仅包含活跃用户
 ```
 
 **RLS 策略（优化版）：**
-
 ```sql
 CREATE POLICY policy ON orders
-  USING ((SELECT auth.uid()) = user_id);  -- Wrap in SELECT!
+  USING ((SELECT auth.uid()) = user_id);  -- 用 SELECT 包裹！
 ```
 
 **UPSERT：**
-
 ```sql
 INSERT INTO settings (user_id, key, value)
 VALUES (123, 'theme', 'dark')
@@ -79,15 +75,13 @@ ON CONFLICT (user_id, key)
 DO UPDATE SET value = EXCLUDED.value;
 ```
 
-**游标分页：**
-
+**Cursor 分页：**
 ```sql
 SELECT * FROM products WHERE id > $last_id ORDER BY id LIMIT 20;
--- O(1) vs OFFSET which is O(n)
+-- O(1) 复杂度，而 OFFSET 为 O(n)
 ```
 
 **队列处理：**
-
 ```sql
 UPDATE jobs SET status = 'processing'
 WHERE id = (
@@ -97,10 +91,10 @@ WHERE id = (
 ) RETURNING *;
 ```
 
-### 反模式检测\*\*
+### 反模式检测
 
 ```sql
--- Find unindexed foreign keys
+-- 查找未建索引的外键
 SELECT conrelid::regclass, a.attname
 FROM pg_constraint c
 JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
@@ -110,13 +104,13 @@ WHERE c.contype = 'f'
     WHERE i.indrelid = c.conrelid AND a.attnum = ANY(i.indkey)
   );
 
--- Find slow queries
+-- 查找慢查询
 SELECT query, mean_exec_time, calls
 FROM pg_stat_statements
 WHERE mean_exec_time > 100
 ORDER BY mean_exec_time DESC;
 
--- Check table bloat
+-- 检查表膨胀
 SELECT relname, n_dead_tup, last_vacuum
 FROM pg_stat_user_tables
 WHERE n_dead_tup > 1000
@@ -126,29 +120,29 @@ ORDER BY n_dead_tup DESC;
 ### 配置模板
 
 ```sql
--- Connection limits (adjust for RAM)
+-- 连接数限制（根据 RAM 调整）
 ALTER SYSTEM SET max_connections = 100;
 ALTER SYSTEM SET work_mem = '8MB';
 
--- Timeouts
+-- 超时设置
 ALTER SYSTEM SET idle_in_transaction_session_timeout = '30s';
 ALTER SYSTEM SET statement_timeout = '30s';
 
--- Monitoring
+-- 监控
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
--- Security defaults
+-- 安全默认值
 REVOKE ALL ON SCHEMA public FROM public;
 
 SELECT pg_reload_conf();
 ```
 
-## 相关
+## 相关资源
 
-* 智能体：`database-reviewer` - 完整的数据库审查工作流
-* 技能：`clickhouse-io` - ClickHouse 分析模式
-* 技能：`backend-patterns` - API 和后端模式
+- Agent：`database-reviewer` - 完整的数据库审查工作流
+- Skill：`clickhouse-io` - ClickHouse 分析模式
+- Skill：`backend-patterns` - API 与后端模式
 
-***
+---
 
-*基于 Supabase 代理技能（致谢：Supabase 团队）（MIT 许可证）*
+*基于 Supabase Agent Skills（鸣谢：Supabase 团队）（MIT License）*

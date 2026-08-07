@@ -1,95 +1,96 @@
 ---
 name: deployment-patterns
-description: 部署工作流、CI/CD流水线模式、Docker容器化、健康检查、回滚策略以及Web应用程序的生产就绪检查清单。
-origin: ECC
+description: 面向 Web 应用的部署工作流、CI/CD pipeline 模式、Docker 容器化、health check、rollback 策略，以及生产就绪清单。
+metadata:
+  origin: ECC
 ---
 
 # 部署模式
 
-生产环境部署工作流和 CI/CD 最佳实践。
+Production 部署工作流与 CI/CD 最佳实践。
 
-## 何时启用
+## 何时激活
 
-* 设置 CI/CD 流水线时
-* 将应用容器化（Docker）时
-* 规划部署策略（蓝绿、金丝雀、滚动）时
-* 实现健康检查和就绪探针时
-* 准备生产发布时
-* 配置环境特定设置时
+- 搭建 CI/CD pipeline
+- 将应用 Docker 化
+- 规划部署策略（blue-green、canary、rolling）
+- 实现 health check 与 readiness probe
+- 准备 production release
+- 配置环境特定的设置
 
 ## 部署策略
 
-### 滚动部署（默认）
+### Rolling Deployment（默认）
 
-逐步替换实例——在发布过程中，新旧版本同时运行。
-
-```
-实例 1: v1 → v2  (首次更新)
-实例 2: v1        (仍在运行 v1)
-实例 3: v1        (仍在运行 v1)
-
-实例 1: v2
-实例 2: v1 → v2  (第二次更新)
-实例 3: v1
-
-实例 1: v2
-实例 2: v2
-实例 3: v1 → v2  (最后更新)
-```
-
-**优点：** 零停机时间，渐进式发布
-**缺点：** 两个版本同时运行——需要向后兼容的更改
-**适用场景：** 标准部署，向后兼容的更改
-
-### 蓝绿部署
-
-运行两个相同的环境。原子化地切换流量。
+逐步替换实例——在 rollout 期间，新旧版本同时运行。
 
 ```
-Blue  (v1) ← 流量
+Instance 1: v1 → v2  (先更新)
+Instance 2: v1        (仍在运行 v1)
+Instance 3: v1        (仍在运行 v1)
+
+Instance 1: v2
+Instance 2: v1 → v2  (第二个更新)
+Instance 3: v1
+
+Instance 1: v2
+Instance 2: v2
+Instance 3: v1 → v2  (最后更新)
+```
+
+**优点：** 零停机、逐步 rollout
+**缺点：** 两个版本同时运行——需要向后兼容的变更
+**适用场景：** 标准部署、向后兼容的变更
+
+### Blue-Green Deployment
+
+运行两个完全相同的环境。以原子方式切换流量。
+
+```
+Blue  (v1) ← traffic
 Green (v2)   空闲，运行新版本
 
-# 验证后：
-Blue  (v1)   空闲（转为备用状态）
-Green (v2) ← 流量
+# 验证之后：
+Blue  (v1)   空闲（成为备用）
+Green (v2) ← traffic
 ```
 
-**优点：** 即时回滚（切换回蓝色环境），切换干净利落
-**缺点：** 部署期间需要双倍的基础设施
-**适用场景：** 关键服务，对问题零容忍
+**优点：** 即时 rollback（切回 blue）、干净利落的切换
+**缺点：** 部署期间需要两倍的基础设施
+**适用场景：** 关键服务、对问题零容忍
 
-### 金丝雀部署
+### Canary Deployment
 
-首先将一小部分流量路由到新版本。
+先将小比例流量路由到新版本。
 
 ```
-v1：95% 的流量
-v2：5% 的流量（金丝雀）
+v1: 95% of traffic
+v2:  5% of traffic  (canary)
 
-# 如果指标表现良好：
-v1：50% 的流量
-v2：50% 的流量
+# 若指标良好：
+v1: 50% of traffic
+v2: 50% of traffic
 
 # 最终：
-v2：100% 的流量
+v2: 100% of traffic
 ```
 
-**优点：** 在全量发布前，通过真实流量发现问题
-**缺点：** 需要流量分割基础设施和监控
-**适用场景：** 高流量服务，风险性更改，功能标志
+**优点：** 在全面 rollout 前用真实流量发现问题
+**缺点：** 需要流量分流基础设施和监控
+**适用场景：** 高流量服务、高风险变更、feature flag
 
 ## Docker
 
-### 多阶段 Dockerfile (Node.js)
+### Multi-Stage Dockerfile（Node.js）
 
 ```dockerfile
-# Stage 1: Install dependencies
+# 阶段 1：安装依赖
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --production=false
 
-# Stage 2: Build
+# 阶段 2：构建
 FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -97,7 +98,7 @@ COPY . .
 RUN npm run build
 RUN npm prune --production
 
-# Stage 3: Production image
+# 阶段 3：生产镜像
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -117,7 +118,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 CMD ["node", "dist/server.js"]
 ```
 
-### 多阶段 Dockerfile (Go)
+### Multi-Stage Dockerfile（Go）
 
 ```dockerfile
 FROM golang:1.22-alpine AS builder
@@ -139,7 +140,7 @@ HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:8080/heal
 CMD ["/server"]
 ```
 
-### 多阶段 Dockerfile (Python/Django)
+### Multi-Stage Dockerfile（Python/Django）
 
 ```dockerfile
 FROM python:3.12-slim AS builder
@@ -168,26 +169,26 @@ CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers
 ### Docker 最佳实践
 
 ```
-# 良好实践
-- 使用特定版本标签（node:22-alpine，而非 node:latest）
-- 采用多阶段构建以最小化镜像体积
-- 以非 root 用户身份运行
-- 优先复制依赖文件（利用分层缓存）
-- 使用 .dockerignore 排除 node_modules、.git、tests 等文件
+# GOOD 实践
+- 使用具体的版本 tag（node:22-alpine，而非 node:latest）
+- 使用 multi-stage build 以最小化镜像体积
+- 以非 root 用户运行
+- 先复制依赖文件（layer caching）
+- 使用 .dockerignore 排除 node_modules、.git、tests
 - 添加 HEALTHCHECK 指令
 - 在 docker-compose 或 k8s 中设置资源限制
 
-# 不良实践
-- 以 root 身份运行
-- 使用 :latest 标签
-- 在单个 COPY 层中复制整个仓库
+# BAD 实践
+- 以 root 运行
+- 使用 :latest tag
+- 在一个 COPY 层中复制整个仓库
 - 在生产镜像中安装开发依赖
-- 在镜像中存储密钥（应使用环境变量或密钥管理器）
+- 在镜像中存储 secret（应使用环境变量或 secrets manager）
 ```
 
-## CI/CD 流水线
+## CI/CD Pipeline
 
-### GitHub Actions (标准流水线)
+### GitHub Actions（标准 Pipeline）
 
 ```yaml
 name: CI/CD
@@ -244,34 +245,34 @@ jobs:
     steps:
       - name: Deploy to production
         run: |
-          # Platform-specific deployment command
+          # 平台特定的部署命令
           # Railway: railway up
           # Vercel: vercel --prod
           # K8s: kubectl set image deployment/app app=ghcr.io/${{ github.repository }}:${{ github.sha }}
           echo "Deploying ${{ github.sha }}"
 ```
 
-### 流水线阶段
+### Pipeline 阶段
 
 ```
-PR 已开启：
-  lint → typecheck → 单元测试 → 集成测试 → 预览部署
+PR 创建后：
+  lint → typecheck → unit tests → integration tests → preview deploy
 
-合并到 main：
-  lint → typecheck → 单元测试 → 集成测试 → 构建镜像 → 部署到 staging → 冒烟测试 → 部署到 production
+合并到 main 后：
+  lint → typecheck → unit tests → integration tests → build image → deploy staging → smoke tests → deploy production
 ```
 
-## 健康检查
+## Health Check
 
-### 健康检查端点
+### Health Check 端点
 
 ```typescript
-// Simple health check
+// 简单 health check
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Detailed health check (for internal monitoring)
+// 详细 health check（用于内部监控）
 app.get("/health/detailed", async (req, res) => {
   const checks = {
     database: await checkDatabase(),
@@ -300,7 +301,7 @@ async function checkDatabase(): Promise<HealthCheck> {
 }
 ```
 
-### Kubernetes 探针
+### Kubernetes Probe
 
 ```yaml
 livenessProbe:
@@ -325,27 +326,27 @@ startupProbe:
     port: 3000
   initialDelaySeconds: 0
   periodSeconds: 5
-  failureThreshold: 30    # 30 * 5s = 150s max startup time
+  failureThreshold: 30    # 30 * 5s = 150s 最大启动时间
 ```
 
 ## 环境配置
 
-### 十二要素应用模式
+### Twelve-Factor App 模式
 
 ```bash
-# All config via environment variables — never in code
+# 所有配置通过环境变量传递——绝不写入代码
 DATABASE_URL=postgres://user:pass@host:5432/db
 REDIS_URL=redis://host:6379/0
-API_KEY=${API_KEY}           # injected by secrets manager
+API_KEY=${API_KEY}           # 由 secrets manager 注入
 LOG_LEVEL=info
 PORT=3000
 
-# Environment-specific behavior
-NODE_ENV=production          # or staging, development
-APP_ENV=production           # explicit app environment
+# 环境特定行为
+NODE_ENV=production          # 或 staging、development
+APP_ENV=production           # 显式的应用环境
 ```
 
-### 配置验证
+### 配置校验
 
 ```typescript
 import { z } from "zod";
@@ -359,74 +360,69 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 
-// Validate at startup — fail fast if config is wrong
+// 在启动时校验——配置有误则 fail fast
 export const env = envSchema.parse(process.env);
 ```
 
-## 回滚策略
+## Rollback 策略
 
-### 即时回滚
+### 即时 Rollback
 
 ```bash
-# Docker/Kubernetes: point to previous image
+# Docker/Kubernetes：指向 previous image
 kubectl rollout undo deployment/app
 
-# Vercel: promote previous deployment
+# Vercel：提升 previous deployment
 vercel rollback
 
-# Railway: redeploy previous commit
+# Railway：重新部署 previous commit
 railway up --commit <previous-sha>
 
-# Database: rollback migration (if reversible)
+# Database：rollback migration（若可逆）
 npx prisma migrate resolve --rolled-back <migration-name>
 ```
 
-### 回滚检查清单
+### Rollback 清单
 
-* \[ ] 之前的镜像/制品可用且已标记
-* \[ ] 数据库迁移向后兼容（无破坏性更改）
-* \[ ] 功能标志可以在不部署的情况下禁用新功能
-* \[ ] 监控警报已配置，用于错误率飙升
-* \[ ] 在生产发布前，回滚已在预演环境测试
+- [ ] previous image/artifact 已可用并打好 tag
+- [ ] database migration 向后兼容（无破坏性变更）
+- [ ] feature flag 能在不部署的情况下禁用新功能
+- [ ] 已为错误率突增配置监控告警
+- [ ] 已在 production release 前于 staging 测试 rollback
 
-## 生产就绪检查清单
+## Production 就绪清单
 
-在任何生产部署之前：
+在任何 production 部署之前：
 
 ### 应用
-
-* \[ ] 所有测试通过（单元、集成、端到端）
-* \[ ] 代码或配置文件中没有硬编码的密钥
-* \[ ] 错误处理覆盖所有边缘情况
-* \[ ] 日志是结构化的（JSON）且不包含 PII
-* \[ ] 健康检查端点返回有意义的状态
+- [ ] 所有测试通过（unit、integration、E2E）
+- [ ] 代码或配置文件中没有硬编码的 secret
+- [ ] 错误处理覆盖所有 edge case
+- [ ] 日志是结构化的（JSON）且不含 PII
+- [ ] health check 端点返回有意义的状态
 
 ### 基础设施
-
-* \[ ] Docker 镜像可重复构建（版本已固定）
-* \[ ] 环境变量已记录并在启动时验证
-* \[ ] 资源限制已设置（CPU、内存）
-* \[ ] 水平伸缩已配置（最小/最大实例数）
-* \[ ] 所有端点均已启用 SSL/TLS
+- [ ] Docker image 可复现地构建（版本已锁定）
+- [ ] 环境变量已文档化并在启动时校验
+- [ ] 已设置资源限制（CPU、memory）
+- [ ] 已配置水平伸缩（最小/最大实例数）
+- [ ] 所有端点已启用 SSL/TLS
 
 ### 监控
-
-* \[ ] 应用指标已导出（请求率、延迟、错误）
-* \[ ] 已配置错误率超过阈值的警报
-* \[ ] 日志聚合已设置（结构化日志，可搜索）
-* \[ ] 健康端点有正常运行时间监控
+- [ ] 应用 metrics 已导出（请求率、latency、错误数）
+- [ ] 已为错误率超过 threshold 配置告警
+- [ ] 已设置日志聚合（结构化日志、可搜索）
+- [ ] 已对 health 端点进行 uptime 监控
 
 ### 安全
-
-* \[ ] 依赖项已扫描 CVE
-* \[ ] CORS 仅配置允许的来源
-* \[ ] 公共端点已启用速率限制
-* \[ ] 身份验证和授权已验证
-* \[ ] 安全头已设置（CSP、HSTS、X-Frame-Options）
+- [ ] 依赖已扫描 CVE
+- [ ] CORS 仅对允许的 origin 配置
+- [ ] 公共端点已启用 rate limiting
+- [ ] 认证与授权已验证
+- [ ] 已设置安全 header（CSP、HSTS、X-Frame-Options）
 
 ### 运维
-
-* \[ ] 回滚计划已记录并测试
-* \[ ] 数据库迁移已针对生产规模的数据进行测试
-* \[ ] 常见故障场景的应急预案
-* \[ ] 待命轮换和升级路径已定义
+- [ ] rollback 计划已文档化并经过测试
+- [ ] database migration 已针对生产规模数据测试
+- [ ] 针对常见故障场景的 runbook
+- [ ] 已定义 on-call 轮值与升级路径

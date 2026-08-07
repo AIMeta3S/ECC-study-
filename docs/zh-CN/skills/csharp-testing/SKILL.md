@@ -1,34 +1,35 @@
 ---
 name: csharp-testing
-description: 使用 xUnit、FluentAssertions、模拟、集成测试和测试组织最佳实践的 C# 和 .NET 测试模式。
-origin: ECC
+description: C# 和 .NET 测试模式，涵盖 xUnit、FluentAssertions、mock、集成测试与测试组织最佳实践。
+metadata:
+  origin: ECC
 ---
 
 # C# 测试模式
 
-使用 xUnit、FluentAssertions 和现代测试实践为 .NET 应用程序提供的全面测试模式。
+面向 .NET 应用的全面测试模式，使用 xUnit、FluentAssertions 和现代测试实践。
 
-## 何时使用
+## 何时激活
 
-* 为 C# 代码编写新测试
-* 审查测试质量和覆盖率
-* 为 .NET 项目搭建测试基础设施
-* 调试不稳定或缓慢的测试
+- 为 C# 代码编写新测试
+- 评审测试质量与覆盖率
+- 为 .NET 项目搭建测试基础设施
+- 调试 flaky 或执行缓慢的测试
 
-## 测试框架栈
+## 测试框架技术栈
 
 | 工具 | 用途 |
 |---|---|
 | **xUnit** | 测试框架（.NET 首选） |
-| **FluentAssertions** | 可读的断言语法 |
-| **NSubstitute** 或 **Moq** | 模拟依赖项 |
+| **FluentAssertions** | 可读性强的断言语法 |
+| **NSubstitute** 或 **Moq** | mock 依赖 |
 | **Testcontainers** | 集成测试中的真实基础设施 |
 | **WebApplicationFactory** | ASP.NET Core 集成测试 |
-| **Bogus** | 生成逼真的测试数据 |
+| **Bogus** | 生成真实的测试数据 |
 
 ## 单元测试结构
 
-### 安排-操作-断言
+### Arrange-Act-Assert
 
 ```csharp
 public sealed class OrderServiceTests
@@ -45,17 +46,17 @@ public sealed class OrderServiceTests
     [Fact]
     public async Task PlaceOrderAsync_ReturnsSuccess_WhenRequestIsValid()
     {
-        // Arrange
+        // 准备
         var request = new CreateOrderRequest
         {
             CustomerId = "cust-123",
             Items = [new OrderItem("SKU-001", 2, 29.99m)]
         };
 
-        // Act
+        // 执行
         var result = await _sut.PlaceOrderAsync(request, CancellationToken.None);
 
-        // Assert
+        // 断言
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value!.CustomerId.Should().Be("cust-123");
@@ -64,17 +65,17 @@ public sealed class OrderServiceTests
     [Fact]
     public async Task PlaceOrderAsync_ReturnsFailure_WhenNoItems()
     {
-        // Arrange
+        // 准备
         var request = new CreateOrderRequest
         {
             CustomerId = "cust-123",
             Items = []
         };
 
-        // Act
+        // 执行
         var result = await _sut.PlaceOrderAsync(request, CancellationToken.None);
 
-        // Assert
+        // 断言
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("at least one item");
     }
@@ -113,34 +114,34 @@ public static TheoryData<CreateOrderRequest, string> InvalidOrderCases => new()
 };
 ```
 
-## 使用 NSubstitute 进行模拟
+## 使用 NSubstitute 进行 mock
 
 ```csharp
 [Fact]
 public async Task GetOrderAsync_ReturnsNull_WhenNotFound()
 {
-    // Arrange
+    // 准备
     var orderId = Guid.NewGuid();
     _repository.FindByIdAsync(orderId, Arg.Any<CancellationToken>())
         .Returns((Order?)null);
 
-    // Act
+    // 执行
     var result = await _sut.GetOrderAsync(orderId, CancellationToken.None);
 
-    // Assert
+    // 断言
     result.Should().BeNull();
 }
 
 [Fact]
 public async Task PlaceOrderAsync_PersistsOrder()
 {
-    // Arrange
+    // 准备
     var request = ValidOrderRequest();
 
-    // Act
+    // 执行
     await _sut.PlaceOrderAsync(request, CancellationToken.None);
 
-    // Assert — verify the repository was called
+    // 断言 —— 验证 repository 已被调用
     await _repository.Received(1).AddAsync(
         Arg.Is<Order>(o => o.CustomerId == request.CustomerId),
         Arg.Any<CancellationToken>());
@@ -149,7 +150,7 @@ public async Task PlaceOrderAsync_PersistsOrder()
 
 ## ASP.NET Core 集成测试
 
-### WebApplicationFactory 设置
+### WebApplicationFactory 搭建
 
 ```csharp
 public sealed class OrderApiTests : IClassFixture<WebApplicationFactory<Program>>
@@ -162,7 +163,7 @@ public sealed class OrderApiTests : IClassFixture<WebApplicationFactory<Program>
         {
             builder.ConfigureServices(services =>
             {
-                // Replace real DB with in-memory for tests
+                // 用内存数据库替换真实数据库以便测试
                 services.RemoveAll<DbContextOptions<AppDbContext>>();
                 services.AddDbContext<AppDbContext>(options =>
                     options.UseInMemoryDatabase("TestDb"));
@@ -259,7 +260,7 @@ tests/
       DatabaseFixture.cs
 ```
 
-## 测试数据构建器
+## 测试数据 Builder
 
 ```csharp
 public sealed class OrderBuilder
@@ -282,40 +283,40 @@ public sealed class OrderBuilder
     public Order Build() => Order.Create(_customerId, _items);
 }
 
-// Usage in tests
+// 在测试中的用法
 var order = new OrderBuilder()
     .WithCustomer("cust-vip")
     .WithItem("SKU-PREMIUM", 3, 99.99m)
     .Build();
 ```
 
-## 常见反模式
+## 常见 Anti-Pattern
 
-| 反模式 | 修复方法 |
+| Anti-Pattern | 修复方式 |
 |---|---|
-| 测试实现细节 | 测试行为和结果 |
-| 共享的可变测试状态 | 每个测试使用新实例（xUnit 通过构造函数实现） |
-| 在异步测试中使用 `Thread.Sleep` | 使用带超时的 `Task.Delay` 或轮询辅助方法 |
-| 对 `ToString()` 输出进行断言 | 对类型化属性进行断言 |
-| 每个测试一个巨型断言 | 每个测试一个逻辑断言 |
-| 测试名称描述实现 | 按行为命名：`Method_ExpectedResult_WhenCondition` |
-| 忽略 `CancellationToken` | 始终传递并验证取消 |
+| 测试实现细节 | 测试行为与结果 |
+| 共享可变的测试状态 | 每个测试使用全新实例（xUnit 通过构造函数实现） |
+| 在异步测试中使用 `Thread.Sleep` | 改用带超时的 `Task.Delay`，或轮询辅助工具 |
+| 对 `ToString()` 输出做断言 | 对类型化属性做断言 |
+| 每个测试一个巨型断言 | 每个测试只做单一逻辑断言 |
+| 测试名描述实现细节 | 按行为命名：`Method_ExpectedResult_WhenCondition` |
+| 忽略 `CancellationToken` | 始终传递并验证取消操作 |
 
 ## 运行测试
 
 ```bash
-# Run all tests
+# 运行所有测试
 dotnet test
 
-# Run with coverage
+# 运行并收集覆盖率
 dotnet test --collect:"XPlat Code Coverage"
 
-# Run specific project
+# 运行指定项目
 dotnet test tests/MyApp.UnitTests/
 
-# Filter by test name
+# 按测试名过滤
 dotnet test --filter "FullyQualifiedName~OrderService"
 
-# Watch mode during development
+# 开发时的 watch mode
 dotnet watch test --project tests/MyApp.UnitTests/
 ```

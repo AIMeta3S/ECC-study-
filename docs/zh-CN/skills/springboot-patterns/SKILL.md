@@ -1,21 +1,22 @@
 ---
 name: springboot-patterns
-description: Spring Boot架构模式、REST API设计、分层服务、数据访问、缓存、异步处理和日志记录。用于Java Spring Boot后端工作。
-origin: ECC
+description: Spring Boot 架构模式、REST API 设计、分层服务、数据访问、缓存、异步处理与日志。用于 Java Spring Boot 后端开发。
+metadata:
+  origin: ECC
 ---
 
 # Spring Boot 开发模式
 
-用于可扩展、生产级服务的 Spring Boot 架构和 API 模式。
+Spring Boot 架构与 API 模式，用于可扩展的生产级服务。
 
 ## 何时激活
 
-* 使用 Spring MVC 或 WebFlux 构建 REST API
-* 构建控制器 → 服务 → 仓库层结构
-* 配置 Spring Data JPA、缓存或异步处理
-* 添加验证、异常处理或分页
-* 为开发/预发布/生产环境设置配置文件
-* 使用 Spring Events 或 Kafka 实现事件驱动模式
+- 使用 Spring MVC 或 WebFlux 构建 REST API
+- 构建 controller → service → repository 分层结构
+- 配置 Spring Data JPA、缓存或异步处理
+- 添加校验、异常处理或分页
+- 为 dev/staging/生产环境配置 profile
+- 使用 Spring Events 或 Kafka 实现事件驱动模式
 
 ## REST API 结构
 
@@ -46,7 +47,7 @@ class MarketController {
 }
 ```
 
-## 仓库模式 (Spring Data JPA)
+## Repository Pattern（Spring Data JPA）
 
 ```java
 public interface MarketRepository extends JpaRepository<MarketEntity, Long> {
@@ -55,7 +56,7 @@ public interface MarketRepository extends JpaRepository<MarketEntity, Long> {
 }
 ```
 
-## 带事务的服务层
+## Service Layer 与事务
 
 ```java
 @Service
@@ -75,7 +76,7 @@ public class MarketService {
 }
 ```
 
-## DTO 和验证
+## DTO 与校验
 
 ```java
 public record CreateMarketRequest(
@@ -111,7 +112,7 @@ class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   ResponseEntity<ApiError> handleGeneric(Exception ex) {
-    // Log unexpected errors with stack traces
+    // 记录意外错误及其堆栈
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(ApiError.of("Internal server error"));
   }
@@ -120,7 +121,7 @@ class GlobalExceptionHandler {
 
 ## 缓存
 
-需要在配置类上使用 `@EnableCaching`。
+需要在配置类上添加 `@EnableCaching`。
 
 ```java
 @Service
@@ -145,20 +146,20 @@ public class MarketCacheService {
 
 ## 异步处理
 
-需要在配置类上使用 `@EnableAsync`。
+需要在配置类上添加 `@EnableAsync`。
 
 ```java
 @Service
 public class NotificationService {
   @Async
   public CompletableFuture<Void> sendAsync(Notification notification) {
-    // send email/SMS
+    // 发送邮件/短信
     return CompletableFuture.completedFuture(null);
   }
 }
 ```
 
-## 日志记录 (SLF4J)
+## 日志（SLF4J）
 
 ```java
 @Service
@@ -168,7 +169,7 @@ public class ReportService {
   public Report generate(Long marketId) {
     log.info("generate_report marketId={}", marketId);
     try {
-      // logic
+      // 业务逻辑
     } catch (Exception ex) {
       log.error("generate_report_failed marketId={}", marketId, ex);
       throw ex;
@@ -178,7 +179,7 @@ public class ReportService {
 }
 ```
 
-## 中间件 / 过滤器
+## Middleware / Filter
 
 ```java
 @Component
@@ -200,7 +201,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 }
 ```
 
-## 分页和排序
+## 分页与排序
 
 ```java
 PageRequest page = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
@@ -231,18 +232,16 @@ public <T> T withRetry(Supplier<T> supplier, int maxRetries) {
 }
 ```
 
-## 速率限制 (过滤器 + Bucket4j)
+## Rate Limiting（Filter + Bucket4j）
 
-**安全须知**：默认情况下 `X-Forwarded-For` 头是不可信的，因为客户端可以伪造它。
-仅在以下情况下使用转发头：
+**安全提示**：`X-Forwarded-For` header 默认不可信，因为客户端可以伪造它。
+仅在以下情况下使用 forwarded header：
+1. 你的应用位于受信任的 reverse proxy 之后（nginx、AWS ALB 等）
+2. 你已将 `ForwardedHeaderFilter` 注册为 bean
+3. 你已在应用属性中配置 `server.forward-headers-strategy=NATIVE` 或 `FRAMEWORK`
+4. 你的 proxy 已配置为覆盖（而非追加）`X-Forwarded-For` header
 
-1. 您的应用程序位于可信的反向代理（nginx、AWS ALB 等）之后
-2. 您已将 `ForwardedHeaderFilter` 注册为 bean
-3. 您已在应用属性中配置了 `server.forward-headers-strategy=NATIVE` 或 `FRAMEWORK`
-4. 您的代理配置为覆盖（而非追加）`X-Forwarded-For` 头
-
-当 `ForwardedHeaderFilter` 被正确配置时，`request.getRemoteAddr()` 将自动从转发的头中返回正确的客户端 IP。
-没有此配置时，请直接使用 `request.getRemoteAddr()`——它返回的是直接连接的 IP，这是唯一可信的值。
+当 `ForwardedHeaderFilter` 正确配置后，`request.getRemoteAddr()` 会自动从 forwarded header 中返回正确的客户端 IP。若缺少此配置，请直接使用 `request.getRemoteAddr()`——它返回的是直连 IP，这是唯一可信的值。
 
 ```java
 @Component
@@ -250,32 +249,31 @@ public class RateLimitFilter extends OncePerRequestFilter {
   private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
   /*
-   * SECURITY: This filter uses request.getRemoteAddr() to identify clients for rate limiting.
+   * 安全提示：此 Filter 使用 request.getRemoteAddr() 来识别限流客户端。
    *
-   * If your application is behind a reverse proxy (nginx, AWS ALB, etc.), you MUST configure
-   * Spring to handle forwarded headers properly for accurate client IP detection:
+   * 如果你的应用位于 reverse proxy 之后（nginx、AWS ALB 等），必须配置
+   * Spring 正确处理 forwarded header，才能准确检测客户端 IP：
    *
-   * 1. Set server.forward-headers-strategy=NATIVE (for cloud platforms) or FRAMEWORK in
-   *    application.properties/yaml
-   * 2. If using FRAMEWORK strategy, register ForwardedHeaderFilter:
+   * 1. 在 application.properties/yaml 中设置 server.forward-headers-strategy=NATIVE
+   *    （适用于云平台）或 FRAMEWORK
+   * 2. 如果使用 FRAMEWORK 策略，注册 ForwardedHeaderFilter：
    *
    *    @Bean
    *    ForwardedHeaderFilter forwardedHeaderFilter() {
    *        return new ForwardedHeaderFilter();
    *    }
    *
-   * 3. Ensure your proxy overwrites (not appends) the X-Forwarded-For header to prevent spoofing
-   * 4. Configure server.tomcat.remoteip.trusted-proxies or equivalent for your container
+   * 3. 确保 proxy 覆盖（而非追加）X-Forwarded-For header，以防止伪造
+   * 4. 为你的容器配置 server.tomcat.remoteip.trusted-proxies 或等效设置
    *
-   * Without this configuration, request.getRemoteAddr() returns the proxy IP, not the client IP.
-   * Do NOT read X-Forwarded-For directly—it is trivially spoofable without trusted proxy handling.
+   * 缺少此配置时，request.getRemoteAddr() 返回的是 proxy IP，而非客户端 IP。
+   * 切勿直接读取 X-Forwarded-For——在没有可信 proxy 处理的情况下，它极易被伪造。
    */
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    // Use getRemoteAddr() which returns the correct client IP when ForwardedHeaderFilter
-    // is configured, or the direct connection IP otherwise. Never trust X-Forwarded-For
-    // headers directly without proper proxy configuration.
+    // 使用 getRemoteAddr()：当 ForwardedHeaderFilter 已配置时返回正确的客户端 IP，
+    // 否则返回直连 IP。在没有正确 proxy 配置的情况下，切勿直接信任 X-Forwarded-For header。
     String clientIp = request.getRemoteAddr();
 
     Bucket bucket = buckets.computeIfAbsent(clientIp,
@@ -292,22 +290,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
 }
 ```
 
-## 后台作业
+## Background Job
 
-使用 Spring 的 `@Scheduled` 或与队列（如 Kafka、SQS、RabbitMQ）集成。保持处理程序是幂等的和可观察的。
+使用 Spring 的 `@Scheduled`，或与队列集成（如 Kafka、SQS、RabbitMQ）。保持 handler 幂等且可观测。
 
 ## 可观测性
 
-* 通过 Logback 编码器进行结构化日志记录 (JSON)
-* 指标：Micrometer + Prometheus/OTel
-* 追踪：带有 OpenTelemetry 或 Brave 后端的 Micrometer Tracing
+- 通过 Logback encoder 进行结构化日志（JSON）
+- Metrics：Micrometer + Prometheus/OTel
+- Tracing：使用 Micrometer Tracing 搭配 OpenTelemetry 或 Brave backend
 
-## 生产环境默认设置
+## 生产环境默认实践
 
-* 优先使用构造函数注入，避免字段注入
-* 启用 `spring.mvc.problemdetails.enabled=true` 以获得 RFC 7807 错误 (Spring Boot 3+)
-* 根据工作负载配置 HikariCP 连接池大小，设置超时
-* 对查询使用 `@Transactional(readOnly = true)`
-* 在适当的地方通过 `@NonNull` 和 `Optional` 强制执行空值安全
+- 优先使用 constructor injection，避免 field injection
+- 启用 `spring.mvc.problemdetails.enabled=true` 以支持 RFC 7807 错误（Spring Boot 3+）
+- 根据工作负载配置 HikariCP 连接池大小，并设置超时
+- 查询使用 `@Transactional(readOnly = true)`
+- 在合适的位置通过 `@NonNull` 和 `Optional` 强制 null 安全
 
-**记住**：保持控制器精简、服务专注、仓库简单，并集中处理错误。为可维护性和可测试性进行优化。
+**切记**：保持 controller 轻量、service 聚焦、repository 简洁，错误集中处理。以可维护性和可测试性为目标进行优化。

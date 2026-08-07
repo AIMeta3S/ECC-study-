@@ -1,75 +1,76 @@
 ---
 name: hexagonal-architecture
-description: 设计、实现并重构端口与适配器系统，具有清晰的领域边界、依赖反转以及跨 TypeScript、Java、Kotlin 和 Go 服务的可测试用例编排。
-origin: ECC
+description: 设计、实现并重构 Ports & Adapters 系统，具备清晰的 domain 边界、dependency inversion 与可测试的 use case 编排，覆盖 TypeScript、Java、Kotlin 和 Go 服务。
+metadata:
+  origin: ECC
 ---
 
-# 六边形架构
+# Hexagonal Architecture
 
-六边形架构（端口与适配器）使业务逻辑独立于框架、传输层和持久化细节。核心应用依赖于抽象端口，而适配器在边缘实现这些端口。
+Hexagonal architecture（Ports and Adapters）使业务逻辑独立于框架、传输和持久化细节。核心应用依赖于抽象的 port，而 adapter 在边缘处实现这些 port。
 
-## 适用场景
+## 何时使用
 
-* 构建需要长期可维护性和可测试性的新功能。
-* 重构分层或框架密集型代码，其中领域逻辑与I/O关注点混杂。
-* 为同一用例支持多种接口（HTTP、CLI、队列工作器、定时任务）。
-* 替换基础设施（数据库、外部API、消息总线）而无需重写业务规则。
+- 构建长期可维护性和可测试性至关重要的新功能。
+- 重构 domain 逻辑与 I/O 关注点混杂的分层式或框架繁重的代码。
+- 为同一 use case 支持多种接口（HTTP、CLI、queue worker、cron job）。
+- 在不重写业务规则的前提下替换基础设施（数据库、外部 API、message bus）。
 
-当需求涉及边界、领域驱动设计、重构紧耦合服务，或将应用逻辑与特定库解耦时，使用此技能。
+当请求涉及边界、以 domain 为中心的设计、重构紧耦合的服务，或将应用逻辑与特定 library 解耦时，使用此 skill。
 
 ## 核心概念
 
-* **领域模型**：业务规则和实体/值对象。无框架导入。
-* **用例（应用层）**：编排领域行为和工作流步骤。
-* **入站端口**：描述应用能力的契约（命令/查询/用例接口）。
-* **出站端口**：应用所需依赖的契约（仓库、网关、事件发布器、时钟、UUID等）。
-* **适配器**：端口的基础设施和交付实现（HTTP控制器、数据库仓库、队列消费者、SDK封装器）。
-* **组合根**：将具体适配器绑定到用例的单一连接位置。
+- **Domain model**：业务规则以及 entity/value object。不导入任何框架。
+- **Use case（应用层）**：编排 domain 行为与工作流步骤。
+- **Inbound port**：描述应用能做什么的契约（command/query/use-case 接口）。
+- **Outbound port**：应用所需依赖的契约（repository、gateway、event publisher、clock、UUID 等）。
+- **Adapter**：port 的基础设施与交付实现（HTTP controller、DB repository、queue consumer、SDK wrapper）。
+- **Composition root**：将具体 adapter 绑定到 use case 的单一装配位置。
 
-出站端口接口通常位于应用层（仅当抽象真正属于领域层时才位于领域层），而基础设施适配器实现它们。
+Outbound port 接口通常位于应用层（或当抽象真正属于 domain 层级时位于 domain 中），而基础设施 adapter 负责实现它们。
 
 依赖方向始终向内：
 
-* 适配器 -> 应用/领域
-* 应用 -> 端口接口（入站/出站契约）
-* 领域 -> 仅领域抽象（无框架或基础设施依赖）
-* 领域 -> 无外部依赖
+- Adapters -> application/domain
+- Application -> port 接口（inbound/outbound 契约）
+- Domain -> domain-only 抽象（无 framework 或基础设施依赖）
+- Domain -> 无外部依赖
 
 ## 工作原理
 
-### 步骤1：建模用例边界
+### Step 1：建模 use case 边界
 
-定义具有清晰输入和输出DTO的单个用例。将传输细节（Express `req`、GraphQL `context`、任务负载包装器）保持在此边界之外。
+为单个 use case 定义清晰的输入与输出 DTO。将传输细节（Express 的 `req`、GraphQL 的 `context`、job payload wrapper）排除在此边界之外。
 
-### 步骤2：首先定义出站端口
+### Step 2：先定义 outbound port
 
-将每个副作用识别为端口：
+将每个 side effect 识别为一个 port：
 
-* 持久化（`UserRepositoryPort`）
-* 外部调用（`BillingGatewayPort`）
-* 横切关注点（`LoggerPort`、`ClockPort`）
+- 持久化（`UserRepositoryPort`）
+- 外部调用（`BillingGatewayPort`）
+- 横切关注（`LoggerPort`、`ClockPort`）
 
-端口应建模能力，而非技术。
+Port 应当建模能力，而非技术。
 
-### 步骤3：使用纯编排实现用例
+### Step 3：以纯编排实现 use case
 
-用例类/函数通过构造函数/参数接收端口。它验证应用层不变量，协调领域规则，并返回纯数据结构。
+Use case 的 class/function 通过 constructor/argument 接收 port。它验证应用级别的 invariant，协调 domain 规则，并返回普通数据结构。
 
-### 步骤4：在边缘构建适配器
+### Step 4：在边缘构建 adapter
 
-* 入站适配器将协议输入转换为用例输入。
-* 出站适配器将应用契约映射到具体API/ORM/查询构建器。
-* 映射保持在适配器中，而非用例内部。
+- Inbound adapter 将协议输入转换为 use-case 输入。
+- Outbound adapter 将应用契约映射到具体的 API/ORM/query builder。
+- 映射保留在 adapter 中，而非 use case 内部。
 
-### 步骤5：在组合根中连接所有组件
+### Step 5：在 composition root 中装配一切
 
-实例化适配器，然后将其注入用例。保持此连接集中化，以避免隐藏的服务定位器行为。
+实例化 adapter，然后将其注入到 use case 中。将此装配集中化，以避免隐式的 service-locator 行为。
 
-### 步骤6：按边界测试
+### Step 6：按边界进行测试
 
-* 使用伪造端口对用例进行单元测试。
-* 使用真实基础设施依赖对适配器进行集成测试。
-* 通过入站适配器对面向用户的流程进行端到端测试。
+- 使用 fake port 对 use case 进行 unit test。
+- 使用真实 infra 依赖对 adapter 进行 integration test。
+- 通过 inbound adapter 对面向用户的流程进行 E2E test。
 
 ## 架构图
 
@@ -85,7 +86,7 @@ flowchart LR
 
 ## 建议的模块布局
 
-使用以功能为先的组织方式，并带有显式边界：
+采用 feature-first 的组织方式，并设置显式边界：
 
 ```text
 src/
@@ -118,7 +119,7 @@ src/
 
 ## TypeScript 示例
 
-### 端口定义
+### Port 定义
 
 ```typescript
 export interface OrderRepositoryPort {
@@ -131,7 +132,7 @@ export interface PaymentGatewayPort {
 }
 ```
 
-### 用例
+### Use case
 
 ```typescript
 type CreateOrderInput = {
@@ -158,7 +159,7 @@ export class CreateOrderUseCase {
       amountCents: order.amountCents,
     });
 
-    // markAuthorized returns a new Order instance; it does not mutate in place.
+    // markAuthorized 返回一个新的 Order 实例；它不会原地 mutate。
     const authorizedOrder = order.markAuthorized(auth.authorizationId);
     await this.orderRepository.save(authorizedOrder);
 
@@ -170,7 +171,7 @@ export class CreateOrderUseCase {
 }
 ```
 
-### 出站适配器
+### Outbound adapter
 
 ```typescript
 export class PostgresOrderRepository implements OrderRepositoryPort {
@@ -190,7 +191,7 @@ export class PostgresOrderRepository implements OrderRepositoryPort {
 }
 ```
 
-### 组合根
+### Composition root
 
 ```typescript
 export const buildCreateOrderUseCase = (deps: { db: SqlClient; stripe: StripeClient }) => {
@@ -203,74 +204,74 @@ export const buildCreateOrderUseCase = (deps: { db: SqlClient; stripe: StripeCli
 
 ## 多语言映射
 
-在不同生态系统中使用相同的边界规则；仅语法和连接方式发生变化。
+在不同生态系统中使用相同的边界规则；只有语法和装配风格有所差异。
 
-* **TypeScript/JavaScript**
-  * 端口：`application/ports/*` 作为接口/类型。
-  * 用例：带有构造函数/参数注入的类/函数。
-  * 适配器：`adapters/inbound/*`、`adapters/outbound/*`。
-  * 组合：显式工厂/容器模块（无隐藏全局变量）。
-* **Java**
-  * 包：`domain`、`application.port.in`、`application.port.out`、`application.usecase`、`adapter.in`、`adapter.out`。
-  * 端口：`application.port.*` 中的接口。
-  * 用例：普通类（Spring `@Service` 是可选的，非必需）。
-  * 组合：Spring配置或手动连接类；将连接逻辑保持在领域/用例类之外。
-* **Kotlin**
-  * 模块/包镜像Java的拆分（`domain`、`application.port`、`application.usecase`、`adapter`）。
-  * 端口：Kotlin接口。
-  * 用例：带有构造函数注入的类（Koin/Dagger/Spring/手动）。
-  * 组合：模块定义或专用组合函数；避免服务定位器模式。
-* **Go**
-  * 包：`internal/<feature>/domain`、`application`、`ports`、`adapters/inbound`、`adapters/outbound`。
-  * 端口：由消费应用包拥有的小型接口。
-  * 用例：带有接口字段和显式 `New...` 构造函数的结构体。
-  * 组合：在 `cmd/<app>/main.go` 中连接（或专用连接包），保持构造函数显式。
+- **TypeScript/JavaScript**
+  - Port：以 `application/ports/*` 作为接口/类型。
+  - Use case：带有 constructor/argument 注入的 class/function。
+  - Adapter：`adapters/inbound/*`、`adapters/outbound/*`。
+  - Composition：显式的 factory/container module（无隐藏的全局变量）。
+- **Java**
+  - Package：`domain`、`application.port.in`、`application.port.out`、`application.usecase`、`adapter.in`、`adapter.out`。
+  - Port：位于 `application.port.*` 的接口。
+  - Use case：普通 class（Spring 的 `@Service` 为可选，非必需）。
+  - Composition：Spring config 或手动装配的 class；将装配保持在 domain/use-case class 之外。
+- **Kotlin**
+  - Module/package 映射 Java 的划分方式（`domain`、`application.port`、`application.usecase`、`adapter`）。
+  - Port：Kotlin 接口。
+  - Use case：带有 constructor 注入的 class（Koin/Dagger/Spring/手动）。
+  - Composition：module 定义或专门的 composition function；避免 service locator 模式。
+- **Go**
+  - Package：`internal/<feature>/domain`、`application`、`ports`、`adapters/inbound`、`adapters/outbound`。
+  - Port：由消费方 application package 拥有的小型接口。
+  - Use case：带有接口字段以及显式 `New...` constructor 的 struct。
+  - Composition：在 `cmd/<app>/main.go`（或专门的装配 package）中进行装配，保持 constructor 显式。
 
-## 应避免的反模式
+## 需要避免的反模式
 
-* 领域实体导入ORM模型、Web框架类型或SDK客户端。
-* 用例直接从 `req`、`res` 或队列元数据读取。
-* 从用例直接返回数据库行，未经领域/应用映射。
-* 让适配器直接相互调用，而非通过用例端口流转。
-* 将依赖连接分散到多个文件中，使用隐藏的全局单例。
+- Domain entity 导入 ORM model、web framework 类型或 SDK client。
+- Use case 直接读取 `req`、`res` 或 queue metadata。
+- 从 use case 直接返回数据库行，而不进行 domain/application 映射。
+- 让 adapter 之间直接相互调用，而非通过 use-case port 流转。
+- 将依赖装配分散到多个文件中，并使用隐藏的全局 singleton。
 
 ## 迁移手册
 
-1. 选择一个垂直切片（单个端点/任务），该切片频繁变更且带来痛苦。
-2. 提取具有显式输入/输出类型的用例边界。
-3. 围绕现有基础设施调用引入出站端口。
-4. 将编排逻辑从控制器/服务移动到用例中。
-5. 保留旧适配器，但使其委托给新用例。
-6. 围绕新边界添加测试（单元测试 + 适配器集成测试）。
-7. 逐个切片重复；避免完全重写。
+1. 选择一个存在频繁变更痛点的 vertical slice（单个 endpoint/job）。
+2. 提取具有显式 input/output 类型的 use-case 边界。
+3. 围绕现有的基础设施调用引入 outbound port。
+4. 将编排逻辑从 controller/service 移入 use case 中。
+5. 保留旧 adapter，但让它们委托给新的 use case。
+6. 围绕新边界添加测试（unit + adapter integration）。
+7. 逐 slice 重复此过程；避免完全重写。
 
 ### 重构现有系统
 
-* **绞杀者模式**：保留当前端点，一次将一个用例路由到新的端口/适配器。
-* **无大爆炸式重写**：按功能切片迁移，并通过特征化测试保持行为。
-* **先建外观**：在替换内部实现之前，将遗留服务包装在出站端口后面。
-* **组合冻结**：尽早集中连接，使新依赖不会泄漏到领域/用例层。
-* **切片选择规则**：优先处理高变更频率、低影响范围的流程。
-* **回滚路径**：为每个迁移的切片保留可逆开关或路由切换，直到生产行为得到验证。
+- **Strangler approach**：保留当前 endpoint，每次让一个 use case 通过新的 port/adapter 进行路由。
+- **避免 big-bang 重写**：按 feature slice 进行迁移，并通过 characterization test 保持行为不变。
+- **Facade 优先**：在替换内部实现之前，先将遗留服务封装到 outbound port 之后。
+- **Composition 冻结**：尽早集中化装配，使新依赖不会泄漏到 domain/use-case 层。
+- **Slice 选择规则**：优先选择高频变更、低爆炸半径的流程。
+- **回滚路径**：在每个迁移后的 slice 上保留可逆的 toggle 或路由切换，直到生产环境行为得到验证。
 
-## 测试指南（相同的六边形边界）
+## 测试指南（相同的 Hexagonal 边界）
 
-* **领域测试**：将实体/值对象作为纯业务规则进行测试（无模拟，无框架设置）。
-* **用例单元测试**：使用出站端口的伪造/桩件测试编排；断言业务结果和端口交互。
-* **出站适配器契约测试**：在端口级别定义共享契约套件，并针对每个适配器实现运行。
-* **入站适配器测试**：验证协议映射（HTTP/CLI/队列负载到用例输入，以及输出/错误映射回协议）。
-* **适配器集成测试**：针对真实基础设施（数据库/API/队列）运行，测试序列化、模式/查询行为、重试和超时。
-* **端到端测试**：覆盖关键用户旅程，通过入站适配器 -> 用例 -> 出站适配器。
-* **重构安全性**：在提取之前添加特征化测试；保持它们直到新边界行为稳定且等价。
+- **Domain 测试**：将 entity/value object 作为纯业务规则进行测试（无 mock，无 framework 设置）。
+- **Use-case unit test**：使用针对 outbound port 的 fake/stub 测试编排；断言业务结果与 port 交互。
+- **Outbound adapter contract test**：在 port 层级定义共享的 contract suite，并针对每个 adapter 实现运行它们。
+- **Inbound adapter 测试**：验证协议映射（将 HTTP/CLI/queue payload 映射为 use-case input，并将 output/error 映射回协议）。
+- **Adapter integration test**：针对真实基础设施（DB/API/queue）运行，以验证序列化、schema/query 行为、retry 与 timeout。
+- **End-to-end 测试**：覆盖经由 inbound adapter -> use case -> outbound adapter 的关键用户旅程。
+- **Refactor 安全性**：在提取之前添加 characterization test；保留它们直到新的边界行为稳定且等效。
 
 ## 最佳实践清单
 
-* 领域和应用层仅导入内部类型和端口。
-* 每个外部依赖都由一个出站端口表示。
-* 验证发生在边界处（入站适配器 + 用例不变量）。
-* 使用不可变转换（返回新值/实体，而非修改共享状态）。
-* 错误在边界间进行转换（基础设施错误 -> 应用/领域错误）。
-* 组合根是显式的且易于审计。
-* 用例可通过简单的内存伪造端口进行测试。
-* 重构从具有行为保持测试的一个垂直切片开始。
-* 语言/框架特定内容保持在适配器中，绝不进入领域规则。
+- Domain 与 use-case 层仅导入内部类型和 port。
+- 每个外部依赖都由一个 outbound port 表示。
+- 校验发生在边界处（inbound adapter + use-case invariant）。
+- 使用 immutable 转换（返回新的 value/entity，而非 mutate 共享状态）。
+- 错误跨边界转换（infra error -> application/domain error）。
+- Composition root 是显式的且易于审计。
+- Use case 可通过针对 port 的简单 in-memory fake 进行测试。
+- Refactor 从一个 vertical slice 开始，并配备保持行为的测试。
+- 语言/framework 的特定细节保留在 adapter 中，绝不进入 domain 规则。

@@ -1,58 +1,59 @@
 ---
 name: kotlin-testing
-description: 使用Kotest、MockK、协程测试、基于属性的测试和Kover覆盖率的Kotlin测试模式。遵循TDD方法论和地道的Kotlin实践。
-origin: ECC
+description: Kotlin 测试模式，涵盖 Kotest、MockK、coroutine 测试、property-based testing 和 Kover 覆盖率。遵循 TDD 方法论与惯用 Kotlin 实践。
+metadata:
+  origin: ECC
 ---
 
 # Kotlin 测试模式
 
-遵循 TDD 方法论，使用 Kotest 和 MockK 编写可靠、可维护测试的全面 Kotlin 测试模式。
+全面的 Kotlin 测试模式，用于遵循 TDD 方法论、结合 Kotest 与 MockK 编写可靠、可维护的测试。
 
 ## 何时使用
 
-* 编写新的 Kotlin 函数或类
-* 为现有 Kotlin 代码添加测试覆盖率
-* 实现基于属性的测试
-* 在 Kotlin 项目中遵循 TDD 工作流
-* 为代码覆盖率配置 Kover
+- 编写新的 Kotlin 函数或类
+- 为现有 Kotlin 代码添加测试覆盖
+- 实现 property-based 测试
+- 在 Kotlin 项目中遵循 TDD 工作流
+- 配置 Kover 进行代码覆盖率统计
 
 ## 工作原理
 
-1. **确定目标代码** — 找到要测试的函数、类或模块
-2. **编写 Kotest 规范** — 选择与测试范围匹配的规范样式（StringSpec、FunSpec、BehaviorSpec）
-3. **模拟依赖项** — 使用 MockK 来隔离被测单元
-4. **运行测试（红色阶段）** — 验证测试是否按预期失败
-5. **实现代码（绿色阶段）** — 编写最少的代码以使测试通过
-6. **重构** — 改进实现，同时保持测试通过
-7. **检查覆盖率** — 运行 `./gradlew koverHtmlReport` 并验证 80%+ 的覆盖率
+1. **识别目标代码** — 找到待测试的函数、类或 module
+2. **编写 Kotest spec** — 选择与测试范围匹配的 spec 风格（StringSpec、FunSpec、BehaviorSpec）
+3. **Mock 依赖** — 使用 MockK 隔离被测单元
+4. **运行测试（RED）** — 验证测试以预期错误失败
+5. **实现代码（GREEN）** — 编写最少代码使测试通过
+6. **重构** — 在保持测试通过的同时改进实现
+7. **检查覆盖率** — 运行 `./gradlew koverHtmlReport` 并验证覆盖率达到 80%+
 
 ## 示例
 
-以下部分包含每个测试模式的详细、可运行示例：
+以下章节包含每种测试模式的详细、可运行示例：
 
 ### 快速参考
 
-* **Kotest 规范** — [Kotest 规范样式](#kotest-规范样式) 中的 StringSpec、FunSpec、BehaviorSpec、DescribeSpec 示例
-* **模拟** — [MockK](#mockk) 中的 MockK 设置、协程模拟、参数捕获
-* **TDD 演练** — [Kotlin 的 TDD 工作流](#kotlin-的-tdd-工作流) 中 EmailValidator 的完整 RED/GREEN/REFACTOR 周期
-* **覆盖率** — [Kover 覆盖率](#kover-覆盖率) 中的 Kover 配置和命令
-* **Ktor 测试** — [Ktor testApplication 测试](#ktor-testapplication-测试) 中的 testApplication 设置
+- **Kotest specs** — StringSpec、FunSpec、BehaviorSpec、DescribeSpec 示例见 [Kotest Spec Styles](#kotest-spec-styles)
+- **Mocking** — MockK 配置、coroutine mocking、argument capture 见 [MockK](#mockk)
+- **TDD 演练** — 使用 EmailValidator 的完整 RED/GREEN/REFACTOR 周期见 [TDD Workflow for Kotlin](#tdd-workflow-for-kotlin)
+- **覆盖率** — Kover 配置和命令见 [Kover Coverage](#kover-coverage)
+- **Ktor 测试** — testApplication 配置见 [Ktor testApplication Testing](#ktor-testapplication-testing)
 
 ### Kotlin 的 TDD 工作流
 
 #### RED-GREEN-REFACTOR 周期
 
 ```
-RED     -> 首先编写一个失败的测试
-GREEN   -> 编写最少的代码使测试通过
-REFACTOR -> 改进代码同时保持测试通过
+RED     -> 先写一个失败的测试
+GREEN   -> 写最少的代码使测试通过
+REFACTOR -> 在保持测试通过的同时改进代码
 REPEAT  -> 继续下一个需求
 ```
 
-#### Kotlin 中逐步进行 TDD
+#### Kotlin 中的逐步 TDD
 
 ```kotlin
-// Step 1: Define the interface/signature
+// 步骤 1：定义接口/签名
 // EmailValidator.kt
 package com.example.validator
 
@@ -60,7 +61,7 @@ fun validateEmail(email: String): Result<String> {
     TODO("not implemented")
 }
 
-// Step 2: Write failing test (RED)
+// 步骤 2：编写失败测试（RED）
 // EmailValidatorTest.kt
 package com.example.validator
 
@@ -82,12 +83,12 @@ class EmailValidatorTest : StringSpec({
     }
 })
 
-// Step 3: Run tests - verify FAIL
+// 步骤 3：运行测试 - 验证 FAIL
 // $ ./gradlew test
 // EmailValidatorTest > valid email returns success FAILED
 //   kotlin.NotImplementedError: An operation is not implemented
 
-// Step 4: Implement minimal code (GREEN)
+// 步骤 4：实现最少代码（GREEN）
 fun validateEmail(email: String): Result<String> {
     if (email.isBlank()) return Result.failure(IllegalArgumentException("Email cannot be blank"))
     if ('@' !in email) return Result.failure(IllegalArgumentException("Email must contain @"))
@@ -96,16 +97,16 @@ fun validateEmail(email: String): Result<String> {
     return Result.success(email)
 }
 
-// Step 5: Run tests - verify PASS
+// 步骤 5：运行测试 - 验证 PASS
 // $ ./gradlew test
 // EmailValidatorTest > valid email returns success PASSED
 // EmailValidatorTest > empty email returns failure PASSED
 // EmailValidatorTest > email without @ returns failure PASSED
 
-// Step 6: Refactor if needed, verify tests still pass
+// 步骤 6：如需重构，验证测试仍然通过
 ```
 
-### Kotest 规范样式
+### Kotest Spec 风格
 
 #### StringSpec（最简单）
 
@@ -222,9 +223,9 @@ class UserValidatorTest : DescribeSpec({
 })
 ```
 
-### Kotest 匹配器
+### Kotest Matchers
 
-#### 核心匹配器
+#### 核心 Matchers
 
 ```kotlin
 import io.kotest.matchers.shouldBe
@@ -233,36 +234,36 @@ import io.kotest.matchers.string.*
 import io.kotest.matchers.collections.*
 import io.kotest.matchers.nulls.*
 
-// Equality
+// 相等性
 result shouldBe expected
 result shouldNotBe unexpected
 
-// Strings
+// 字符串
 name shouldStartWith "Al"
 name shouldEndWith "ice"
 name shouldContain "lic"
 name shouldMatch Regex("[A-Z][a-z]+")
 name.shouldBeBlank()
 
-// Collections
+// 集合
 list shouldContain "item"
 list shouldHaveSize 3
 list.shouldBeSorted()
 list.shouldContainAll("a", "b", "c")
 list.shouldBeEmpty()
 
-// Nulls
+// Null
 result.shouldNotBeNull()
 result.shouldBeNull()
 
-// Types
+// 类型
 result.shouldBeInstanceOf<User>()
 
-// Numbers
+// 数字
 count shouldBeGreaterThan 0
 price shouldBeInRange 1.0..100.0
 
-// Exceptions
+// 异常
 shouldThrow<IllegalArgumentException> {
     validateAge(-1)
 }.message shouldBe "Age must be positive"
@@ -272,7 +273,7 @@ shouldNotThrow<Exception> {
 }
 ```
 
-#### 自定义匹配器
+#### 自定义 Matchers
 
 ```kotlin
 fun beActiveUser() = object : Matcher<User> {
@@ -283,18 +284,18 @@ fun beActiveUser() = object : Matcher<User> {
     )
 }
 
-// Usage
+// 用法
 user should beActiveUser()
 ```
 
 ### MockK
 
-#### 基本模拟
+#### 基础 Mocking
 
 ```kotlin
 class UserServiceTest : FunSpec({
     val repository = mockk<UserRepository>()
-    val logger = mockk<Logger>(relaxed = true) // Relaxed: returns defaults
+    val logger = mockk<Logger>(relaxed = true) // Relaxed：返回默认值
     val service = UserService(repository, logger)
 
     beforeTest {
@@ -321,7 +322,7 @@ class UserServiceTest : FunSpec({
 })
 ```
 
-#### 协程模拟
+#### Coroutine Mocking
 
 ```kotlin
 class AsyncUserServiceTest : FunSpec({
@@ -339,7 +340,7 @@ class AsyncUserServiceTest : FunSpec({
 
     test("getUser with delay") {
         coEvery { repository.findById("1") } coAnswers {
-            delay(100) // Simulate async work
+            delay(100) // 模拟异步工作
             User(id = "1", name = "Alice")
         }
 
@@ -349,7 +350,7 @@ class AsyncUserServiceTest : FunSpec({
 })
 ```
 
-#### 参数捕获
+#### Argument Capture
 
 ```kotlin
 test("save captures the user argument") {
@@ -364,7 +365,7 @@ test("save captures the user argument") {
 }
 ```
 
-#### 间谍和部分模拟
+#### Spy 与部分 Mocking
 
 ```kotlin
 test("spy on real object") {
@@ -375,14 +376,14 @@ test("spy on real object") {
 
     spy.createUser(request)
 
-    verify { spy.generateId() } // Overridden
-    // Other methods use real implementation
+    verify { spy.generateId() } // 已被覆盖
+    // 其他方法使用真实实现
 }
 ```
 
-### 协程测试
+### Coroutine 测试
 
-#### 用于挂起函数的 runTest
+#### 用于 Suspend 函数的 runTest
 
 ```kotlin
 import kotlinx.coroutines.test.runTest
@@ -405,7 +406,7 @@ class CoroutineServiceTest : FunSpec({
 
             shouldThrow<TimeoutCancellationException> {
                 withTimeout(100) {
-                    service.slowOperation() // Takes > 100ms
+                    service.slowOperation() // 耗时 > 100ms
                 }
             }
         }
@@ -413,7 +414,7 @@ class CoroutineServiceTest : FunSpec({
 })
 ```
 
-#### 测试 Flow
+#### 测试 Flows
 
 ```kotlin
 import io.kotest.matchers.collections.shouldContainInOrder
@@ -449,7 +450,7 @@ class FlowServiceTest : FunSpec({
 
             queries.emit("a")
             queries.emit("ab")
-            queries.emit("abc") // Only this should trigger search
+            queries.emit("abc") // 只有这个应该触发搜索
             advanceTimeBy(500)
 
             results shouldHaveSize 1
@@ -485,7 +486,7 @@ class DispatcherTest : FunSpec({
 })
 ```
 
-### 基于属性的测试
+### Property-Based Testing
 
 #### Kotest 属性测试
 
@@ -499,8 +500,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 
-// Note: The serialization roundtrip test below requires the User data class
-// to be annotated with @Serializable (from kotlinx.serialization).
+// 注意：下面的序列化往返测试要求 User data class
+// 标注 @Serializable（来自 kotlinx.serialization）。
 
 class PropertyTest : FunSpec({
     test("string reverse is involutory") {
@@ -527,7 +528,7 @@ class PropertyTest : FunSpec({
 })
 ```
 
-#### 自定义生成器
+#### 自定义 Generators
 
 ```kotlin
 val userArb: Arb<User> = Arb.bind(
@@ -583,7 +584,7 @@ class ParserTest : FunSpec({
 })
 ```
 
-### 测试生命周期和固件
+### 测试生命周期与 Fixtures
 
 #### BeforeTest / AfterTest
 
@@ -627,10 +628,10 @@ class DatabaseTest : FunSpec({
 })
 ```
 
-#### Kotest 扩展
+#### Kotest Extensions
 
 ```kotlin
-// Reusable test extension
+// 可复用的测试 extension
 class DatabaseExtension : BeforeSpecListener, AfterSpecListener {
     lateinit var db: Database
 
@@ -639,7 +640,7 @@ class DatabaseExtension : BeforeSpecListener, AfterSpecListener {
     }
 
     override suspend fun afterSpec(spec: Spec) {
-        // cleanup
+        // 清理
     }
 }
 
@@ -677,7 +678,7 @@ kover {
         }
         verify {
             rule {
-                minBound(80) // Fail build below 80% coverage
+                minBound(80) // 覆盖率低于 80% 时使构建失败
             }
         }
     }
@@ -687,16 +688,16 @@ kover {
 #### 覆盖率命令
 
 ```bash
-# Run tests with coverage
+# 运行测试并收集覆盖率
 ./gradlew koverHtmlReport
 
-# Verify coverage thresholds
+# 验证覆盖率阈值
 ./gradlew koverVerify
 
-# XML report for CI
+# 用于 CI 的 XML 报告
 ./gradlew koverXmlReport
 
-# View HTML report (use the command for your OS)
+# 查看 HTML 报告（使用适用于你操作系统的命令）
 # macOS:   open build/reports/kover/html/index.html
 # Linux:   xdg-open build/reports/kover/html/index.html
 # Windows: start build/reports/kover/html/index.html
@@ -707,9 +708,9 @@ kover {
 | 代码类型 | 目标 |
 |-----------|--------|
 | 关键业务逻辑 | 100% |
-| 公共 API | 90%+ |
+| Public APIs | 90%+ |
 | 通用代码 | 80%+ |
-| 生成的 / 配置代码 | 排除 |
+| 生成代码 / 配置代码 | 排除 |
 
 ### Ktor testApplication 测试
 
@@ -751,56 +752,54 @@ class ApiRoutesTest : FunSpec({
 ### 测试命令
 
 ```bash
-# Run all tests
+# 运行所有测试
 ./gradlew test
 
-# Run specific test class
+# 运行特定测试类
 ./gradlew test --tests "com.example.UserServiceTest"
 
-# Run specific test
+# 运行特定测试
 ./gradlew test --tests "com.example.UserServiceTest.getUser returns user when found"
 
-# Run with verbose output
+# 以详细输出运行
 ./gradlew test --info
 
-# Run with coverage
+# 运行并收集覆盖率
 ./gradlew koverHtmlReport
 
-# Run detekt (static analysis)
+# 运行 detekt（静态分析）
 ./gradlew detekt
 
-# Run ktlint (formatting check)
+# 运行 ktlint（格式检查）
 ./gradlew ktlintCheck
 
-# Continuous testing
+# 持续测试
 ./gradlew test --continuous
 ```
 
 ### 最佳实践
 
-**应做：**
+**推荐做法：**
+- 先写测试（TDD）
+- 在整个项目中一致使用 Kotest 的 spec 风格
+- 对 suspend 函数使用 MockK 的 `coEvery`/`coVerify`
+- 使用 `runTest` 进行 coroutine 测试
+- 测试行为，而非实现
+- 对纯函数使用 property-based testing
+- 使用 `data class` 测试 fixture 以提高清晰度
 
-* 先写测试（TDD）
-* 在整个项目中一致地使用 Kotest 的规范样式
-* 对挂起函数使用 MockK 的 `coEvery`/`coVerify`
-* 对协程测试使用 `runTest`
-* 测试行为，而非实现
-* 对纯函数使用基于属性的测试
-* 为清晰起见使用 `data class` 测试固件
-
-**不应做：**
-
-* 混合使用测试框架（选择 Kotest 并坚持使用）
-* 模拟数据类（使用真实实例）
-* 在协程测试中使用 `Thread.sleep()`（改用 `advanceTimeBy`）
-* 跳过 TDD 中的红色阶段
-* 直接测试私有函数
-* 忽略不稳定的测试
+**避免做法：**
+- 混用测试框架（选择 Kotest 并坚持使用）
+- Mock data class（应使用真实实例）
+- 在 coroutine 测试中使用 `Thread.sleep()`（应使用 `advanceTimeBy`）
+- 跳过 TDD 中的 RED 阶段
+- 直接测试私有函数
+- 忽略 flaky 测试
 
 ### 与 CI/CD 集成
 
 ```yaml
-# GitHub Actions example
+# GitHub Actions 示例
 test:
   runs-on: ubuntu-latest
   steps:
@@ -823,4 +822,4 @@ test:
         token: ${{ secrets.CODECOV_TOKEN }}
 ```
 
-**记住**：测试就是文档。它们展示了你的 Kotlin 代码应如何使用。使用 Kotest 富有表现力的匹配器使测试可读，并使用 MockK 来清晰地模拟依赖项。
+**记住**：测试即文档。它们展示了你的 Kotlin 代码应如何被使用。使用 Kotest 富有表现力的 matchers 让测试更易读，使用 MockK 干净地 mock 依赖。

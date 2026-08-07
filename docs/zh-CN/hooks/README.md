@@ -1,59 +1,81 @@
-# 钩子
+# Hooks
 
-钩子是事件驱动的自动化程序，在 Claude Code 工具执行前后触发。它们用于强制执行代码质量、及早发现错误以及自动化重复性检查。
+Hooks 是事件驱动的自动化机制，在 Claude Code 工具执行之前或之后触发。它们用于强制保障代码质量、及早发现错误，并自动化重复性的检查。
 
-## 钩子如何工作
+## Hooks 的工作原理
 
 ```
-用户请求 → Claude 选择工具 → PreToolUse 钩子运行 → 工具执行 → PostToolUse 钩子运行
+User request → Claude picks a tool → PreToolUse hook runs → Tool executes → PostToolUse hook runs
 ```
 
-* **PreToolUse** 钩子在工具执行前运行。它们可以**阻止**（退出码 2）或**警告**（stderr 输出但不阻止）。
-* **PostToolUse** 钩子在工具完成后运行。它们可以分析输出但不能阻止执行。
-* **Stop** 钩子在每次 Claude 响应后运行。
-* **SessionStart/SessionEnd** 钩子在会话生命周期的边界处运行。
-* **PreCompact** 钩子在上下文压缩前运行，适用于保存状态。
+- **PreToolUse** hooks 在工具执行之前运行。它们可以 **block**（exit code 2）或 **warn**（写 stderr 但不阻止执行）。
+- **PostToolUse** hooks 在工具执行完成之后运行。它们可以分析输出但不能阻止执行。
+- **Stop** hooks 在每次 Claude 响应之后运行。
+- **SessionStart/SessionEnd** hooks 在 session 生命周期的边界处运行。
+- **PreCompact** hooks 在 context compaction 之前运行，适合用于保存状态。
 
-## 本插件中的钩子
+## 本插件中的 Hooks
 
-### PreToolUse 钩子
+Memory persistence 生命周期定义位于 `hooks/memory-persistence/`。
+可执行的 hook 图仍然是 `hooks/hooks.json`；memory persistence 目录是 SessionStart、PreCompact、observation、activity tracking 以及 SessionEnd 行为的稳定契约。
 
-| 钩子 | 匹配器 | 行为 | 退出码 |
-|------|---------|----------|-----------|
-| **开发服务器拦截器** | `Bash` | 在 tmux 外阻止 `npm run dev` 等命令 — 确保日志可访问 | 2 (拦截) |
-| **Tmux 提醒器** | `Bash` | 对长时间运行命令（npm test、cargo build、docker）建议使用 tmux | 0 (警告) |
-| **Git 推送提醒器** | `Bash` | 在 `git push` 前提醒检查变更 | 0 (警告) |
-| **文档文件警告器** | `Write` | 对非标准 `.md`/`.txt` 文件发出警告（允许 README、CLAUDE、CONTRIBUTING、CHANGELOG、LICENSE、SKILL、docs/、skills/）；跨平台路径处理 | 0 (警告) |
-| **策略性压缩提醒器** | `Edit\|Write` | 建议在逻辑间隔（约每 50 次工具调用）手动执行 `/compact` | 0 (警告) |
+## 手动安装这些 Hooks
 
-### PostToolUse 钩子
+对于 Claude Code 手动安装，不要将仓库原始的 `hooks.json` 粘贴到 `~/.claude/settings.json`，也不要直接复制到 `~/.claude/hooks/hooks.json`。仓库检入的这个文件面向 plugin/repo 使用场景，应当通过 ECC 安装器安装或作为 plugin 加载。
 
-| 钩子 | 匹配器 | 功能 |
-|------|---------|-------------|
-| **PR 记录器** | `Bash` | 在 `gh pr create` 后记录 PR URL 和审查命令 |
-| **构建分析** | `Bash` | 构建命令后的后台分析（异步，非阻塞） |
-| **质量门** | `Edit\|Write\|MultiEdit` | 在编辑后运行快速质量检查 |
-| **Prettier 格式化** | `Edit` | 编辑后使用 Prettier 自动格式化 JS/TS 文件 |
-| **TypeScript 检查** | `Edit` | 在编辑 `.ts`/`.tsx` 文件后运行 `tsc --noEmit` |
-| **console.log 警告** | `Edit` | 警告编辑的文件中存在 `console.log` 语句 |
+请改用安装器，这样 hook 命令会根据你实际的 Claude 根目录进行重写：
 
-### 生命周期钩子
+```bash
+bash ./install.sh --target claude --modules hooks-runtime
+```
 
-| 钩子 | 事件 | 功能 |
-|------|-------|-------------|
-| **会话开始** | `SessionStart` | 加载先前上下文并检测包管理器 |
-| **预压缩** | `PreCompact` | 在上下文压缩前保存状态 |
-| **Console.log 审计** | `Stop` | 每次响应后检查所有修改的文件是否有 `console.log` |
-| **会话摘要** | `Stop` | 当转录路径可用时持久化会话状态 |
-| **模式提取** | `Stop` | 评估会话以提取可抽取的模式（持续学习） |
-| **成本追踪器** | `Stop` | 发出轻量级的运行成本遥测标记 |
-| **会话结束标记** | `SessionEnd` | 生命周期标记和清理日志 |
+```powershell
+pwsh -File .\install.ps1 --target claude --modules hooks-runtime
+```
 
-## 自定义钩子
+这会将解析后的 hooks 安装到 `~/.claude/hooks/hooks.json`。在 Windows 上，Claude 配置根目录是 `%USERPROFILE%\\.claude`。
 
-### 禁用钩子
+### PreToolUse Hooks
 
-在 `hooks.json` 中移除或注释掉钩子条目。如果作为插件安装，请在您的 `~/.claude/settings.json` 中覆盖：
+| Hook | Matcher | 行为 | Exit Code |
+|------|---------|------|-----------|
+| **Dev server blocker** | `Bash` | 阻止在 tmux 之外运行 `npm run dev` 等命令 —— 确保可以访问 log | 2 (blocks) |
+| **Tmux reminder** | `Bash` | 为长时间运行的命令（npm test、cargo build、docker）建议使用 tmux | 0 (warns) |
+| **Git push reminder** | `Bash` | 在 `git push` 之前提醒 review 改动 | 0 (warns) |
+| **Pre-commit quality check** | `Bash` | 在 `git commit` 之前运行质量检查：对 staged 文件执行 lint，当通过 `-m/--message` 提供时验证 commit message 格式，检测 console.log/debugger/secrets | 2 (blocks critical) / 0 (warns) |
+| **Doc file warning** | `Write` | 对非标准的 `.md`/`.txt` 文件发出警告（允许 README、CLAUDE、CONTRIBUTING、CHANGELOG、LICENSE、SKILL、docs/、skills/）；跨平台路径处理 | 0 (warns) |
+| **Strategic compact** | `Edit\|Write` | 在逻辑间隔点（大约每 50 次工具调用）建议手动执行 `/compact` | 0 (warns) |
+
+### PostToolUse Hooks
+
+| Hook | Matcher | 作用 |
+|------|---------|------|
+| **PR logger** | `Bash` | 在 `gh pr create` 之后记录 PR URL 和 review 命令 |
+| **Build analysis** | `Bash` | 在 build 命令之后进行后台分析（async、non-blocking） |
+| **Quality gate** | `Edit\|Write\|MultiEdit` | 在 edit 之后运行快速质量检查 |
+| **Design quality check** | `Edit\|Write\|MultiEdit` | 当前端 edit 偏向通用模板化的 UI 时发出警告 |
+| **Prettier format** | `Edit` | 在 edit 之后使用 Prettier 自动格式化 JS/TS 文件 |
+| **TypeScript check** | `Edit` | 在编辑 `.ts`/`.tsx` 文件之后运行 `tsc --noEmit` |
+| **console.log warning** | `Edit` | 对已编辑文件中的 `console.log` 语句发出警告 |
+
+### Lifecycle Hooks
+
+| Hook | Event | 作用 |
+|------|-------|------|
+| **Session start** | `SessionStart` | 加载之前的 context 并检测包管理器 |
+| **Pre-compact** | `PreCompact` | 在 context compaction 之前保存状态 |
+| **Console.log audit** | `Stop` | 在每次响应之后检查所有修改过的文件是否含 `console.log` |
+| **Session summary** | `Stop` | 当 transcript path 可用时持久化 session 状态 |
+| **Pattern extraction** | `Stop` | 评估 session 中是否含有可提取的模式（continuous learning） |
+| **Cost tracker** | `Stop` | 发出轻量的运行成本 telemetry 标记 |
+| **Desktop notify** | `Stop` | 发送 macOS 桌面通知，附带任务摘要（standard 及以上 profile） |
+| **Session end marker** | `SessionEnd` | 生命周期标记与清理 log |
+
+## 自定义 Hooks
+
+### 禁用某个 Hook
+
+删除或在 `hooks.json` 中注释掉对应的 hook 条目。如果是作为 plugin 安装的，请在你的 `~/.claude/settings.json` 中覆盖：
 
 ```json
 {
@@ -69,27 +91,44 @@
 }
 ```
 
-### 运行时钩子控制（推荐）
+### 运行时 Hook 控制（推荐）
 
-使用环境变量控制钩子行为，无需编辑 `hooks.json`：
+使用环境变量来控制 hook 行为，无需编辑 `hooks.json`：
 
 ```bash
-# minimal | standard | strict (default: standard)
+# minimal | standard | strict（默认：standard）
 export ECC_HOOK_PROFILE=standard
 
-# Disable specific hook IDs (comma-separated)
+# 禁用特定的 hook ID（逗号分隔）
 export ECC_DISABLED_HOOKS="pre:bash:tmux-reminder,post:edit:typecheck"
+
+# 仅在安装或恢复期间禁用 GateGuard
+export ECC_GATEGUARD=off
+
+# 限制 SessionStart 额外 context 的大小（默认：8000 字符）
+export ECC_SESSION_START_MAX_CHARS=4000
+
+# 完全禁用 SessionStart 的额外 context
+export ECC_SESSION_START_CONTEXT=off
+
+# 保留 context/scope/loop 警告，但抑制 API 速率相关的成本估算
+export ECC_CONTEXT_MONITOR_COST_WARNINGS=off
 ```
 
-配置文件：
+Windows PowerShell：
 
-* `minimal` —— 仅保留必要的生命周期和安全钩子。
-* `standard` —— 默认；平衡的质量 + 安全检查。
-* `strict` —— 启用额外的提醒和更严格的防护措施。
+```powershell
+[Environment]::SetEnvironmentVariable('ECC_CONTEXT_MONITOR_COST_WARNINGS', 'off', 'User')
+```
 
-### 编写你自己的钩子
+Profiles：
+- `minimal` —— 仅保留必要的 lifecycle 和安全 hooks。
+- `standard` —— 默认档；平衡质量与安全检查。
+- `strict` —— 启用额外的提醒和更严格的 guardrails。
 
-钩子是 shell 命令，通过 stdin 接收 JSON 格式的工具输入，并且必须在 stdout 上输出 JSON。
+### 编写自己的 Hook
+
+Hooks 是 shell 命令，通过 stdin 接收 JSON 格式的 tool input，并必须通过 stdout 输出 JSON。
 
 **基本结构：**
 
@@ -100,49 +139,48 @@ process.stdin.on('data', chunk => data += chunk);
 process.stdin.on('end', () => {
   const input = JSON.parse(data);
 
-  // Access tool info
-  const toolName = input.tool_name;        // "Edit", "Bash", "Write", etc.
-  const toolInput = input.tool_input;      // Tool-specific parameters
-  const toolOutput = input.tool_output;    // Only available in PostToolUse
+  // 访问工具信息
+  const toolName = input.tool_name;        // "Edit"、"Bash"、"Write" 等
+  const toolInput = input.tool_input;      // 工具特定的参数
+  const toolOutput = input.tool_output;    // 仅在 PostToolUse 中可用
 
-  // Warn (non-blocking): write to stderr
+  // 警告（不阻止执行）：写入 stderr
   console.error('[Hook] Warning message shown to Claude');
 
-  // Block (PreToolUse only): exit with code 2
+  // 阻止执行（仅 PreToolUse）：以 code 2 退出
   // process.exit(2);
 
-  // Always output the original data to stdout
+  // 始终将原始数据输出到 stdout
   console.log(data);
 });
 ```
 
-**退出码：**
+**Exit code（退出码）：**
+- `0` —— 成功（继续执行）
+- `2` —— 阻止该 tool call（仅 PreToolUse）
+- 其他非零值 —— 错误（会被记录但不阻止执行）
 
-* `0` —— 成功（继续执行）
-* `2` —— 阻止工具调用（仅限 PreToolUse）
-* 其他非零值 —— 错误（记录日志但不阻止）
-
-### 钩子输入模式
+### Hook Input Schema
 
 ```typescript
 interface HookInput {
-  tool_name: string;          // "Bash", "Edit", "Write", "Read", etc.
+  tool_name: string;          // "Bash"、"Edit"、"Write"、"Read" 等
   tool_input: {
-    command?: string;         // Bash: the command being run
-    file_path?: string;       // Edit/Write/Read: target file
-    old_string?: string;      // Edit: text being replaced
-    new_string?: string;      // Edit: replacement text
-    content?: string;         // Write: file content
+    command?: string;         // Bash：正在运行的命令
+    file_path?: string;       // Edit/Write/Read：目标文件
+    old_string?: string;      // Edit：被替换的文本
+    new_string?: string;      // Edit：替换后的文本
+    content?: string;         // Write：文件内容
   };
-  tool_output?: {             // PostToolUse only
-    output?: string;          // Command/tool output
+  tool_output?: {             // 仅 PostToolUse 可用
+    output?: string;          // 命令/工具的输出
   };
 }
 ```
 
-### 异步钩子
+### Async Hooks
 
-对于不应阻塞主流程的钩子（例如，后台分析）：
+对于不应阻塞主流程的 hooks（例如后台分析）：
 
 ```json
 {
@@ -153,9 +191,9 @@ interface HookInput {
 }
 ```
 
-异步钩子在后台运行。它们不能阻止工具执行。
+Async hooks 在后台运行。它们无法阻止工具执行。
 
-## 常用钩子配方
+## 常用 Hook 配方
 
 ### 警告 TODO 注释
 
@@ -196,7 +234,7 @@ interface HookInput {
 }
 ```
 
-### 要求新源文件附带测试文件
+### 要求为新源码文件配套测试文件
 
 ```json
 {
@@ -209,12 +247,12 @@ interface HookInput {
 }
 ```
 
-## 跨平台注意事项
+## 跨平台说明
 
-钩子逻辑在 Node.js 脚本中实现，以便在 Windows、macOS 和 Linux 上具有跨平台行为。保留了少量 shell 包装器用于持续学习的观察者钩子；这些包装器受配置文件控制，并具有 Windows 安全的回退行为。
+Hook 逻辑用 Node.js 脚本实现，以便在 Windows、macOS 和 Linux 上保持跨平台一致行为。continuous-learning observer 以 Node 模式 hook 的形式暴露，通过一个 profile 控制的 runner 委托给其既有的 `observe.sh` 实现，并带有 Windows 安全的 fallback 行为。
 
-## 相关
+## 相关内容
 
-* [rules/common/hooks.md](../rules/common/hooks.md) —— 钩子架构指南
-* [skills/strategic-compact/](../../../skills/strategic-compact) —— 策略性压缩技能
-* [scripts/hooks/](../../../scripts/hooks) —— 钩子脚本实现
+- [rules/common/hooks.md](../rules/common/hooks.md) —— Hook 架构指南
+- [skills/strategic-compact/](../skills/strategic-compact/) —— Strategic compaction skill
+- [scripts/hooks/](../scripts/hooks/) —— Hook 脚本实现

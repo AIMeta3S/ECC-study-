@@ -407,7 +407,7 @@ everything-claude-code/
 |   |-- instinct-export.md  # /instinct-export - 导出直觉（新增）
 |   |-- evolve.md           # /evolve - 将直觉聚类为技能
 |   |-- pm2.md              # /pm2 - PM2 服务生命周期管理（新增）
-|   |-- multi-plan.md       # /multi-plan - 多代理任务拆解（新增）
+|   |-- multi-plan.md       # /multi-plan - 多代理 task 拆解（新增）
 |   |-- multi-execute.md    # /multi-execute - 编排的多代理工作流（新增）
 |   |-- multi-backend.md    # /multi-backend - 后端多服务编排（新增）
 |   |-- multi-frontend.md   # /multi-frontend - 前端多服务编排（新增）
@@ -706,7 +706,7 @@ cp -r everything-claude-code/skills/search-first ~/.claude/skills/
 
 ### 智能体
 
-子智能体处理具有有限范围的委托任务。示例：
+子智能体处理具有有限范围的委托 tasks。示例：
 
 ```markdown
 ---
@@ -831,7 +831,7 @@ e2e-testing 技能                              → e2e-runner: 关键用户流�
 <details>
 <summary><b>我的钩子不工作 / 我看到“重复钩子文件”错误</b></summary>
 
-这是最常见的问题。**不要在 `.claude-plugin/plugin.json` 中添加 `"hooks"` 字段。** Claude Code v2.1+ 会自动从已安装的插件加载 `hooks/hooks.json`。显式声明它会导致重复检测错误。参见 [#29](https://github.com/affaan-m/everything-claude-code/issues/29), [#52](https://github.com/affaan-m/everything-claude-code/issues/52), [#103](https://github.com/affaan-m/everything-claude-code/issues/103)。
+这是最常见的 issue。**不要在 `.claude-plugin/plugin.json` 中添加 `"hooks"` 字段。** Claude Code v2.1+ 会自动从已安装的插件加载 `hooks/hooks.json`。显式声明它会导致重复检测错误。参见 [#29](https://github.com/affaan-m/everything-claude-code/issues/29), [#52](https://github.com/affaan-m/everything-claude-code/issues/52), [#103](https://github.com/affaan-m/everything-claude-code/issues/103)。
 
 </details>
 
@@ -1200,7 +1200,7 @@ OpenCode 的插件系统比 Claude Code 更复杂，有 20 多种事件类型：
 | `/loop-start` | 启动受控的智能体循环执行模式 |
 | `/loop-status` | 检查活动循环状态和检查点 |
 | `/quality-gate` | 对路径或整个仓库运行质量门检查 |
-| `/model-route` | 根据复杂度和预算将任务路由到模型 |
+| `/model-route` | 根据复杂度和预算将 tasks 路由到模型 |
 
 ### 插件安装
 
@@ -1304,7 +1304,7 @@ ECC 是**第一个最大化利用每个主要 AI 编码工具的插件**。以�
 
 | 设置 | 默认值 | 推荐值 | 影响 |
 |---------|---------|-------------|--------|
-| `model` | opus | **sonnet** | 约 60% 的成本降低；处理 80%+ 的编码任务 |
+| `model` | opus | **sonnet** | 约 60% 的成本降低；处理 80%+ 的编码 tasks |
 | `MAX_THINKING_TOKENS` | 31,999 | **10,000** | 每个请求的隐藏思考成本降低约 70% |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | 95 | **50** | 更早压缩 —— 在长会话中质量更好 |
 
@@ -1318,10 +1318,10 @@ ECC 是**第一个最大化利用每个主要 AI 编码工具的插件**。以�
 
 | 命令 | 何时使用 |
 |---------|-------------|
-| `/model sonnet` | 大多数任务的默认选择 |
+| `/model sonnet` | 大多数 tasks 的默认选择 |
 | `/model opus` | 复杂架构、调试、深度推理 |
-| `/clear` | 在不相关的任务之间（免费，即时重置） |
-| `/compact` | 在逻辑任务断点处（研究完成，里程碑达成） |
+| `/clear` | 在不相关的 tasks 之间（免费，即时重置） |
+| `/compact` | 在逻辑 task 断点处（研究完成，里程碑达成） |
 | `/cost` | 在会话期间监控令牌花费 |
 
 ### 策略性压缩
@@ -1349,7 +1349,7 @@ ECC 是**第一个最大化利用每个主要 AI 编码工具的插件**。以�
 
 ### 代理团队成本警告
 
-代理团队会生成多个上下文窗口。每个团队成员独立消耗令牌。仅用于并行性能提供明显价值的任务（多模块工作、并行审查）。对于简单的顺序任务，子代理更节省令牌。
+代理团队会生成多个上下文窗口。每个团队成员独立消耗令牌。仅用于并行性能提供明显价值的 tasks（多模块工作、并行审查）。对于简单的顺序 tasks，子代理更节省令牌。
 
 ***
 
@@ -1373,7 +1373,7 @@ ECC 是**第一个最大化利用每个主要 AI 编码工具的插件**。以�
 }
 ```
 
-在不相关的任务之间使用 `/clear`，在逻辑断点处使用 `/compact`，并使用 `/cost` 来监控花费。
+在不相关的 tasks 之间使用 `/clear`，在逻辑断点处使用 `/compact`，并使用 `/cost` 来监控花费。
 
 ### 定制化
 

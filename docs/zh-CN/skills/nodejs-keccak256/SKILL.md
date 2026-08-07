@@ -1,23 +1,24 @@
 ---
 name: nodejs-keccak256
-description: 防止 JavaScript 和 TypeScript 中的以太坊哈希错误。Node 的 sha3-256 是 NIST SHA3，而非以太坊 Keccak-256，会静默破坏选择器、签名、存储槽和地址推导。
-origin: ECC direct-port adaptation
+description: 防止 JavaScript 和 TypeScript 中的 Ethereum 哈希 bug。Node 的 sha3-256 是 NIST SHA3，而非 Ethereum Keccak-256，会静默地破坏 selector、签名、storage slot 和地址推导。
+metadata:
+  origin: ECC 直接移植改编
 version: "1.0.0"
 ---
 
 # Node.js Keccak-256
 
-以太坊使用 Keccak-256，而非 Node 的 `crypto.createHash('sha3-256')` 所暴露的 NIST 标准化 SHA3 变体。
+Ethereum 使用 Keccak-256，而不是 Node 的 `crypto.createHash('sha3-256')` 所暴露的 NIST 标准化 SHA3 变体。
 
 ## 何时使用
 
-* 计算以太坊函数选择器或事件主题
-* 在 JS/TS 中构建 EIP-712、签名、Merkle 或存储槽辅助函数
-* 审查任何直接使用 Node crypto 对以太坊数据进行哈希的代码
+- 计算 Ethereum 的 function selector 或 event topic
+- 在 JS/TS 中构建 EIP-712、签名、Merkle 或 storage slot 辅助函数
+- 审查任何直接使用 Node crypto 对 Ethereum 数据做哈希的代码
 
 ## 工作原理
 
-两种算法对相同输入会产生不同输出，且 Node 不会发出警告。
+这两种算法对相同输入会产生不同的输出，而 Node 不会发出警告。
 
 ```javascript
 import crypto from 'crypto';
@@ -79,7 +80,7 @@ function getMappingSlot(key: string, mappingSlot: number): string {
 }
 ```
 
-### 从公钥生成地址
+### 从公钥推导地址
 
 ```typescript
 import { keccak256 } from 'ethers';
@@ -99,4 +100,4 @@ grep -rn "keccak256" --include="*.ts" --include="*.js" . | grep -v node_modules
 
 ## 规则
 
-在以太坊上下文中，切勿使用 `crypto.createHash('sha3-256')`。应使用来自 `ethers`、`viem`、`web3` 或其他明确 Keccak 实现的 Keccak 感知辅助函数。
+在 Ethereum 上下文中，绝不要使用 `crypto.createHash('sha3-256')`。请使用来自 `ethers`、`viem`、`web3` 或其他显式 Keccak 实现的支持 Keccak 的辅助函数。

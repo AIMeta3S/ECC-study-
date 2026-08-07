@@ -3,14 +3,13 @@ paths:
   - "**/*.swift"
   - "**/Package.swift"
 ---
+# Swift Patterns
 
-# Swift 模式
+> 本文件扩展了 [common/patterns.md](../common/patterns.md)，补充 Swift 专属内容。
 
-> 此文件使用 Swift 特定内容扩展了 [common/patterns.md](../common/patterns.md)。
+## Protocol-Oriented Design
 
-## 面向协议的设计
-
-定义小型、专注的协议。使用协议扩展来提供共享的默认实现：
+定义小而聚焦的 protocol。使用 protocol extension 提供共享默认实现：
 
 ```swift
 protocol Repository: Sendable {
@@ -22,8 +21,8 @@ protocol Repository: Sendable {
 
 ## 值类型
 
-* 使用结构体（struct）作为数据传输对象和模型
-* 使用带有关联值的枚举（enum）来建模不同的状态：
+- 使用 struct 作为 DTO 和 model
+- 使用带 associated value 的 enum 来建模不同的状态：
 
 ```swift
 enum LoadState<T: Sendable>: Sendable {
@@ -34,9 +33,9 @@ enum LoadState<T: Sendable>: Sendable {
 }
 ```
 
-## Actor 模式
+## Actor Pattern
 
-使用 actor 来处理共享可变状态，而不是锁或调度队列：
+对于共享的可变状态，使用 actor 代替锁或 dispatch queue：
 
 ```swift
 actor Cache<Key: Hashable & Sendable, Value: Sendable> {
@@ -47,9 +46,9 @@ actor Cache<Key: Hashable & Sendable, Value: Sendable> {
 }
 ```
 
-## 依赖注入
+## Dependency Injection
 
-使用默认参数注入协议 —— 生产环境使用默认值，测试时注入模拟对象：
+通过默认参数注入 protocol — 生产环境使用默认实现，测试注入 mock：
 
 ```swift
 struct UserService {
@@ -63,5 +62,5 @@ struct UserService {
 
 ## 参考
 
-查看技能：`swift-actor-persistence` 以了解基于 actor 的持久化模式。
-查看技能：`swift-protocol-di-testing` 以了解基于协议的依赖注入和测试。
+参见 skill：`swift-actor-persistence`，了解基于 actor 的持久化 pattern。
+参见 skill：`swift-protocol-di-testing`，了解基于 protocol 的 DI 与测试。

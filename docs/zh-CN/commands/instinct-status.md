@@ -1,19 +1,16 @@
 ---
 name: instinct-status
-description: 展示已学习的本能（项目+全局）并充满信心
+description: 显示已学到的 instinct（项目 + 全局）及其 confidence
 command: true
 ---
 
-# 本能状态命令
+# Instinct Status 命令
 
-显示当前项目学习到的本能以及全局本能，按领域分组。
+显示当前项目已学到的 instinct 以及全局 instinct，按 domain 分组。
 
 ## 实现
 
-以与 `hooks/hooks.json` 和其他斜杠命令（`/sessions`、`/skill-health`）
-相同的解析器运行本能 CLI——环境变量 → 标准安装 → 已知插件根 → 插件缓存 → 回退。
-这样可以避免当 `CLAUDE_PLUGIN_ROOT` 未设置而旧的
-`~/.claude/skills/continuous-learning-v2/` 目录仍然存在时发生的路径分歧 (#2037)。
+运行 instinct CLI，采用与 `hooks/hooks.json` 和其他 slash command（`/sessions`、`/skill-health`）相同的方式解析当前生效的 ECC plugin root —— env var → standard install → known plugin roots → plugin cache → fallback。这样可以避免当 `CLAUDE_PLUGIN_ROOT` 未设置、但旧版 `~/.claude/skills/continuous-learning-v2/` 目录仍然存在时出现的不一致（#2037）。
 
 ```bash
 ECC_ROOT="${CLAUDE_PLUGIN_ROOT:-$(node -e "var r=(()=>{var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var p=require('path'),f=require('fs'),h=require('os').homedir(),d=p.join(h,'.claude'),q=p.join('scripts','lib','utils.js');if(f.existsSync(p.join(d,q)))return d;for(var s of [['ecc'],['ecc@ecc'],['marketplaces','ecc'],['everything-claude-code'],['everything-claude-code@everything-claude-code'],['marketplaces','everything-claude-code']]){var l=p.join(d,'plugins',...s);if(f.existsSync(p.join(l,q)))return l}try{for(var g of ['ecc','everything-claude-code']){var b=p.join(d,'plugins','cache',g);for(var o of f.readdirSync(b,{withFileTypes:true})){if(!o.isDirectory())continue;for(var v of f.readdirSync(p.join(b,o.name),{withFileTypes:true})){if(!v.isDirectory())continue;var c=p.join(b,o.name,v.name);if(f.existsSync(p.join(c,q)))return c}}}}catch(x){}return d})();console.log(r)")}"
@@ -28,30 +25,30 @@ python3 "$ECC_ROOT/skills/continuous-learning-v2/scripts/instinct-cli.py" status
 
 ## 操作步骤
 
-1. 检测当前项目上下文（git remote/路径哈希）
-2. 从 `~/.claude/homunculus/projects/<project-id>/instincts/` 读取项目本能
-3. 从 `~/.claude/homunculus/instincts/` 读取全局本能
-4. 合并并应用优先级规则（当ID冲突时，项目本能覆盖全局本能）
-5. 按领域分组显示，包含置信度条和观察统计数据
+1. 检测当前项目上下文（git remote/path hash）
+2. 从 `~/.claude/homunculus/projects/<project-id>/instincts/` 读取项目 instinct
+3. 从 `~/.claude/homunculus/instincts/` 读取全局 instinct
+4. 按优先级规则合并（当 ID 冲突时项目覆盖全局）
+5. 按 domain 分组显示，包含 confidence bar 和 observation 统计
 
 ## 输出格式
 
 ```
 ============================================================
-  INSTINCT 状态 - 总计 12
+  INSTINCT STATUS - 12 total
 ============================================================
 
-  项目: my-app (a1b2c3d4e5f6)
-  项目 instincts: 8
-  全局 instincts:  4
+  Project: my-app (a1b2c3d4e5f6)
+  Project instincts: 8
+  Global instincts:  4
 
-## 项目范围内 (my-app)
-  ### 工作流 (3)
+## PROJECT-SCOPED (my-app)
+  ### WORKFLOW (3)
     ███████░░░  70%  grep-before-edit [project]
-              触发条件: 当修改代码时
+              trigger: when modifying code
 
-## 全局 (适用于所有项目)
-  ### 安全 (2)
+## GLOBAL (apply to all projects)
+  ### SECURITY (2)
     █████████░  85%  validate-user-input [global]
-              触发条件: 当处理用户输入时
+              trigger: when handling user input
 ```

@@ -1,104 +1,101 @@
 # Capture 指南
 
-## 概述
+## 概览
 
-VideoDB Capture 支持实时屏幕和音频录制，并具备 AI 处理能力。桌面捕获目前仅支持 **macOS**。
+VideoDB Capture 支持实时屏幕和音频录制，并配合 AI 处理。桌面端 capture 目前仅支持 **macOS**。
 
-关于代码层面的详细信息（SDK 方法、事件结构、AI 管道），请参阅 [capture-reference.md](capture-reference.md)。
+如需代码层面的细节（SDK 方法、event 结构、AI pipeline），请参见 [capture-reference.md](capture-reference.md)。
 
 ## 快速开始
 
-1. **启动 WebSocket 监听器**：`python scripts/ws_listener.py --clear &`
-2. **运行捕获代码**（见下方完整捕获工作流）
-3. **事件写入到**：`/tmp/videodb_events.jsonl`
+1. **启动 WebSocket listener**：`python scripts/ws_listener.py --clear &`
+2. **运行 capture 代码**（参见下文的“完整的 Capture 工作流”）
+3. **event 写入到**：`/tmp/videodb_events.jsonl`
 
-***
+---
 
-## 完整捕获工作流
+## 完整的 Capture 工作流
 
-无需 webhook 或轮询。WebSocket 会传递所有事件，包括会话生命周期事件。
+无需 webhooks 或轮询。WebSocket 负责投递所有 event，包括 session 的生命周期事件。
 
-> **关键提示：** `CaptureClient` 必须在整个捕获期间持续运行。它运行本地录制器二进制文件，将屏幕/音频数据流式传输到 VideoDB。如果创建 `CaptureClient` 的 Python 进程退出，录制器二进制文件将被终止，捕获会静默停止。请始终将捕获代码作为**长期运行的后台进程**运行（例如 `nohup python capture_script.py &`），并使用信号处理（`asyncio.Event` + `SIGINT`/`SIGTERM`）来保持其存活，直到您明确停止它。
+> **关键：** `CaptureClient` 必须在整个 capture 期间保持运行。它运行本地的 recorder binary，将屏幕/音频数据流式传输给 VideoDB。如果创建 `CaptureClient` 的 Python 进程退出，recorder binary 会被 kill，capture 会静默停止。务必将 capture 代码作为**长驻后台进程**运行（例如 `nohup python capture_script.py &`），并使用 signal 处理（`asyncio.Event` + `SIGINT`/`SIGTERM`）让其保持存活，直到你显式停止它。
 
-1. 在后台**启动 WebSocket 监听器**，使用 `--clear` 标志来清除旧事件。等待其创建 WebSocket ID 文件。
+1. 在后台**启动 WebSocket listener**，带上 `--clear` flag 以清除旧的 event。等待其创建 WebSocket ID 文件。
 
-2. **读取 WebSocket ID**。此 ID 是捕获会话和 AI 管道所必需的。
+2. **读取 WebSocket ID**。此 ID 是 capture session 和 AI pipeline 所必需的。
 
-3. **创建捕获会话**，并为桌面客户端生成客户端令牌。
+3. **创建一个 capture session**，并为桌面端 client 生成 client token。
 
-4. 使用令牌**初始化 CaptureClient**。请求麦克风和屏幕捕获权限。
+4. 使用该 token **初始化 CaptureClient**。请求麦克风和屏幕 capture 的权限。
 
-5. **列出并选择通道**（麦克风、显示器、系统音频）。在您希望持久化为视频的通道上设置 `store = True`。
+5. **列出并选择 channels**（mic、display、system_audio）。对希望持久化为视频的 channels 设置 `store = True`。
 
-6. 使用选定的通道**启动会话**。
+6. 使用选定的 channels **启动 session**。
 
-7. 通过读取事件直到看到 `capture_session.active` 来**等待会话激活**。此事件包含 `rtstreams` 数组。将会话信息（会话 ID、RTStream ID）保存到文件（例如 `/tmp/videodb_capture_info.json`），以便其他脚本可以读取。
+7. 通过读取 event **等待 session 激活**，直到看到 `capture_session.active`。该 event 包含 `rtstreams` 数组。将 session 信息（session ID、RTStream IDs）保存到文件（例如 `/tmp/videodb_capture_info.json`），以便其他脚本读取。
 
-8. **保持进程存活**。使用 `asyncio.Event` 配合 `SIGINT`/`SIGTERM` 的信号处理器来阻塞进程，直到显式停止。写入一个 PID 文件（例如 `/tmp/videodb_capture_pid`），以便稍后可以使用 `kill $(cat /tmp/videodb_capture_pid)` 停止该进程。PID 文件应在每次运行时被覆盖，以便重新运行时始终具有正确的 PID。
+8. **保持进程存活。** 使用 `asyncio.Event` 配合 `SIGINT`/`SIGTERM` 的 signal handler 进行阻塞，直到被显式停止。写入 PID 文件（例如 `/tmp/videodb_capture_pid`），以便后续可通过 `kill $(cat /tmp/videodb_capture_pid)` 停止该进程。PID 文件应在每次运行时被覆盖，以确保每次重跑都持有正确的 PID。
 
-9. **启动 AI 管道**（在单独的命令/脚本中）对每个 RTStream 进行音频索引和视觉索引。从保存的会话信息文件中读取 RTStream ID。
+9. 对每个 RTStream **启动 AI pipeline**（在独立的命令/脚本中），用于 audio indexing 和 visual indexing。从已保存的 session 信息文件中读取 RTStream IDs。
 
-10. **编写自定义事件处理逻辑**（在单独的命令/脚本中），根据您的用例读取实时事件。示例：
-    * 当 `visual_index` 提到 "Slack" 时记录 Slack 活动
-    * 当 `audio_index` 事件到达时总结讨论
-    * 当 `transcript` 中出现特定关键词时触发警报
-    * 从屏幕描述中跟踪应用程序使用情况
+10. **编写自定义的 event 处理逻辑**（在独立的命令/脚本中），根据你的 use case 读取实时 event。示例：
+    - 当 `visual_index` 提到 “Slack” 时记录 Slack 活动
+    - 当 `audio_index` event 到达时总结讨论
+    - 当特定关键词出现在 `transcript` 中时触发告警
+    - 根据屏幕描述跟踪应用使用情况
 
-11. **停止捕获** - 完成后，向捕获进程发送 SIGTERM。它应在信号处理器中调用 `client.stop_capture()` 和 `client.shutdown()`。
+11. 完成后**停止 capture** —— 向 capture 进程发送 SIGTERM。它应在其 signal handler 中调用 `client.stop_capture()` 和 `client.shutdown()`。
 
-12. **等待导出** - 通过读取事件直到看到 `capture_session.exported`。此事件包含 `exported_video_id`、`stream_url` 和 `player_url`。这可能在停止捕获后需要几秒钟。
+12. 通过读取 event **等待导出**，直到看到 `capture_session.exported`。该 event 包含 `exported_video_id`、`stream_url` 和 `player_url`。这可能需要在停止 capture 后等待数秒。
 
-13. **停止 WebSocket 监听器** - 收到导出事件后，使用 `kill $(cat /tmp/videodb_ws_pid)` 来干净地终止它。
+13. 在接收到导出 event 后**停止 WebSocket listener**。使用 `kill $(cat /tmp/videodb_ws_pid)` 来干净地终止它。
 
-***
+---
 
-## 关机顺序
+## 关闭流程
 
-正确的关机顺序对于确保捕获所有事件非常重要：
+正确的关闭顺序很重要，以确保所有 event 都被捕获：
 
-1. **停止捕获会话** — `client.stop_capture()` 然后 `client.shutdown()`
-2. **等待导出事件** — 轮询 `/tmp/videodb_events.jsonl` 以查找 `capture_session.exported`
-3. **停止 WebSocket 监听器** — `kill $(cat /tmp/videodb_ws_pid)`
+1. **停止 capture session** —— `client.stop_capture()` 然后 `client.shutdown()`
+2. **等待导出 event** —— 轮询 `/tmp/videodb_events.jsonl` 查找 `capture_session.exported`
+3. **停止 WebSocket listener** —— `kill $(cat /tmp/videodb_ws_pid)`
 
-在收到导出事件之前，请**不要**杀死 WebSocket 监听器，否则您将错过最终的视频 URL。
+在接收到导出 event 之前，请勿 kill WebSocket listener，否则会错过最终的视频 URL。
 
-***
+---
 
 ## 脚本
 
-| 脚本 | 描述 |
+| 脚本 | 说明 |
 |--------|-------------|
-| `scripts/ws_listener.py` | WebSocket 事件监听器（转储为 JSONL） |
+| `scripts/ws_listener.py` | WebSocket event listener（导出为 JSONL） |
 
-### ws\_listener.py 用法
+### ws_listener.py 用法
 
 ```bash
-# Start listener in background (append to existing events)
+# 在后台启动 listener（追加到已有 event）
 python scripts/ws_listener.py &
 
-# Start listener with clear (new session, clears old events)
+# 启动 listener 并清除（新 session，清除旧 event）
 python scripts/ws_listener.py --clear &
 
-# Custom output directory
+# 自定义输出目录
 python scripts/ws_listener.py --clear /path/to/events &
 
-# Stop the listener
+# 停止 listener
 kill $(cat /tmp/videodb_ws_pid)
 ```
 
 **选项：**
-
-* `--clear`：在启动前清除事件文件。启动新捕获会话时使用。
+- `--clear`：启动前清除 event 文件。在启动新的 capture session 时使用。
 
 **输出文件：**
+- `videodb_events.jsonl` - 所有 WebSocket event
+- `videodb_ws_id` - WebSocket connection ID（用于 `ws_connection_id` 参数）
+- `videodb_ws_pid` - Process ID（用于停止 listener）
 
-* `videodb_events.jsonl` - 所有 WebSocket 事件
-* `videodb_ws_id` - WebSocket 连接 ID（用于 `ws_connection_id` 参数）
-* `videodb_ws_pid` - 进程 ID（用于停止监听器）
-
-**功能：**
-
-* 连接断开时自动重连，并采用指数退避
-* 收到 SIGINT/SIGTERM 时优雅关机
-* PID 文件，便于进程管理
-* 连接状态日志记录
+**特性：**
+- 连接断开时以 exponential backoff 自动重连
+- 收到 SIGINT/SIGTERM 时优雅关闭
+- PID 文件，便于进程管理
+- 连接状态日志记录

@@ -1,140 +1,132 @@
 ---
-description: 全面的 C++ 代码审查，涵盖内存安全、现代 C++ 惯用法、并发性和安全性。调用 cpp-reviewer 代理。
+description: 针对内存安全、现代 C++ 惯用法、并发与安全的全面 C++ 代码审查。调用 cpp-reviewer agent。
 ---
 
 # C++ 代码审查
 
-此命令调用 **cpp-reviewer** 代理进行全面的 C++ 特定代码审查。
+该命令调用 **cpp-reviewer** agent，执行针对 C++ 的全面代码审查。
 
-## 此命令的作用
+## 此命令的功能
 
-1. **识别 C++ 变更**：通过 `git diff` 查找已修改的 `.cpp`、`.hpp`、`.cc`、`.h` 文件
+1. **识别 C++ 改动**：通过 `git diff` 查找已修改的 `.cpp`、`.hpp`、`.cc`、`.h` 文件
 2. **运行静态分析**：执行 `clang-tidy` 和 `cppcheck`
-3. **内存安全检查**：检查原始 new/delete、缓冲区溢出、释放后使用
-4. **并发审查**：分析线程安全性、互斥锁使用情况、数据竞争
-5. **现代 C++ 检查**：验证代码是否遵循 C++17/20 约定和最佳实践
-6. **生成报告**：按严重程度对问题进行分类
+3. **内存安全扫描**：检查裸 new/delete、缓冲区溢出、use-after-free
+4. **并发审查**：分析线程安全、mutex 用法、data race
+5. **现代 C++ 检查**：验证代码是否遵循 C++17/20 约定与最佳实践
+6. **生成报告**：按严重程度对 issue 分级
 
-## 使用时机
+## 何时使用
 
-在以下情况下使用 `/cpp-review`：
-
-* 编写或修改 C++ 代码后
-* 提交 C++ 变更前
-* 审查包含 C++ 代码的拉取请求时
-* 接手新的 C++ 代码库时
-* 检查内存安全问题
+在以下情况使用 `/cpp-review`：
+- 编写或修改 C++ 代码后
+- 提交 C++ 改动前
+- 审查包含 C++ 代码的 Pull Request
+- 接手新的 C++ 代码库时
+- 检查内存安全 issue 时
 
 ## 审查类别
 
-### 严重（必须修复）
+### CRITICAL（必须修复）
+- 不使用 RAII 的裸 `new`/`delete`
+- 缓冲区溢出与 use-after-free
+- 无同步机制的 data race
+- 通过 `system()` 的命令注入
+- 读取未初始化变量
+- 空指针解引用
 
-* 未使用 RAII 的原始 `new`/`delete`
-* 缓冲区溢出和释放后使用
-* 无同步的数据竞争
-* 通过 `system()` 进行命令注入
-* 未初始化的变量读取
-* 空指针解引用
+### HIGH（应当修复）
+- 违反 Rule of Five
+- 缺少 `std::lock_guard` / `std::scoped_lock`
+- 缺少正确生命周期管理的 detached thread
+- 使用 C 风格转换而非 `static_cast`/`dynamic_cast`
+- 缺少 const correctness
 
-### 高（应该修复）
+### MEDIUM（建议考虑）
+- 不必要的拷贝（按值传递而非 `const&`）
+- 已知大小的容器未调用 `reserve()`
+- 在头文件中使用 `using namespace std;`
+- 重要的返回值缺少 `[[nodiscard]]`
+- 过于复杂的 template metaprogramming
 
-* 五法则违规
-* 缺少 `std::lock_guard` / `std::scoped_lock`
-* 分离的线程没有正确的生命周期管理
-* 使用 C 风格强制转换而非 `static_cast`/`dynamic_cast`
-* 缺少 `const` 正确性
-
-### 中（考虑）
-
-* 不必要的拷贝（按值传递而非 `const&`）
-* 已知大小的容器上缺少 `reserve()`
-* 头文件中的 `using namespace std;`
-* 重要返回值上缺少 `[[nodiscard]]`
-* 过于复杂的模板元编程
-
-## 运行的自动化检查
+## 自动化检查
 
 ```bash
-# Static analysis
+# 静态分析
 clang-tidy --checks='*,-llvmlibc-*' src/*.cpp -- -std=c++17
 
-# Additional analysis
+# 额外分析
 cppcheck --enable=all --suppress=missingIncludeSystem src/
 
-# Build with warnings
+# 带警告构建
 cmake --build build -- -Wall -Wextra -Wpedantic
 ```
 
 ## 使用示例
 
-````text
+```text
+User: /cpp-review
+
+Agent:
 # C++ 代码审查报告
 
 ## 已审查文件
-- src/handler/user.cpp (已修改)
-- src/service/auth.cpp (已修改)
+- src/handler/user.cpp（已修改）
+- src/service/auth.cpp（已修改）
 
 ## 静态分析结果
 ✓ clang-tidy: 2 个警告
-✓ cppcheck: 无问题
+✓ cppcheck: 无 issue
 
-## 发现的问题
+## 发现的 issue
 
-[严重] 内存泄漏
-文件: src/service/auth.cpp:45
-问题: 使用了原始的 `new` 而没有匹配的 `delete`
+[CRITICAL] 内存泄漏
+文件：src/service/auth.cpp:45
+问题：裸 `new` 没有匹配的 `delete`
 ```cpp
 auto* session = new Session(userId);  // 内存泄漏！
 cache[userId] = session;
-````
-
+```
 修复：使用 `std::unique_ptr`
-
 ```cpp
 auto session = std::make_unique<Session>(userId);
 cache[userId] = std::move(session);
 ```
 
-\[高] 缺少常量引用
+[HIGH] 缺少 const 引用
 文件：src/handler/user.cpp:28
 问题：大对象按值传递
-
 ```cpp
-void processUser(User user) {  // Unnecessary copy
+void processUser(User user) {  // 不必要的拷贝
 ```
-
-修复：通过常量引用传递
-
+修复：按 const 引用传递
 ```cpp
 void processUser(const User& user) {
 ```
 
-## 摘要
+## 汇总
+- CRITICAL: 1
+- HIGH: 1
+- MEDIUM: 0
 
-* 严重：1
-* 高：1
-* 中：0
-
-建议：FAIL: 在严重问题修复前阻止合并
-
+建议：FAIL：阻止合并，直至修复 CRITICAL issue
 ```
-## 批准标准
+
+## 通过标准
 
 | 状态 | 条件 |
 |--------|-----------|
-| PASS: 批准 | 没有 CRITICAL 或 HIGH 级别的问题 |
-| WARNING: 警告 | 仅有 MEDIUM 级别的问题（谨慎合并） |
-| FAIL: 阻止 | 发现 CRITICAL 或 HIGH 级别的问题 |
+| PASS: Approve | 无 CRITICAL 或 HIGH issue |
+| WARNING: Warning | 仅有 MEDIUM issue（谨慎合并） |
+| FAIL: Block | 发现 CRITICAL 或 HIGH issue |
 
-## 与其他命令的集成
+## 与其他命令的配合
 
-- 首先使用 `/cpp-test` 确保测试通过
-- 如果出现构建错误，请使用 `/cpp-build`
-- 在提交前使用 `/cpp-review`
-- 对于非 C++ 特定的问题，请使用 `/code-review`
+- 先使用 `/cpp-test` 确保测试通过
+- 出现 build 错误时使用 `/cpp-build`
+- 提交前使用 `/cpp-review`
+- 针对 C++ 专属之外的关注点使用 `/code-review`
 
-## 相关
+## 相关资源
 
-- 代理：`agents/cpp-reviewer.md`
-- 技能：`skills/cpp-coding-standards/`, `skills/cpp-testing/`
-```
+- Agent：`agents/cpp-reviewer.md`
+- Skills：`skills/cpp-coding-standards/`、`skills/cpp-testing/`

@@ -1,20 +1,20 @@
 # 故障排除指南
 
-Everything Claude Code (ECC) 插件的常见问题与解决方案。
+Everything Claude Code (ECC) 插件的常见 issues 与解决方案。
 
 ## 目录
 
-* [内存与上下文问题](#内存与上下文问题)
+* [内存与上下文 Issues](#内存与上下文-issues)
 * [代理工具故障](#代理工具故障)
 * [钩子与工作流错误](#钩子与工作流错误)
 * [安装与设置](#安装与设置)
-* [性能问题](#性能问题)
+* [性能 Issues](#性能-issues)
 * [常见错误信息](#常见错误信息)
 * [获取帮助](#获取帮助)
 
 ***
 
-## 内存与上下文问题
+## 内存与上下文 Issues
 
 ### 上下文窗口溢出
 
@@ -317,7 +317,7 @@ rm package-lock.json  # If using pnpm/yarn/bun
 
 ***
 
-## 性能问题
+## 性能 Issues
 
 ### 响应时间缓慢
 
@@ -418,7 +418,7 @@ find ~/.claude/plugins -name "*.sh" -exec dos2unix {} \;
 
 ## 获取帮助
 
-如果您仍然遇到问题：
+如果您仍然遇到 issues：
 
 1. **检查 GitHub Issues**：[github.com/affaan-m/everything-claude-code/issues](https://github.com/affaan-m/everything-claude-code/issues)
 2. **启用调试日志记录**：

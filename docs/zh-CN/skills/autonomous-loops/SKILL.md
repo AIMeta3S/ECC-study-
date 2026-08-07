@@ -1,352 +1,348 @@
 ---
 name: autonomous-loops
-description: "自主Claude代码循环的模式与架构——从简单的顺序管道到基于RFC的多智能体有向无环图系统。"
-origin: ECC
+description: "autonomous Claude Code loop 的 pattern 与架构——从简单的 sequential pipeline 到 RFC-driven 多 agent DAG 系统。"
+metadata:
+  origin: ECC
 ---
 
-# 自主循环技能
+# Autonomous Loops 技能
 
-> 兼容性说明 (v1.8.0): `autonomous-loops` 保留一个发布周期。
-> 规范的技能名称现在是 `continuous-agent-loop`。新的循环指南应在此处编写，而此技能继续可用以避免破坏现有工作流。
+> 兼容性说明（v1.8.0）：`autonomous-loops` 将保留一个 release。
+> 当前的 canonical skill 名称为 `continuous-agent-loop`。新的 loop 指南
+> 应在那里编写，同时此 skill 仍然保留可用，以避免
+> 破坏现有 workflow。
 
-在循环中自主运行 Claude Code 的模式、架构和参考实现。涵盖从简单的 `claude -p` 管道到完整的 RFC 驱动的多智能体 DAG 编排的一切。
+以 autonomous loop 形式运行 Claude Code 的 pattern、架构与参考实现。涵盖从简单的 `claude -p` pipeline 到完整的 RFC-driven 多 agent DAG orchestration 的所有内容。
 
 ## 何时使用
 
-* 建立无需人工干预即可运行的自主开发工作流
-* 为你的问题选择正确的循环架构（简单与复杂）
-* 构建 CI/CD 风格的持续开发管道
-* 运行具有合并协调的并行智能体
-* 在循环迭代中实现上下文持久化
-* 为自主工作流添加质量门和清理步骤
+- 建立无需人工干预即可运行的 autonomous 开发 workflow
+- 为你的 problem 选择合适的 loop 架构（简单 vs 复杂）
+- 构建 CI/CD 风格的持续开发 pipeline
+- 运行并行 agent 并协调 merge
+- 实现跨 loop 迭代的 context 持久化
+- 为 autonomous workflow 添加 quality gate 和 cleanup pass
 
-## 循环模式谱系
+## Loop Pattern 谱系
 
 从最简单到最复杂：
 
-| 模式 | 复杂度 | 最适合 |
+| Pattern | 复杂度 | 最适合 |
 |---------|-----------|----------|
-| [顺序管道](#1-顺序管道-claude--p) | 低 | 日常开发步骤，脚本化工作流 |
-| [NanoClaw REPL](#2-nanoclaw-repl) | 低 | 交互式持久会话 |
-| [无限智能体循环](#3-无限智能体循环) | 中 | 并行内容生成，规范驱动的工作 |
-| [持续 Claude PR 循环](#4-持续-claude-pr-循环) | 中 | 具有 CI 门的跨天迭代项目 |
-| [去草率化模式](#5-去草率化模式) | 附加 | 任何实现者步骤后的质量清理 |
-| [Ralphinho / RFC 驱动的 DAG](#6-ralphinho--rfc-驱动的-dag-编排) | 高 | 大型功能，具有合并队列的多单元并行工作 |
+| [Sequential Pipeline](#1-sequential-pipeline-claude--p) | 低 | 日常开发步骤、脚本化 workflow |
+| [NanoClaw REPL](#2-nanoclaw-repl) | 低 | 交互式持久 session |
+| [Infinite Agentic Loop](#3-infinite-agentic-loop) | 中 | 并行内容生成、spec-driven 工作 |
+| [Continuous Claude PR Loop](#4-continuous-claude-pr-loop) | 中 | 带 CI gate 的多天迭代项目 |
+| [De-Sloppify Pattern](#5-the-de-sloppify-pattern) | 附加 | 在任意 Implementer 步骤之后的 quality cleanup |
+| [Ralphinho / RFC-Driven DAG](#6-ralphinho--rfc-driven-dag-orchestration) | 高 | 大型 feature、带 merge queue 的多单元并行工作 |
 
-***
+---
 
-## 1. 顺序管道 (`claude -p`)
+## 1. Sequential Pipeline (`claude -p`)
 
-**最简单的循环。** 将日常开发分解为一系列非交互式 `claude -p` 调用。每次调用都是一个具有清晰提示的专注步骤。
+**最简单的 loop。** 将日常开发拆分为一系列非交互式的 `claude -p` 调用。每次调用都是一个具有明确 prompt 的聚焦步骤。
 
 ### 核心见解
 
-> 如果你无法想出这样的循环，那意味着你甚至无法在交互模式下驱动 LLM 来修复你的代码。
+> 如果你想不出这样的 loop，意味着你甚至无法在交互模式下驱动 LLM 修复你的代码。
 
-`claude -p` 标志以非交互方式运行 Claude Code 并附带提示，完成后退出。链式调用来构建管道：
+`claude -p` flag 以非交互方式运行 Claude Code 并带有一个 prompt，完成后退出。链式调用以构建 pipeline：
 
 ```bash
 #!/bin/bash
-# daily-dev.sh — Sequential pipeline for a feature branch
+# daily-dev.sh — 针对 feature branch 的 sequential pipeline
 
 set -e
 
-# Step 1: Implement the feature
+# Step 1：实现 feature
 claude -p "Read the spec in docs/auth-spec.md. Implement OAuth2 login in src/auth/. Write tests first (TDD). Do NOT create any new documentation files."
 
-# Step 2: De-sloppify (cleanup pass)
+# Step 2：De-sloppify（cleanup pass）
 claude -p "Review all files changed by the previous commit. Remove any unnecessary type tests, overly defensive checks, or testing of language features (e.g., testing that TypeScript generics work). Keep real business logic tests. Run the test suite after cleanup."
 
-# Step 3: Verify
+# Step 3：验证
 claude -p "Run the full build, lint, type check, and test suite. Fix any failures. Do not add new features."
 
-# Step 4: Commit
+# Step 4：提交
 claude -p "Create a conventional commit for all staged changes. Use 'feat: add OAuth2 login flow' as the message."
 ```
 
 ### 关键设计原则
 
-1. **每个步骤都是隔离的** — 每次 `claude -p` 调用都是一个新的上下文窗口，意味着步骤之间没有上下文泄露。
-2. **顺序很重要** — 步骤按顺序执行。每个步骤都建立在前一个步骤留下的文件系统状态之上。
-3. **否定指令是危险的** — 不要说“不要测试类型系统。”相反，添加一个单独的清理步骤（参见[去草率化模式](#5-去草率化模式)）。
-4. **退出代码会传播** — `set -e` 在失败时停止管道。
+1. **每个步骤是隔离的** —— 每个 `claude -p` 调用使用全新的 context window，意味着步骤之间没有 context 串扰。
+2. **顺序很重要** —— 步骤按顺序执行。每个步骤都建立在前一个步骤留下的 filesystem 状态之上。
+3. **负面指令是危险的** —— 不要说"不要测试 type system"。相反，应添加一个单独的 cleanup 步骤（见 [De-Sloppify Pattern](#5-the-de-sloppify-pattern)）。
+4. **exit code 会传播** —— `set -e` 在失败时停止 pipeline。
 
 ### 变体
 
-**使用模型路由：**
-
+**使用 model routing：**
 ```bash
-# Research with Opus (deep reasoning)
+# 使用 Opus 进行 Research（深度推理）
 claude -p --model opus "Analyze the codebase architecture and write a plan for adding caching..."
 
-# Implement with Sonnet (fast, capable)
+# 使用 Sonnet 进行 Implement（快速、能力强）
 claude -p "Implement the caching layer according to the plan in docs/caching-plan.md..."
 
-# Review with Opus (thorough)
+# 使用 Opus 进行 Review（彻底）
 claude -p --model opus "Review all changes for security issues, race conditions, and edge cases..."
 ```
 
-**使用环境上下文：**
-
+**使用环境 context：**
 ```bash
-# Pass context via files, not prompt length
+# 通过文件传递 context，而不是通过 prompt 长度
 echo "Focus areas: auth module, API rate limiting" > .claude-context.md
 claude -p "Read .claude-context.md for priorities. Work through them in order."
 rm .claude-context.md
 ```
 
 **使用 `--allowedTools` 限制：**
-
 ```bash
-# Read-only analysis pass
+# 只读分析 pass
 claude -p --allowedTools "Read,Grep,Glob" "Audit this codebase for security vulnerabilities..."
 
-# Write-only implementation pass
+# 只写实现 pass
 claude -p --allowedTools "Read,Write,Edit,Bash" "Implement the fixes from security-audit.md..."
 ```
 
-***
+---
 
 ## 2. NanoClaw REPL
 
-**ECC 内置的持久循环。** 一个具有会话感知的 REPL，它使用完整的对话历史同步调用 `claude -p`。
+**ECC 内置的 persistent loop。** 一个 session 感知的 REPL，它以完整的对话历史同步调用 `claude -p`。
 
 ```bash
-# Start the default session
+# 启动默认 session
 node scripts/claw.js
 
-# Named session with skill context
+# 带 skill context 的命名 session
 CLAW_SESSION=my-project CLAW_SKILLS=tdd-workflow,security-review node scripts/claw.js
 ```
 
 ### 工作原理
 
 1. 从 `~/.claude/claw/{session}.md` 加载对话历史
-2. 每个用户消息都连同完整历史记录作为上下文发送给 `claude -p`
-3. 响应被追加到会话文件中（Markdown 作为数据库）
-4. 会话在重启后持久存在
+2. 每条用户消息都连同完整历史作为 context 发送给 `claude -p`
+3. 响应被追加到 session 文件中（Markdown 作为数据库）
+4. session 在重启后依然持久存在
 
-### NanoClaw 与顺序管道的选择
+### 何时使用 NanoClaw vs Sequential Pipeline
 
-| 用例 | NanoClaw | 顺序管道 |
+| 使用场景 | NanoClaw | Sequential Pipeline |
 |----------|----------|-------------------|
 | 交互式探索 | 是 | 否 |
 | 脚本化自动化 | 否 | 是 |
-| 会话持久性 | 内置 | 手动 |
-| 上下文累积 | 每轮增长 | 每个步骤都是新的 |
+| Session 持久化 | 内置 | 手动 |
+| Context 累积 | 每轮递增 | 每步全新 |
 | CI/CD 集成 | 差 | 优秀 |
 
-有关完整详情，请参阅 `/claw` 命令文档。
+详情请参阅 `/claw` 命令文档。
 
-***
+---
 
-## 3. 无限智能体循环
+## 3. Infinite Agentic Loop
 
-**一个双提示系统**，用于编排并行子智能体以进行规范驱动的生成。由 disler 开发（致谢：@disler）。
+**一个 two-prompt 系统**，通过编排并行 sub-agent 来进行 spec-driven 生成。由 disler 开发（credit: @disler）。
 
-### 架构：双提示系统
+### 架构：Two-Prompt System
 
 ```
-PROMPT 1（协调器）              PROMPT 2（子代理）
+PROMPT 1 (Orchestrator)              PROMPT 2 (Sub-Agents)
 ┌─────────────────────┐             ┌──────────────────────┐
-│ 解析规范文件         │             │ 接收完整上下文        │
-│ 扫描输出目录         │  部署       │ 读取分配编号          │
-│ 规划迭代             │────────────│ 严格遵循规范          │
-│ 分配创作目录         │  N个代理    │ 生成唯一输出          │
-│ 管理批次             │             │ 保存至输出目录        │
+│ Parse spec file      │             │ Receive full context  │
+│ Scan output dir      │  deploys   │ Read assigned number  │
+│ Plan iteration       │────────────│ Follow spec exactly   │
+│ Assign creative dirs │  N agents  │ Generate unique output │
+│ Manage waves         │             │ Save to output dir    │
 └─────────────────────┘             └──────────────────────┘
 ```
 
-### 模式
+### 该 Pattern
 
-1. **规范分析** — 编排器读取一个定义要生成内容的规范文件（Markdown）
-2. **目录侦察** — 扫描现有输出以找到最高的迭代编号
-3. **并行部署** — 启动 N 个子智能体，每个都有：
-   * 完整的规范
-   * 独特的创意方向
-   * 特定的迭代编号（无冲突）
-   * 现有迭代的快照（用于确保唯一性）
-4. **波次管理** — 对于无限模式，部署 3-5 个智能体的波次，直到上下文耗尽
+1. **Spec Analysis** —— Orchestrator 读取一个定义要生成什么的 specification 文件（Markdown）
+2. **Directory Recon** —— 扫描现有输出以找到最高的迭代编号
+3. **Parallel Deployment** —— 启动 N 个 sub-agent，每个带有：
+   - 完整的 spec
+   - 一个唯一的创作方向
+   - 一个具体的迭代编号（无冲突）
+   - 现有迭代的一份快照（用于唯一性）
+4. **Wave Management** —— 对于 infinite 模式，每波部署 3-5 个 agent 直到 context 耗尽
 
-### 通过 Claude Code 命令实现
+### 通过 Claude Code Command 实现
 
 创建 `.claude/commands/infinite.md`：
 
 ```markdown
-从 $ARGUMENTS 中解析以下参数：
-1. spec_file — 规范 Markdown 文件的路径
-2. output_dir — 保存迭代结果的目录
-3. count — 整数 1-N 或 "infinite"
+Parse the following arguments from $ARGUMENTS:
+1. spec_file — path to the specification markdown
+2. output_dir — where iterations are saved
+3. count — integer 1-N or "infinite"
 
-阶段 1： 读取并深入理解规范。
-阶段 2： 列出 output_dir，找到最高的迭代编号。从 N+1 开始。
-阶段 3： 规划创意方向 — 每个代理获得一个**不同的**主题/方法。
-阶段 4： 并行部署子代理（使用 Task 工具）。每个代理接收：
-  - 完整的规范文本
-  - 当前目录快照
-  - 它们被分配的迭代编号
-  - 它们独特的创意方向
-阶段 5（无限模式）： 以 3-5 个为一波进行循环，直到上下文不足为止。
+PHASE 1: Read and deeply understand the specification.
+PHASE 2: List output_dir, find highest iteration number. Start at N+1.
+PHASE 3: Plan creative directions — each agent gets a DIFFERENT theme/approach.
+PHASE 4: Deploy sub-agents in parallel (Task tool). Each receives:
+  - Full spec text
+  - Current directory snapshot
+  - Their assigned iteration number
+  - Their unique creative direction
+PHASE 5 (infinite mode): Loop in waves of 3-5 until context is low.
 ```
 
 **调用：**
-
 ```bash
 /project:infinite specs/component-spec.md src/ 5
 /project:infinite specs/component-spec.md src/ infinite
 ```
 
-### 批处理策略
+### Batching 策略
 
 | 数量 | 策略 |
 |-------|----------|
-| 1-5 | 所有智能体同时运行 |
+| 1-5 | 所有 agent 同时运行 |
 | 6-20 | 每批 5 个 |
-| 无限 | 3-5 个一波，逐步复杂化 |
+| infinite | 每波 3-5 个，逐步提升复杂度 |
 
 ### 关键见解：通过分配实现唯一性
 
-不要依赖智能体自我区分。编排器**分配**给每个智能体一个特定的创意方向和迭代编号。这可以防止并行智能体之间的概念重复。
+不要依赖 agent 自行区分。orchestrator 为每个 agent **分配**具体的创作方向和迭代编号。这样可以防止并行 agent 之间出现重复的概念。
 
-***
+---
 
-## 4. 持续 Claude PR 循环
+## 4. Continuous Claude PR Loop
 
-**一个生产级的 shell 脚本**，在持续循环中运行 Claude Code，创建 PR，等待 CI，并自动合并。由 AnandChowdhary 创建（致谢：@AnandChowdhary）。
+**一个生产级别的 shell 脚本**，它以 continuous loop 运行 Claude Code，创建 PR、等待 CI 并自动 merge。由 AnandChowdhary 创建（credit: @AnandChowdhary）。
 
-### 核心循环
+### 核心 Loop
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  持续 CLAUDE 迭代                                   │
+│  CONTINUOUS CLAUDE ITERATION                        │
 │                                                     │
-│  1. 创建分支 (continuous-claude/iteration-N)       │
-│  2. 使用增强提示运行 claude -p                      │
-│  3. (可选) 审查者通过 — 单独的 claude -p            │
-│  4. 提交更改 (claude 生成提交信息)                  │
-│  5. 推送 + 创建 PR (gh pr create)                   │
-│  6. 等待 CI 检查 (轮询 gh pr checks)                │
-│  7. CI 失败？ → 自动修复通过 (claude -p)             │
-│  8. 合并 PR (squash/merge/rebase)                   │
-│  9. 返回 main → 重复                                │
+│  1. Create branch (continuous-claude/iteration-N)   │
+│  2. Run claude -p with enhanced prompt              │
+│  3. (Optional) Reviewer pass — separate claude -p   │
+│  4. Commit changes (claude generates message)       │
+│  5. Push + create PR (gh pr create)                 │
+│  6. Wait for CI checks (poll gh pr checks)          │
+│  7. CI failure? → Auto-fix pass (claude -p)         │
+│  8. Merge PR (squash/merge/rebase)                  │
+│  9. Return to main → repeat                         │
 │                                                     │
-│  限制条件： --max-runs N | --max-cost $X            │
-│            --max-duration 2h | 完成信号             │
+│  Limit by: --max-runs N | --max-cost $X             │
+│            --max-duration 2h | completion signal     │
 └─────────────────────────────────────────────────────┘
 ```
 
 ### 安装
 
-> **警告：** 请在审阅代码后，从 continuous-claude 的仓库安装。不要将外部脚本直接管道传入 bash。
+> **警告：** 在审查代码后从其 repository 安装 continuous-claude。不要将外部脚本直接 pipe 到 bash。
 
 ### 用法
 
 ```bash
-# Basic: 10 iterations
+# 基本用法：10 次迭代
 continuous-claude --prompt "Add unit tests for all untested functions" --max-runs 10
 
-# Cost-limited
+# 按成本限制
 continuous-claude --prompt "Fix all linter errors" --max-cost 5.00
 
-# Time-boxed
+# 按时间限制
 continuous-claude --prompt "Improve test coverage" --max-duration 8h
 
-# With code review pass
+# 带 code review pass
 continuous-claude \
   --prompt "Add authentication feature" \
   --max-runs 10 \
   --review-prompt "Run npm test && npm run lint, fix any failures"
 
-# Parallel via worktrees
+# 通过 worktree 并行执行
 continuous-claude --prompt "Add tests" --max-runs 5 --worktree tests-worker &
 continuous-claude --prompt "Refactor code" --max-runs 5 --worktree refactor-worker &
 wait
 ```
 
-### 跨迭代上下文：SHARED\_TASK\_NOTES.md
+### 跨迭代的 Context：SHARED_TASK_NOTES.md
 
-关键创新：一个 `SHARED_TASK_NOTES.md` 文件在迭代间持久存在：
+关键创新：一个 `SHARED_TASK_NOTES.md` 文件在迭代之间持久存在：
 
 ```markdown
-## 进展
-- [x] 已添加认证模块测试（第1轮）
-- [x] 已修复令牌刷新中的边界情况（第2轮）
-- [ ] 仍需完成：速率限制测试、错误边界测试
+## Progress
+- [x] Added tests for auth module (iteration 1)
+- [x] Fixed edge case in token refresh (iteration 2)
+- [ ] Still need: rate limiting tests, error boundary tests
 
-## 后续步骤
-- 接下来专注于速率限制模块
-- 测试中位于 `tests/helpers.ts` 的模拟设置可以复用
+## Next Steps
+- Focus on rate limiting module next
+- The mock setup in tests/helpers.ts can be reused
 ```
 
-Claude 在迭代开始时读取此文件，并在迭代结束时更新它。这弥合了独立 `claude -p` 调用之间的上下文差距。
+Claude 在迭代开始时读取该文件，并在迭代结束时更新它。这弥合了独立的 `claude -p` 调用之间的 context 鸿沟。
 
 ### CI 失败恢复
 
-当 PR 检查失败时，持续 Claude 会自动：
-
-1. 通过 `gh run list` 获取失败的运行 ID
-2. 生成一个新的带有 CI 修复上下文的 `claude -p`
-3. Claude 通过 `gh run view` 检查日志，修复代码，提交，推送
-4. 重新等待检查（最多 `--ci-retry-max` 次尝试）
+当 PR check 失败时，Continuous Claude 自动：
+1. 通过 `gh run list` 获取失败的 run ID
+2. 以 CI 修复 context 启动一个新的 `claude -p`
+3. Claude 通过 `gh run view` 检查 log，修复代码，提交，推送
+4. 重新等待 check（最多 `--ci-retry-max` 次尝试）
 
 ### 完成信号
 
-Claude 可以通过输出一个魔法短语来发出“我完成了”的信号：
+Claude 可以通过输出一个 magic phrase 来发出"我已完成"的信号：
 
 ```bash
 continuous-claude \
   --prompt "Fix all bugs in the issue tracker" \
   --completion-signal "CONTINUOUS_CLAUDE_PROJECT_COMPLETE" \
-  --completion-threshold 3  # Stops after 3 consecutive signals
+  --completion-threshold 3  # 连续 3 次信号后停止
 ```
 
-连续三次迭代发出完成信号会停止循环，防止在已完成的工作上浪费运行。
+连续三次迭代发出完成信号即停止 loop，避免在已完成的工作上浪费运行。
 
 ### 关键配置
 
-| 标志 | 目的 |
+| Flag | 用途 |
 |------|---------|
 | `--max-runs N` | 在 N 次成功迭代后停止 |
-| `--max-cost $X` | 在花费 $X 后停止 |
-| `--max-duration 2h` | 在时间过去后停止 |
+| `--max-cost $X` | 花费 $X 后停止 |
+| `--max-duration 2h` | 超时后停止 |
 | `--merge-strategy squash` | squash、merge 或 rebase |
-| `--worktree <name>` | 通过 git worktrees 并行执行 |
-| `--disable-commits` | 试运行模式（无 git 操作） |
-| `--review-prompt "..."` | 每次迭代添加审阅者审核 |
+| `--worktree <name>` | 通过 git worktree 并行执行 |
+| `--disable-commits` | Dry-run 模式（无 git 操作） |
+| `--review-prompt "..."` | 每次迭代添加 reviewer pass |
 | `--ci-retry-max N` | 自动修复 CI 失败（默认：1） |
 
-***
+---
 
-## 5. 去草率化模式
+## 5. The De-Sloppify Pattern
 
-**任何循环的附加模式。** 在每个实现者步骤之后添加一个专门的清理/重构步骤。
+**适用于任何 loop 的附加 pattern。** 在每个 Implementer 步骤之后添加一个专门的 cleanup/refactor 步骤。
 
 ### 问题
 
-当你要求 LLM 使用 TDD 实现时，它对“编写测试”的理解过于字面：
+当你要求 LLM 用 TDD 实现时，它会过于字面地理解"编写测试"：
+- 验证 TypeScript type system 是否工作的测试（测试 `typeof x === 'string'`）
+- 对 type system 已经保证的事情进行过度防御性的 runtime check
+- 测试 framework 行为而非业务逻辑的测试
+- 掩盖实际代码的过度 error handling
 
-* 测试验证 TypeScript 的类型系统是否有效（测试 `typeof x === 'string'`）
-* 对类型系统已经保证的东西进行过度防御的运行时检查
-* 测试框架行为而非业务逻辑
-* 过多的错误处理掩盖了实际代码
+### 为什么不使用负面指令？
 
-### 为什么不使用否定指令？
+在 Implementer prompt 中添加"不要测试 type system"或"不要添加不必要的检查"会有下游影响：
+- model 对所有测试都变得犹豫
+- 它会跳过合理的 edge case 测试
+- 质量以不可预测的方式下降
 
-在实现者提示中添加“不要测试类型系统”或“不要添加不必要的检查”会产生下游影响：
+### 解决方案：单独的 Pass
 
-* 模型对所有测试都变得犹豫不决
-* 它会跳过合法的边缘情况测试
-* 质量不可预测地下降
-
-### 解决方案：单独的步骤
-
-与其限制实现者，不如让它彻底。然后添加一个专注的清理智能体：
+与其限制 Implementer，不如让它彻底发挥。然后添加一个专注的 cleanup agent：
 
 ```bash
-# Step 1: Implement (let it be thorough)
+# Step 1：实现（让它彻底发挥）
 claude -p "Implement the feature with full TDD. Be thorough with tests."
 
-# Step 2: De-sloppify (separate context, focused cleanup)
+# Step 2：De-sloppify（独立的 context，专注 cleanup）
 claude -p "Review all changes in the working tree. Remove:
 - Tests that verify language/framework behavior rather than business logic
 - Redundant type checks that the type system already enforces
@@ -357,58 +353,58 @@ claude -p "Review all changes in the working tree. Remove:
 Keep all business logic tests. Run the test suite after cleanup to ensure nothing breaks."
 ```
 
-### 在循环上下文中
+### 在 Loop Context 中
 
 ```bash
 for feature in "${features[@]}"; do
-  # Implement
+  # 实现
   claude -p "Implement $feature with TDD."
 
   # De-sloppify
   claude -p "Cleanup pass: review changes, remove test/code slop, run tests."
 
-  # Verify
+  # 验证
   claude -p "Run build + lint + tests. Fix any failures."
 
-  # Commit
+  # 提交
   claude -p "Commit with message: feat: add $feature"
 done
 ```
 
 ### 关键见解
 
-> 与其添加具有下游质量影响的否定指令，不如添加一个单独的去草率化步骤。两个专注的智能体胜过一个有约束的智能体。
+> 与其添加具有下游质量影响的负面指令，不如添加一个单独的 de-sloppify pass。两个专注的 agent 优于一个受限的 agent。
 
-***
+---
 
-## 6. Ralphinho / RFC 驱动的 DAG 编排
+## 6. Ralphinho / RFC-Driven DAG Orchestration
 
-**最复杂的模式。** 一个 RFC 驱动的多智能体管道，将规范分解为依赖关系 DAG，通过分层质量管道运行每个单元，并通过智能体驱动的合并队列落地。由 enitrat 创建（致谢：@enitrat）。
+**最复杂的 pattern。** 一个 RFC-driven 的多 agent pipeline，它将 spec 分解为一个 dependency DAG，让每个单元经过分层 quality pipeline，并通过 agent 驱动的 merge queue 落地。由 enitrat 创建（credit: @enitrat）。
 
-### 架构概述
+### 架构概览
 
 ```
-RFC/PRD 文档
+RFC/PRD Document
        │
        ▼
-  分解（AI）
-  将 RFC 分解为具有依赖关系 DAG 的工作单元
+  DECOMPOSITION (AI)
+  Break RFC into work units with dependency DAG
        │
        ▼
 ┌──────────────────────────────────────────────────────┐
-│  RALPH 循环（最多 3 轮）                             │
+│  RALPH LOOP (up to 3 passes)                         │
 │                                                      │
-│  针对每个 DAG 层级（按依赖关系顺序）：                 │
+│  For each DAG layer (sequential, by dependency):     │
 │                                                      │
-│  ┌── 质量流水线（每个单元并行） ───────┐              │
-│  │  每个单元在其独立的工作树中：        │              │
-│  │  研究 → 规划 → 实现 → 测试 → 评审   │              │
-│  │  （深度根据复杂度层级变化）          │              │
+│  ┌── Quality Pipelines (parallel per unit) ───────┐  │
+│  │  Each unit in its own worktree:                │  │
+│  │  Research → Plan → Implement → Test → Review   │  │
+│  │  (depth varies by complexity tier)             │  │
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
-│  ┌── 合并队列 ─────────────────────────────────┐     │
-│  │  变基到主分支 → 运行测试 → 合并或移除       │     │
-│  │  被移除的单元携带冲突上下文重新进入         │     │
+│  ┌── Merge Queue ─────────────────────────────────┐  │
+│  │  Rebase onto main → Run tests → Land or evict │  │
+│  │  Evicted units re-enter with conflict context  │  │
 │  └────────────────────────────────────────────────┘  │
 │                                                      │
 └──────────────────────────────────────────────────────┘
@@ -416,204 +412,200 @@ RFC/PRD 文档
 
 ### RFC 分解
 
-AI 读取 RFC 并生成工作单元：
+AI 读取 RFC 并生成 work unit：
 
 ```typescript
 interface WorkUnit {
-  id: string;              // kebab-case identifier
-  name: string;            // Human-readable name
-  rfcSections: string[];   // Which RFC sections this addresses
-  description: string;     // Detailed description
-  deps: string[];          // Dependencies (other unit IDs)
-  acceptance: string[];    // Concrete acceptance criteria
+  id: string;              // kebab-case 标识符
+  name: string;            // 人类可读的名称
+  rfcSections: string[];   // 该 unit 涉及哪些 RFC 小节
+  description: string;     // 详细描述
+  deps: string[];          // 依赖（其他 unit ID）
+  acceptance: string[];    // 具体的验收标准
   tier: "trivial" | "small" | "medium" | "large";
 }
 ```
 
 **分解规则：**
+- 倾向于更少、更具内聚性的 unit（最小化 merge 风险）
+- 最小化 unit 之间的文件重叠（避免冲突）
+- 将测试与实现放在一起（绝不分离"实现 X"+"测试 X"）
+- 仅在存在真实代码依赖时才设置依赖
 
-* 倾向于更少、内聚的单元（最小化合并风险）
-* 最小化跨单元文件重叠（避免冲突）
-* 保持测试与实现在一起（永远不要分开“实现 X” + “测试 X”）
-* 仅在实际存在代码依赖关系的地方设置依赖关系
-
-依赖关系 DAG 决定了执行顺序：
-
+dependency DAG 决定执行顺序：
 ```
 Layer 0: [unit-a, unit-b]     ← 无依赖，并行运行
-Layer 1: [unit-c]             ← 依赖于 unit-a
-Layer 2: [unit-d, unit-e]     ← 依赖于 unit-c
+Layer 1: [unit-c]             ← 依赖 unit-a
+Layer 2: [unit-d, unit-e]     ← 依赖 unit-c
 ```
 
-### 复杂度层级
+### 复杂度分层
 
-不同的层级获得不同深度的管道：
+不同的 tier 会得到不同的 pipeline 深度：
 
-| 层级 | 管道阶段 |
+| Tier | Pipeline 阶段 |
 |------|----------------|
 | **trivial** | implement → test |
 | **small** | implement → test → code-review |
 | **medium** | research → plan → implement → test → PRD-review + code-review → review-fix |
 | **large** | research → plan → implement → test → PRD-review + code-review → review-fix → final-review |
 
-这可以防止对简单更改进行昂贵的操作，同时确保架构更改得到彻底审查。
+这避免了对简单变更执行昂贵的操作，同时确保架构变更得到彻底审查。
 
-### 独立的上下文窗口（消除作者偏见）
+### 独立的 Context Window（消除作者偏见）
 
-每个阶段在其自己的智能体进程中运行，拥有自己的上下文窗口：
+每个阶段在独立的 agent 进程中运行，拥有自己的 context window：
 
-| 阶段 | 模型 | 目的 |
+| 阶段 | Model | 用途 |
 |-------|-------|---------|
-| Research | Sonnet | 读取代码库 + RFC，生成上下文文档 |
+| Research | Sonnet | 阅读 codebase + RFC，产出 context 文档 |
 | Plan | Opus | 设计实现步骤 |
-| Implement | Codex | 按照计划编写代码 |
-| Test | Sonnet | 运行构建 + 测试套件 |
-| PRD Review | Sonnet | 规范合规性检查 |
+| Implement | Codex | 按计划编写代码 |
+| Test | Sonnet | 运行 build + test suite |
+| PRD Review | Sonnet | Spec 合规性检查 |
 | Code Review | Opus | 质量 + 安全检查 |
-| Review Fix | Codex | 处理审阅问题 |
-| Final Review | Opus | 质量门（仅限大型层级） |
+| Review Fix | Codex | 处理 review 问题 |
+| Final Review | Opus | Quality gate（仅 large tier） |
 
-**关键设计：** 审阅者从未编写过它要审阅的代码。这消除了作者偏见——这是自我审阅中遗漏问题的最常见原因。
+**关键设计：** reviewer 从未编写过它所 review 的代码。这消除了作者偏见——这是 self-review 中最常导致问题被遗漏的根源。
 
-### 具有驱逐功能的合并队列
+### 带 Eviction 的 Merge Queue
 
-质量管道完成后，单元进入合并队列：
+quality pipeline 完成后，unit 进入 merge queue：
 
 ```
 Unit branch
     │
-    ├─ 变基到 main 分支
-    │   └─ 冲突？→ 移除（捕获冲突上下文）
+    ├─ Rebase onto main
+    │   └─ Conflict? → EVICT (capture conflict context)
     │
-    ├─ 运行构建 + 测试
-    │   └─ 失败？→ 移除（捕获测试输出）
+    ├─ Run build + tests
+    │   └─ Fail? → EVICT (capture test output)
     │
-    └─ 通过 → 快进合并 main 分支，推送，删除分支
+    └─ Pass → Fast-forward main, push, delete branch
 ```
 
 **文件重叠智能：**
+- 不重叠的 unit 以投机方式并行落地
+- 重叠的 unit 逐一落地，每次都进行 rebase
 
-* 非重叠单元并行推测性地落地
-* 重叠单元逐个落地，每次重新变基
-
-**驱逐恢复：**
-被驱逐时，会捕获完整上下文（冲突文件、差异、测试输出）并反馈给下一个 Ralph 轮次的实现者：
+**Eviction 恢复：**
+被 evict 时，会捕获完整的 context（冲突文件、diff、测试输出），并在下一次 Ralph pass 中反馈给 implementer：
 
 ```markdown
-## 合并冲突 — 在下一次推送前解决
+## MERGE CONFLICT — RESOLVE BEFORE NEXT LANDING
 
-您之前的实现与另一个已先推送的单元发生了冲突。
-请重构您的更改以避免以下冲突的文件/行。
+Your previous implementation conflicted with another unit that landed first.
+Restructure your changes to avoid the conflicting files/lines below.
 
-{完整的排除上下文及差异}
+{full eviction context with diffs}
 ```
 
-### 阶段间的数据流
+### 阶段之间的数据流
 
 ```
-research.contextFilePath ──────────────────→ 方案
-plan.implementationSteps ──────────────────→ 实施
-implement.{filesCreated, whatWasDone} ─────→ 测试, 审查
-test.failingSummary ───────────────────────→ 审查, 实施（下一轮）
-reviews.{feedback, issues} ────────────────→ 审查修复 → 实施（下一轮）
-final-review.reasoning ────────────────────→ 实施（下一轮）
-evictionContext ───────────────────────────→ 实施（合并冲突后）
+research.contextFilePath ──────────────────→ plan
+plan.implementationSteps ──────────────────→ implement
+implement.{filesCreated, whatWasDone} ─────→ test, reviews
+test.failingSummary ───────────────────────→ reviews, implement (next pass)
+reviews.{feedback, issues} ────────────────→ review-fix → implement (next pass)
+final-review.reasoning ────────────────────→ implement (next pass)
+evictionContext ───────────────────────────→ implement (after merge conflict)
 ```
 
-### 工作树隔离
+### Worktree 隔离
 
-每个单元在隔离的工作树中运行（使用 jj/Jujutsu，而不是 git）：
-
+每个 unit 都在隔离的 worktree 中运行（使用 jj/Jujutsu，而非 git）：
 ```
 /tmp/workflow-wt-{unit-id}/
 ```
 
-同一单元的管道阶段**共享**一个工作树，在 research → plan → implement → test → review 之间保留状态（上下文文件、计划文件、代码更改）。
+同一 unit 的 pipeline 阶段**共享**一个 worktree，在 research → plan → implement → test → review 之间保留状态（context 文件、plan 文件、代码变更）。
 
 ### 关键设计原则
 
-1. **确定性执行** — 预先分解锁定并行性和顺序
-2. **在杠杆点进行人工审阅** — 工作计划是单一最高杠杆干预点
-3. **关注点分离** — 每个阶段在独立的上下文窗口中，由独立的智能体负责
-4. **带上下文的冲突恢复** — 完整的驱逐上下文支持智能重试，而非盲目重试
-5. **层级驱动的深度** — 琐碎更改跳过研究/审阅；大型更改获得最大审查
-6. **可恢复的工作流** — 完整状态持久化到 SQLite；可从任何点恢复
+1. **确定性执行** —— 提前分解锁定并行性与顺序
+2. **在关键节点进行人工 review** —— work plan 是唯一最高杠杆的干预点
+3. **分离关注点** —— 每个阶段在独立的 context window 中由独立的 agent 执行
+4. **带 context 的冲突恢复** —— 完整的 eviction context 支持智能重跑，而非盲目重试
+5. **Tier 驱动的深度** —— trivial 变更跳过 research/review；large 变更获得最大程度的审查
+6. **可恢复的 workflow** —— 完整状态持久化到 SQLite；可从任意点恢复
 
-### 何时使用 Ralphinho 与更简单的模式
+### 何时使用 Ralphinho vs 更简单的 Pattern
 
-| 信号 | 使用 Ralphinho | 使用更简单的模式 |
+| 信号 | 使用 Ralphinho | 使用更简单的 Pattern |
 |--------|--------------|-------------------|
-| 多个相互依赖的工作单元 | 是 | 否 |
+| 多个相互依赖的 work unit | 是 | 否 |
 | 需要并行实现 | 是 | 否 |
-| 可能出现合并冲突 | 是 | 否（顺序即可） |
-| 单文件更改 | 否 | 是（顺序管道） |
-| 跨天项目 | 是 | 可能（持续-claude） |
-| 规范/RFC 已编写 | 是 | 可能 |
-| 对单个事物的快速迭代 | 否 | 是（NanoClaw 或管道） |
+| 可能出现 merge conflict | 是 | 否（顺序执行即可） |
+| 单文件变更 | 否 | 是（sequential pipeline） |
+| 多天项目 | 是 | 可能（continuous-claude） |
+| Spec/RFC 已编写 | 是 | 可能 |
+| 对单个事项快速迭代 | 否 | 是（NanoClaw 或 pipeline） |
 
-***
+---
 
-## 选择正确的模式
+## 选择合适的 Pattern
 
 ### 决策矩阵
 
 ```
-该任务是否是一个单一的、专注的变更？
-├─ 是 → 顺序管道或NanoClaw
-└─ 否 → 是否有书面的规范/RFC？
-         ├─ 有 → 是否需要并行实现？
-         │        ├─ 是 → Ralphinho（DAG编排）
-         │        └─ 否 → Continuous Claude（迭代式PR循环）
-         └─ 否 → 是否需要同一事物的多种变体？
-                  ├─ 是 → 无限代理循环（规范驱动生成）
-                  └─ 否 → 顺序管道与去杂乱化
+Is the task a single focused change?
+├─ Yes → Sequential Pipeline or NanoClaw
+└─ No → Is there a written spec/RFC?
+         ├─ Yes → Do you need parallel implementation?
+         │        ├─ Yes → Ralphinho (DAG orchestration)
+         │        └─ No → Continuous Claude (iterative PR loop)
+         └─ No → Do you need many variations of the same thing?
+                  ├─ Yes → Infinite Agentic Loop (spec-driven generation)
+                  └─ No → Sequential Pipeline with de-sloppify
 ```
 
-### 模式组合
+### 组合 Pattern
 
-这些模式可以很好地组合：
+这些 pattern 可以很好地组合：
 
-1. **顺序流水线 + 去草率化** — 最常见的组合。每个实现步骤都进行一次清理。
+1. **Sequential Pipeline + De-Sloppify** —— 最常见的组合。每个 implement 步骤都有一个 cleanup pass。
 
-2. **连续 Claude + 去草率化** — 为每次迭代添加带有去草率化指令的 `--review-prompt`。
+2. **Continuous Claude + De-Sloppify** —— 为每次迭代添加带 de-sloppify 指令的 `--review-prompt`。
 
-3. **任何循环 + 验证** — 在提交前，使用 ECC 的 `/verify` 命令或 `verification-loop` 技能作为关卡。
+3. **任意 loop + Verification** —— 使用 ECC 的 `/verify` 命令或 `verification-loop` skill 作为 commit 前的 gate。
 
-4. **Ralphinho 在简单循环中的分层方法** — 即使在顺序流水线中，你也可以将简单任务路由到 Haiku，复杂任务路由到 Opus：
+4. **在更简单的 loop 中使用 Ralphinho 的分层方法** —— 即使在 sequential pipeline 中，你也可以将简单 task 路由到 Haiku，将复杂 task 路由到 Opus：
    ```bash
-   # 简单的格式修复
+   # 简单的格式化修复
    claude -p --model haiku "Fix the import ordering in src/utils.ts"
 
    # 复杂的架构变更
    claude -p --model opus "Refactor the auth module to use the strategy pattern"
    ```
 
-***
+---
 
-## 反模式
+## Anti-Pattern
 
 ### 常见错误
 
-1. **没有退出条件的无限循环** — 始终设置最大运行次数、最大成本、最大持续时间或完成信号。
+1. **没有退出条件的 infinite loop** —— 始终要有 max-runs、max-cost、max-duration 或 completion signal。
 
-2. **迭代之间没有上下文桥接** — 每次 `claude -p` 调用都从头开始。使用 `SHARED_TASK_NOTES.md` 或文件系统状态来桥接上下文。
+2. **迭代之间没有 context 桥接** —— 每个 `claude -p` 调用都全新开始。使用 `SHARED_TASK_NOTES.md` 或 filesystem 状态来桥接 context。
 
-3. **重试相同的失败** — 如果一次迭代失败，不要只是重试。捕获错误上下文并将其提供给下一次尝试。
+3. **重试同一个失败** —— 如果某次迭代失败，不要只是重试。捕获错误 context 并将其提供给下一次尝试。
 
-4. **使用负面指令而非清理过程** — 不要说“不要做 X”。添加一个单独的步骤来移除 X。
+4. **用负面指令代替 cleanup pass** —— 不要说"不要做 X"。添加一个单独的 pass 来移除 X。
 
-5. **所有智能体都在一个上下文窗口中** — 对于复杂的工作流，将关注点分离到不同的智能体进程中。审查者永远不应该是作者。
+5. **所有 agent 在同一个 context window 中** —— 对于复杂的 workflow，应将不同关注点分离到不同的 agent 进程中。reviewer 绝不应是作者。
 
-6. **在并行工作中忽略文件重叠** — 如果两个并行智能体可能编辑同一个文件，你需要一个合并策略（顺序落地、变基或冲突解决）。
+6. **忽视并行工作中的文件重叠** —— 如果两个并行 agent 可能编辑同一个文件，你需要一个 merge 策略（顺序落地、rebase 或 conflict resolution）。
 
-***
+---
 
-## 参考资料
+## 参考
 
 | 项目 | 作者 | 链接 |
 |---------|--------|------|
 | Ralphinho | enitrat | credit: @enitrat |
 | Infinite Agentic Loop | disler | credit: @disler |
 | Continuous Claude | AnandChowdhary | credit: @AnandChowdhary |
-| NanoClaw | ECC | 此仓库中的 `/claw` 命令 |
-| Verification Loop | ECC | 此仓库中的 `skills/verification-loop/` |
+| NanoClaw | ECC | 本 repo 中的 `/claw` 命令 |
+| Verification Loop | ECC | 本 repo 中的 `skills/verification-loop/` |

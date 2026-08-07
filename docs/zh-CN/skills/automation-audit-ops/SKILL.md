@@ -1,142 +1,143 @@
 ---
 name: automation-audit-ops
-description: 面向ECC的以证据为先的自动化清单与重叠审计工作流。当用户希望在修复任何内容之前了解哪些作业、钩子、连接器、MCP服务器或包装器是活跃的、损坏的、冗余的或缺失时使用。
-origin: ECC
+description: 面向 ECC 的证据优先的自动化清单与重叠审计工作流。当用户在修复任何内容之前，想了解哪些 jobs、hooks、connectors、MCP servers 或 wrappers 处于活跃、损坏、冗余或缺失状态时使用。
+metadata:
+  origin: ECC
 ---
 
-# 自动化审计运维
+# Automation Audit Ops
 
-当用户询问哪些自动化正在运行、哪些任务出现故障、哪里存在重叠，或者哪些工具和连接器当前正在实际发挥作用时，请使用此技能。
+当用户询问哪些自动化已上线、哪些 jobs 已损坏、哪里存在重叠，或哪些工具和 connectors 当前真正在发挥有用作用时，使用此 skill。
 
-这是一项以审计为先的操作技能。其任务是在重写任何内容之前，生成一份有证据支持的清单以及一套保留/合并/删除/下一步修复的建议集。
+这是一个审计优先的运维 skill。其任务是在重写任何内容之前，先产出一份有证据支撑的清单以及一套 keep / merge / cut / fix-next 的建议集。
 
-## 技能栈
+## Skill Stack
 
-在相关时，将这些 ECC 原生技能引入工作流程：
+在相关时，将以下 ECC 原生 skills 引入工作流：
 
-* `workspace-surface-audit` 用于连接器、MCP、钩子和应用清单
-* `knowledge-ops` 当审计需要将实时仓库的真实情况与持久上下文进行核对时
-* `github-ops` 当答案依赖于 CI、计划工作流、议题或 PR 自动化时
-* `ecc-tools-cost-audit` 当真正的问题是兄弟应用仓库中的 webhook 扇出、队列任务或计费消耗时
-* `research-ops` 当需要将本地清单与当前平台支持或公开文档进行比较时
-* `verification-loop` 用于证明修复后的状态，而不是依赖假设的恢复
+- `workspace-surface-audit` 用于 connector、MCP、hook 和 app 清单
+- `knowledge-ops` 当审计需要将 repo 的实时真相与持久 context 进行核对时
+- `github-ops` 当答案依赖于 CI、定时工作流、issues 或 PR 自动化时
+- `ecc_tools-cost-audit` 当真正的问题是兄弟 app repo 中的 webhook 扇出、排队 jobs 或账单消耗时
+- `research-ops` 当需要将本地清单与当前平台支持或公开文档进行对比时
+- `verification-loop` 用于证明修复后的状态，而非依赖假设的恢复
 
-## 使用时机
+## 何时使用
 
-* 用户询问"我有哪些自动化"、"什么在运行"、"什么出故障了"或"什么重叠了"
-* 任务涉及 cron 任务、GitHub Actions、本地钩子、MCP 服务器、连接器、包装器或应用集成
-* 用户想知道从其他代理系统移植了什么，以及哪些还需要在 ECC 内部重建
-* 工作区积累了多种执行同一任务的方式，用户希望有一条规范的路径
+- 用户询问"我有哪些自动化"、"什么是活跃的"、"什么是损坏的"或"什么有重叠"
+- 任务涉及 cron jobs、GitHub Actions、本地 hooks、MCP servers、connectors、wrappers 或 app 集成
+- 用户想了解哪些内容是从其他 agent 系统移植过来的，哪些仍需在 ECC 内部重建
+- workspace 已积累多种完成同一件事的方式，用户希望有一个规范通道
 
-## 防护栏
+## 护栏
 
-* 除非用户明确要求修复，否则以只读方式开始
-* 区分：
-  * 已配置
-  * 已验证身份
-  * 最近已验证
-  * 过时或损坏
-  * 完全缺失
-* 不要仅仅因为某个技能或配置引用了某个工具，就声称该工具正在运行
-* 在证据表存在之前，不要合并或删除重叠的表面
+- 除非用户明确要求修复，否则以只读方式开始
+- 区分：
+  - configured
+  - authenticated
+  - recently verified
+  - stale or broken
+  - missing entirely
+- 不要仅仅因为某个 skill 或 config 引用了某工具，就声称该工具是活跃的
+- 在证据表存在之前，不要合并或删除重叠的 surfaces
 
-## 工作流程
+## 工作流
 
-### 1. 盘点真实表面
+### 1. 清点真实的 surface
 
-在理论化之前，先读取当前的实时表面：
+在理论分析之前，先读取当前实际存在的 surface：
 
-* 仓库钩子和本地钩子脚本
-* GitHub Actions 和计划工作流
-* MCP 配置和已启用的服务器
-* 基于连接器或应用的集成
-* 包装器脚本和特定仓库的自动化入口点
+- repo hooks 和本地 hook 脚本
+- GitHub Actions 和定时工作流
+- MCP configs 和已启用的 servers
+- connector 或 app 支撑的集成
+- wrapper 脚本和 repo 特定的自动化 entrypoints
 
-按表面分组：
+按 surface 对它们分组：
 
-* 本地运行时
-* 仓库 CI / 自动化
-* 连接的外部系统
-* 消息传递 / 通知
-* 计费 / 客户运营
-* 研究 / 监控
+- 本地 runtime
+- repo CI / 自动化
+- 已连接的外部系统
+- 消息 / 通知
+- 计费 / 客户运营
+- 研究 / 监控
 
-### 2. 按实时状态对每个项目进行分类
+### 2. 按活跃状态对每项分类
 
-对于每个发现的自动化，标记：
+对每一个已盘点的自动化项，标记：
 
-* 已配置
-* 已验证身份
-* 最近已验证
-* 过时或损坏
-* 缺失
+- configured
+- authenticated
+- recently verified
+- stale or broken
+- missing
 
-然后对问题类型进行分类：
+然后分类问题类型：
 
-* 活动故障
-* 身份验证中断
-* 状态过时
-* 重叠或冗余
-* 功能缺失
+- active breakage
+- auth outage
+- stale status
+- overlap or redundancy
+- missing capability
 
-### 3. 追溯证据路径
+### 3. 追踪证据路径
 
-为每个重要声明提供具体来源：
+用具体的来源支撑每一个重要声明：
 
-* 文件路径
-* 工作流运行
-* 钩子日志
-* 配置条目
-* 最近的命令输出
-* 确切的故障特征
+- 文件路径
+- 工作流运行记录
+- hook 日志
+- config 条目
+- 近期命令输出
+- 精确的失败特征
 
-如果当前状态不明确，请直接说明，而不是假装审计已完成。
+如果当前状态不明确，直接说明，而不是假装审计已完成。
 
-### 4. 以保留 / 合并 / 删除 / 下一步修复结束
+### 4. 以 keep / merge / cut / fix-next 结束
 
-对于每个重叠或可疑的表面，返回一个决策：
+对每一个重叠或可疑的 surface，返回一个判定：
 
-* 保留
-* 合并
-* 删除
-* 下一步修复
+- keep
+- merge
+- cut
+- fix next
 
-其价值在于将杂乱的自动化整合到一条规范的 ECC 路径中，而不是保留每一条历史路径。
+其价值在于将杂乱的自动化收敛为一条规范的 ECC 通道，而非保留每一条历史路径。
 
 ## 输出格式
 
 ```text
-当前表面
-- 自动化
-- 来源
-- 实时状态
-- 证据
+CURRENT SURFACE
+- automation
+- source
+- live state
+- proof
 
-发现
-- 活跃故障
-- 重叠
-- 过时状态
-- 缺失能力
+FINDINGS
+- active breakage
+- overlap
+- stale status
+- missing capability
 
-建议
-- 保留
-- 合并
-- 删除
-- 下次修复
+RECOMMENDATION
+- keep
+- merge
+- cut
+- fix next
 
-下一步ECC行动
-- 需加强的具体技能/钩子/工作流/应用通道
+NEXT ECC MOVE
+- exact skill / hook / workflow / app lane to strengthen
 ```
 
-## 常见陷阱
+## 陷阱
 
-* 当可以读取实时清单时，不要凭记忆回答
-* 不要将"配置中存在"视为"正在工作"
-* 在指出故障的高信号路径之前，不要修复低价值的冗余
-* 如果用户首先要求的是清单，不要将任务扩大为仓库重写
+- 当可以读取实际清单时，不要凭记忆作答
+- 不要将"存在于 config 中"等同于"正常工作"
+- 在识别出已损坏的高信号路径之前，不要先去修复低价值的冗余
+- 如果用户首先要求的是清单，不要将任务扩大为 repo 重写
 
 ## 验证
 
-* 重要声明需引用实时证据路径
-* 每个发现的自动化都需标有清晰的实时状态类别
-* 最终建议需区分保留 / 合并 / 删除 / 下一步修复
+- 重要声明引用实际的证据路径
+- 每个已盘点的自动化项都标注了清晰的活跃状态类别
+- 最终建议区分 keep / merge / cut / fix-next

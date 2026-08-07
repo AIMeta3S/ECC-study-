@@ -1,58 +1,59 @@
 ---
 name: accessibility
-description: 使用 WCAG 2.2 Level AA 标准设计、实施和审计包容性数字产品。运用此技能为 Web 生成语义 ARIA，并为 Web 和原生平台（iOS/Android）生成无障碍特性。
-origin: ECC
+description: 基于 WCAG 2.2 Level AA 标准设计、实现并审计包容性数字产品。当需要为 Web 生成语义化 ARIA，或为 Web 与 Native 平台（iOS/Android）生成 accessibility traits 时，使用此 skill。
+metadata:
+  origin: ECC
 ---
 
-# 无障碍性（WCAG 2.2）
+# Accessibility (WCAG 2.2)
 
-本技能确保数字界面对于所有用户（包括使用屏幕阅读器、开关控制或键盘导航的用户）具有可感知性、可操作性、可理解性和健壮性（POUR）。它专注于 WCAG 2.2 成功标准的技术实现。
+本 skill 确保数字界面对所有用户都是 Perceivable、Operable、Understandable 和 Robust（POUR）的，包括使用 screen readers、switch controls 或键盘导航的用户。它聚焦于 WCAG 2.2 success criteria 的技术实现。
 
-## 使用时机
+## 何时使用
 
-* 定义 Web、iOS 或 Android 的 UI 组件规范。
-* 审计现有代码中的无障碍性障碍或合规性差距。
-* 实现新的 WCAG 2.2 标准，如目标尺寸（最小）和焦点外观。
-* 将高层设计需求映射到技术属性（ARIA 角色、特性、提示）。
+- 为 Web、iOS 或 Android 定义 UI 组件规范。
+- 审计现有代码中的 accessibility 障碍或合规缺口。
+- 实现新的 WCAG 2.2 标准，如 Target Size (Minimum) 和 Focus Appearance。
+- 将高层设计需求映射到技术属性（ARIA roles、traits、hints）。
 
 ## 核心概念
 
-* **POUR 原则**：WCAG 的基础（可感知、可操作、可理解、健壮）。
-* **语义映射**：使用原生元素而非通用容器，以提供内置的无障碍性。
-* **无障碍树**：辅助技术实际“读取”的 UI 表示。
-* **焦点管理**：控制键盘/屏幕阅读器光标的顺序和可见性。
-* **标签与提示**：通过 `aria-label`、`accessibilityLabel` 和 `contentDescription` 提供上下文。
+- **POUR Principles**：WCAG 的基础（Perceivable、Operable、Understandable、Robust）。
+- **Semantic Mapping**：优先使用原生元素而非通用容器，以提供内置的 accessibility。
+- **Accessibility Tree**：UI 的表示形式，assistive technologies 实际“读取”的就是它。
+- **Focus Management**：控制键盘/screen reader 光标的顺序与可见性。
+- **Labeling & Hints**：通过 `aria-label`、`accessibilityLabel` 和 `contentDescription` 提供上下文。
 
 ## 工作原理
 
-### 步骤 1：识别组件角色
+### Step 1：识别组件角色
 
-确定功能目的（例如，这是按钮、链接还是标签页？）。在诉诸自定义角色之前，优先使用最语义化的原生元素。
+确定功能用途（例如，这是一个 button、link 还是 tab？）。在诉诸 custom roles 之前，先使用最具语义化的原生元素。
 
-### 步骤 2：定义可感知属性
+### Step 2：定义 Perceivable 属性
 
-* 确保文本对比度达到 **4.5:1**（正常文本）或 **3:1**（大文本/UI 组件）。
-* 为非文本内容（图像、图标）添加文本替代方案。
-* 实现响应式重排（放大至 400% 时功能不丢失）。
+- 确保文本对比度满足 **4.5:1**（normal）或 **3:1**（large/UI）。
+- 为非文本内容（图像、icons）添加文本替代。
+- 实现响应式 reflow（支持放大到 400% 而不丢失功能）。
 
-### 步骤 3：实现可操作控件
+### Step 3：实现 Operable 控件
 
-* 确保最小 **24x24 CSS 像素** 的目标尺寸（WCAG 2.2 SC 2.5.8）。
-* 验证所有交互元素可通过键盘访问，并具有可见的焦点指示器（SC 2.4.11）。
-* 为拖拽操作提供单指针替代方案。
+- 确保最小 **24x24 CSS pixel** 的 target size（WCAG 2.2 SC 2.5.8）。
+- 验证所有交互元素均可通过键盘到达，并具有可见的 focus indicator（SC 2.4.11）。
+- 为拖拽操作提供 single-pointer 替代方式。
 
-### 步骤 4：确保可理解逻辑
+### Step 4：确保 Understandable 逻辑
 
-* 使用一致的导航模式。
-* 提供描述性错误消息和更正建议（SC 3.3.3）。
-* 实现“冗余输入”（SC 3.3.7），避免重复询问相同数据。
+- 使用一致的导航模式。
+- 提供描述性的错误消息和修正建议（SC 3.3.3）。
+- 实现“Redundant Entry”（SC 3.3.7）以避免重复索要相同数据。
 
-### 步骤 5：验证健壮兼容性
+### Step 5：验证 Robust 兼容性
 
-* 使用正确的 `Name, Role, Value` 模式。
-* 为动态状态更新实现 `aria-live` 或活动区域。
+- 使用正确的 `Name, Role, Value` 模式。
+- 为动态状态更新实现 `aria-live` 或 live regions。
 
-## 无障碍架构图
+## Accessibility 架构图
 
 ```mermaid
 flowchart TD
@@ -68,16 +69,16 @@ flowchart TD
 
 ## 跨平台映射
 
-| 特性             | Web (HTML/ARIA)          | iOS (SwiftUI)                        | Android (Compose)                                           |
-| :--------------- | :----------------------- | :----------------------------------- | :---------------------------------------------------------- |
-| **主标签**       | `aria-label` / `<label>` | `.accessibilityLabel()`              | `contentDescription`                                        |
-| **辅助提示**     | `aria-describedby`       | `.accessibilityHint()`               | `Modifier.semantics { stateDescription = ... }`             |
-| **操作角色**     | `role="button"`          | `.accessibilityAddTraits(.isButton)` | `Modifier.semantics { role = Role.Button }`                 |
-| **实时更新**     | `aria-live="polite"`     | `.accessibilityLiveRegion(.polite)`  | `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` |
+| 特性               | Web (HTML/ARIA)          | iOS (SwiftUI)                        | Android (Compose)                                           |
+| :----------------- | :----------------------- | :----------------------------------- | :---------------------------------------------------------- |
+| **主要 Label**     | `aria-label` / `<label>` | `.accessibilityLabel()`              | `contentDescription`                                        |
+| **辅助 Hint**      | `aria-describedby`       | `.accessibilityHint()`               | `Modifier.semantics { stateDescription = ... }`             |
+| **Action Role**    | `role="button"`          | `.accessibilityAddTraits(.isButton)` | `Modifier.semantics { role = Role.Button }`                 |
+| **实时更新**       | `aria-live="polite"`     | `.accessibilityLiveRegion(.polite)`  | `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` |
 
 ## 示例
 
-### Web：无障碍搜索
+### Web：Accessible 搜索
 
 ```html
 <form role="search">
@@ -89,7 +90,7 @@ flowchart TD
 </form>
 ```
 
-### iOS：无障碍操作按钮
+### iOS：Accessible Action Button
 
 ```swift
 Button(action: deleteItem) {
@@ -100,7 +101,7 @@ Button(action: deleteItem) {
 .accessibilityAddTraits(.isButton)
 ```
 
-### Android：无障碍切换开关
+### Android：Accessible Toggle
 
 ```kotlin
 Switch(
@@ -112,34 +113,34 @@ Switch(
 )
 ```
 
-## 应避免的反模式
+## 应避免的 Anti-Patterns
 
-* **Div 按钮**：使用 `<div>` 或 `<span>` 处理点击事件，但未添加角色和键盘支持。
-* **仅用颜色传达含义**：仅通过颜色变化（例如，将边框变为红色）来指示错误或状态。
-* **未限制的模态焦点**：模态框未限制焦点，导致键盘用户在模态框打开时仍可导航背景内容。焦点必须被限制，并且可通过 `Escape` 键或显式关闭按钮退出（WCAG SC 2.1.2）。
-* **冗余替代文本**：在替代文本中使用“图像...”或“图片...”（屏幕阅读器已宣布“图像”角色）。
+- **Div-Buttons**：使用 `<div>` 或 `<span>` 处理 click 事件，却未添加 role 和键盘支持。
+- **Color-Only Meaning**：_仅_ 通过颜色变化来指示错误或状态（例如，将 border 变红）。
+- **Uncontained Modal Focus**：未 trap focus 的 Modals，使键盘用户可在 modal 打开时导航到背景内容。Focus 必须 _同时_ 被包含，并可通过 `Escape` 键或显式的关闭按钮退出（WCAG SC 2.1.2）。
+- **Redundant Alt Text**：在 alt text 中使用 “Image of...” 或 “Picture of...”（screen readers 已经会播报 “Image” 这一 role）。
 
-## 最佳实践检查清单
+## 最佳实践清单
 
-* \[ ] 交互元素满足 **24x24px**（Web）或 **44x44pt**（原生）的目标尺寸。
-* \[ ] 焦点指示器清晰可见且高对比度。
-* \[ ] 模态框在打开时**限制焦点**，并在关闭时干净地释放焦点（`Escape` 键或关闭按钮）。
-* \[ ] 下拉菜单和菜单在关闭时将焦点恢复到触发元素。
-* \[ ] 表单提供基于文本的错误建议。
-* \[ ] 所有仅图标按钮都有描述性文本标签。
-* \[ ] 文本缩放时内容正确重排。
+- [ ] 交互元素满足 **24x24px**（Web）或 **44x44pt**（Native）的 target size。
+- [ ] Focus indicators 清晰可见且为高对比度。
+- [ ] Modals 在打开时 **contain focus**，并在关闭时干净地释放 focus（`Escape` 键或关闭按钮）。
+- [ ] Dropdowns 和 menus 在关闭时将 focus 还给触发元素。
+- [ ] Forms 提供基于文本的错误建议。
+- [ ] 所有 icon-only buttons 均具有描述性的文本 label。
+- [ ] 文本缩放时内容能正确 reflow。
 
-## 参考
+## 参考资料
 
-* [WCAG 2.2 指南](https://www.w3.org/TR/WCAG22/)
-* [WAI-ARIA 创作实践](https://www.w3.org/TR/wai-aria-practices/)
-* [iOS 无障碍编程指南](https://developer.apple.com/documentation/accessibility)
-* [iOS 人机界面指南 - 无障碍](https://developer.apple.com/design/human-interface-guidelines/accessibility)
-* [Android 无障碍开发者指南](https://developer.android.com/guide/topics/ui/accessibility)
+- [WCAG 2.2 Guidelines](https://www.w3.org/TR/WCAG22/)
+- [WAI-ARIA Authoring Practices](https://www.w3.org/TR/wai-aria-practices/)
+- [iOS Accessibility Programming Guide](https://developer.apple.com/documentation/accessibility)
+- [iOS Human Interface Guidelines - Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+- [Android Accessibility Developer Guide](https://developer.android.com/guide/topics/ui/accessibility)
 
-## 相关技能
+## 相关 Skills
 
-* `frontend-patterns`
-* `design-system`
-* `liquid-glass-design`
-* `swiftui-patterns`
+- `frontend-patterns`
+- `design-system`
+- `liquid-glass-design`
+- `swiftui-patterns`

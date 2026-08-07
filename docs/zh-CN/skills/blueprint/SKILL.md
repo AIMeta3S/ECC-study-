@@ -1,96 +1,98 @@
 ---
 name: blueprint
-description: 将单行目标转化为多会话、多代理工程项目的分步构建计划。每个步骤包含独立的上下文简介，以便新代理能直接执行。包括对抗性审查门、依赖图、并行步骤检测、反模式目录和计划突变协议。触发条件：当用户请求复杂多PR任务的计划、蓝图或路线图，或描述需要多个会话的工作时。不触发条件：任务可在单个PR或少于3个工具调用中完成，或用户说“直接执行”时。origin: community
+description: >-
+  将一行目标转化为多 session、多 agent 工程项目的分步建设计划。每个步骤都包含独立的 context brief，使新的 agent 能够零上下文执行。包含对抗性 review gate、依赖图、并行步骤检测、anti-pattern 目录和计划变更协议。触发条件：用户为复杂的多 PR 任务请求计划、blueprint 或 roadmap，或描述需要多个 session 的工作。不触发条件：任务可在单个 PR 内完成、tool 调用少于 3 次，或用户说"直接做"。
+metadata:
+  origin: community
 ---
 
-# Blueprint — 施工计划生成器
+# Blueprint — 建设计划生成器
 
-将单行目标转化为分步施工计划，任何编码代理都能冷启动执行。
+将一行目标转化为分步建设计划，使任何 coding agent 都能零上下文执行。
 
-## 何时使用
+## 适用场景
 
-* 将大型功能拆分为多个具有明确依赖顺序的 PR
-* 规划跨多个会话的重构或迁移
-* 协调子代理间的并行工作流
-* 任何因会话间上下文丢失而导致返工的任务
+- 将大型 feature 拆分为多个具有明确依赖顺序的 PR
+- 规划跨多个 session 的 refactor 或 migration
+- 跨 sub-agents 协调并行 workstreams
+- 任何因 session 间上下文丢失会导致返工的任务
 
-**请勿用于** 可在单个 PR 内完成、少于 3 次工具调用，或用户明确表示“直接做”的任务。
+对于可在单个 PR 内完成、tool 调用少于 3 次的任务，或用户说"直接做"时，**不要使用**。
 
 ## 工作原理
 
-Blueprint 运行一个 5 阶段流水线：
+Blueprint 运行一个 5 阶段的 pipeline：
 
-1. **研究** — 预检（git、gh auth、远程仓库、默认分支），然后读取项目结构、现有计划和记忆文件以收集上下文。
-2. **设计** — 将目标分解为适合单次 PR 的步骤（通常 3–12 步）。为每个步骤分配依赖边、并行/串行顺序、模型层级（最强 vs 默认）和回滚策略。
-3. **草拟** — 将自包含的 Markdown 计划文件写入 `plans/`。每个步骤都包含上下文摘要、任务列表、验证命令和退出标准 — 这样新的代理无需阅读先前步骤即可执行任何步骤。
-4. **审查** — 委托最强模型子代理（例如 Opus）根据清单和反模式目录进行对抗性审查。在最终确定前修复所有关键发现。
-5. **注册** — 保存计划、更新内存索引，并向用户展示步骤计数和并行性摘要。
+1. **Research** — 预检查（git、gh auth、remote、default branch），然后读取项目结构、已有计划和 memory 文件以收集上下文。
+2. **Design** — 将目标拆分为单 PR 大小的步骤（通常 3–12 个）。为每个步骤分配依赖边、并行/串行排序、model tier（最强模型 vs 默认模型）和 rollback 策略。
+3. **Draft** — 向 `plans/` 写入独立的 Markdown 计划文件。每个步骤都包含 context brief、任务列表、验证命令和 exit criteria——使新的 agent 无需阅读前置步骤即可执行任意步骤。
+4. **Review** — 将对抗性 review 委托给最强模型的 sub-agent（如 Opus），依据 checklist 和 anti-pattern 目录执行。在最终确定前修复所有 critical 发现。
+5. **Register** — 保存计划，更新 memory 索引，并向用户展示步骤数和并行度摘要。
 
-Blueprint 自动检测 git/gh 可用性。如果具备 git + GitHub CLI，它会生成完整的分支/PR/CI 工作流计划。如果没有，则切换到直接模式（原地编辑，无分支）。
+Blueprint 自动检测 git/gh 的可用性。在 git + GitHub CLI 可用时，生成完整的 branch/PR/CI workflow 计划。缺少时切换为 direct mode（就地编辑，不创建分支）。
 
 ## 示例
 
 ### 基本用法
 
 ```
-/blueprint myapp "将数据库迁移到PostgreSQL"
+/blueprint myapp "migrate database to PostgreSQL"
 ```
 
-生成 `plans/myapp-migrate-database-to-postgresql.md`，包含类似以下的步骤：
+生成 `plans/myapp-migrate-database-to-postgresql.md`，包含如下步骤：
+- 步骤 1：添加 PostgreSQL 驱动和连接配置
+- 步骤 2：为每张表创建 migration 脚本
+- 步骤 3：更新 repository 层以使用新驱动
+- 步骤 4：添加针对 PostgreSQL 的 integration tests
+- 步骤 5：移除旧的数据库代码和配置
 
-* 步骤 1：添加 PostgreSQL 驱动程序和连接配置
-* 步骤 2：为每个表创建迁移脚本
-* 步骤 3：更新仓库层以使用新驱动程序
-* 步骤 4：添加针对 PostgreSQL 的集成测试
-* 步骤 5：移除旧数据库代码和配置
-
-### 多代理项目
+### 多 agent 项目
 
 ```
-/blueprint chatbot "将LLM提供商提取到插件系统中"
+/blueprint chatbot "extract LLM providers into a plugin system"
 ```
 
-生成一个尽可能包含并行步骤的计划（例如，在插件接口步骤完成后，“实现 Anthropic 插件”和“实现 OpenAI 插件”可以并行运行），分配模型层级（接口设计步骤使用最强模型，实现步骤使用默认模型），并在每个步骤后验证不变量（例如“所有现有测试通过”、“核心模块无提供商导入”）。
+生成的计划中会在可能处安排并行步骤（例如"实现 Anthropic plugin"和"实现 OpenAI plugin"在 plugin interface 步骤完成后并行运行）、model tier 分配（interface design 步骤使用最强模型，实现步骤使用默认模型），以及每一步后验证的 invariants（例如"所有已有测试通过"、"core 中无 provider 导入"）。
 
-## 主要特性
+## 关键特性
 
-* **冷启动执行** — 每个步骤都包含自包含的上下文摘要。无需先前上下文。
-* **对抗性审查门控** — 每个计划都由最强模型子代理根据清单进行审查，涵盖完整性、依赖关系正确性和反模式检测。
-* **分支/PR/CI 工作流** — 内置于每个步骤中。当 git/gh 缺失时，优雅降级为直接模式。
-* **并行步骤检测** — 依赖图识别出没有共享文件或输出依赖的步骤。
-* **计划变更协议** — 步骤可以按照正式协议和审计追踪进行拆分、插入、跳过、重新排序或放弃。
-* **零运行时风险** — 纯 Markdown 技能。整个仓库仅包含 `.md` 文件 — 无钩子、无 shell 脚本、无可执行代码、无 `package.json`、无构建步骤。安装或调用时，除了 Claude Code 的原生 Markdown 技能加载器外，不运行任何内容。
+- **冷启动执行** — 每个步骤都包含独立的 context brief，无需前置上下文。
+- **对抗性 review gate** — 每个计划都由最强模型的 sub-agent 依据 checklist 进行 review，覆盖完整性、依赖正确性和 anti-pattern 检测。
+- **Branch/PR/CI workflow** — 内建于每个步骤。当 git/gh 缺失时优雅降级为 direct mode。
+- **并行步骤检测** — 依赖图识别没有共享文件或输出依赖的步骤。
+- **计划变更协议** — 步骤可被拆分、插入、跳过、重排或放弃，并具备正式协议和 audit trail。
+- **零运行时风险** — 纯 Markdown skill。整个仓库只包含 `.md` 文件——无 hooks、无 shell scripts、无可执行代码、无 `package.json`、无 build step。在安装或调用时除了 Claude Code 原生的 Markdown skill 加载器外什么都不运行。
 
 ## 安装
 
-此技能随 Everything Claude Code 附带。安装 ECC 时无需单独安装。
+此 skill 随 Everything Claude Code 一起发布。安装 ECC 时无需单独安装。
 
 ### 完整 ECC 安装
 
-如果您从 ECC 仓库检出中工作，请验证技能是否存在：
+如果你从 ECC 仓库 checkout 工作，使用以下命令验证 skill 是否存在：
 
 ```bash
 test -f skills/blueprint/SKILL.md
 ```
 
-后续更新时，请在更新前查看 ECC 的差异：
+日后更新时，在更新前先 review ECC 的 diff：
 
 ```bash
 cd /path/to/everything-claude-code
 git fetch origin main
-git log --oneline HEAD..origin/main       # review new commits before updating
-git checkout <reviewed-full-sha>          # pin to a specific reviewed commit
+git log --oneline HEAD..origin/main       # 更新前 review 新的 commit
+git checkout <reviewed-full-sha>          # 固定到某个已 review 的 commit
 ```
 
-### 独立安装（内嵌副本）
+### Vendored 独立安装
 
-如果您在完整 ECC 安装之外仅内嵌此技能，请将 ECC 仓库中已审查的文件复制到 `~/.claude/skills/blueprint/SKILL.md`。内嵌副本没有 git 远程仓库，因此应通过从已审查的 ECC 提交中重新复制文件来更新，而不是运行 `git pull`。
+如果你在完整 ECC 安装之外仅 vendoring 此 skill，请将已 review 的文件从 ECC 仓库复制到 `~/.claude/skills/blueprint/SKILL.md`。Vendored 副本没有 git remote，因此通过从已 review 的 ECC commit 重新复制文件来更新它们，而不是运行 `git pull`。
 
-## 要求
+## 环境要求
 
-* Claude Code（用于 `/blueprint` 斜杠命令）
-* Git + GitHub CLI（可选 — 启用完整的分支/PR/CI 工作流；Blueprint 检测到缺失时会自动切换到直接模式）
+- Claude Code（用于 `/blueprint` slash command）
+- Git + GitHub CLI（可选——启用完整的 branch/PR/CI workflow；Blueprint 会检测缺失并自动切换为 direct mode）
 
 ## 来源
 
-灵感来源于 antbotlab/blueprint — 上游项目和参考设计。
+灵感来自 antbotlab/blueprint——上游项目和参考设计。

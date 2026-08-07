@@ -1,30 +1,33 @@
 ---
 name: x-api
-description: X/Twitter API集成，用于发布推文、线程、读取时间线、搜索和分析。涵盖OAuth认证模式、速率限制和平台原生内容发布。当用户希望以编程方式与X交互时使用。
-origin: ECC
+description: X/Twitter API 集成，用于发布推文、thread、读取 timeline、搜索和分析。涵盖 OAuth 认证模式、rate limit 以及平台原生内容发布。当用户希望以编程方式与 X 交互时使用。
+metadata:
+  origin: ECC
 ---
 
 # X API
+
+> **易漂移的 skill。** X API 的 endpoint、访问层级、配额和写入权限会频繁变化。在引用 rate limit 或实现发布/搜索流程之前，请先核实当前的开发者文档和账户权限。
 
 以编程方式与 X（Twitter）交互，用于发布、读取、搜索和分析。
 
 ## 何时激活
 
-* 用户希望以编程方式发布推文或帖子串
-* 从 X 读取时间线、提及或用户数据
-* 在 X 上搜索内容、趋势或对话
-* 构建 X 集成或机器人
-* 分析和参与度跟踪
-* 用户提及"发布到 X"、"发推"、"X API"或"Twitter API"
+- 用户希望以编程方式发布推文或 thread
+- 从 X 读取 timeline、mentions 或用户数据
+- 在 X 中搜索内容、趋势或对话
+- 构建 X 集成或 bot
+- 分析和互动追踪
+- 用户提到 "post to X"、"tweet"、"X API" 或 "Twitter API"
 
 ## 认证
 
-### OAuth 2.0 Bearer 令牌（仅应用）
+### OAuth 2.0 Bearer Token（App-Only）
 
-最佳适用场景：读取密集型操作、搜索、公开数据。
+最适合：读密集型操作、搜索、公共数据。
 
 ```bash
-# Environment setup
+# 环境变量设置
 export X_BEARER_TOKEN="your-bearer-token"
 ```
 
@@ -35,7 +38,7 @@ import requests
 bearer = os.environ["X_BEARER_TOKEN"]
 headers = {"Authorization": f"Bearer {bearer}"}
 
-# Search recent tweets
+# 搜索最近的推文
 resp = requests.get(
     "https://api.x.com/2/tweets/search/recent",
     headers=headers,
@@ -44,33 +47,35 @@ resp = requests.get(
 tweets = resp.json()
 ```
 
-### OAuth 1.0a（用户上下文）
+### OAuth 1.0a（User Context）
 
-必需用于：发布推文、管理账户、私信。
+必需用于：发布推文、管理账户、DM 以及任何写入流程。
 
 ```bash
-# Environment setup — source before use
-export X_API_KEY="your-api-key"
-export X_API_SECRET="your-api-secret"
+# 环境变量设置 — 使用前先 source
+export X_CONSUMER_KEY="your-consumer-key"
+export X_CONSUMER_SECRET="your-consumer-secret"
 export X_ACCESS_TOKEN="your-access-token"
-export X_ACCESS_SECRET="your-access-secret"
+export X_ACCESS_TOKEN_SECRET="your-access-token-secret"
 ```
+
+在较早的配置中可能存在 `X_API_KEY`、`X_API_SECRET` 和 `X_ACCESS_SECRET` 等旧别名。在编写文档或接入新流程时，优先使用 `X_CONSUMER_*` 和 `X_ACCESS_TOKEN_SECRET` 这些名称。
 
 ```python
 import os
 from requests_oauthlib import OAuth1Session
 
 oauth = OAuth1Session(
-    os.environ["X_API_KEY"],
-    client_secret=os.environ["X_API_SECRET"],
+    os.environ["X_CONSUMER_KEY"],
+    client_secret=os.environ["X_CONSUMER_SECRET"],
     resource_owner_key=os.environ["X_ACCESS_TOKEN"],
-    resource_owner_secret=os.environ["X_ACCESS_SECRET"],
+    resource_owner_secret=os.environ["X_ACCESS_TOKEN_SECRET"],
 )
 ```
 
 ## 核心操作
 
-### 发布一条推文
+### 发布推文
 
 ```python
 resp = oauth.post(
@@ -81,7 +86,7 @@ resp.raise_for_status()
 tweet_id = resp.json()["data"]["id"]
 ```
 
-### 发布一个帖子串
+### 发布 Thread
 
 ```python
 def post_thread(oauth, tweets: list[str]) -> list[str]:
@@ -98,7 +103,7 @@ def post_thread(oauth, tweets: list[str]) -> list[str]:
     return ids
 ```
 
-### 读取用户时间线
+### 读取用户 Timeline
 
 ```python
 resp = requests.get(
@@ -125,7 +130,22 @@ resp = requests.get(
 )
 ```
 
-### 通过用户名获取用户
+### 拉取最近的原创帖子用于语气建模
+
+```python
+resp = requests.get(
+    "https://api.x.com/2/tweets/search/recent",
+    headers=headers,
+    params={
+        "query": "from:affaanmustafa -is:retweet -is:reply",
+        "max_results": 25,
+        "tweet.fields": "created_at,public_metrics",
+    }
+)
+voice_samples = resp.json()
+```
+
+### 按用户名获取用户
 
 ```python
 resp = requests.get(
@@ -138,29 +158,28 @@ resp = requests.get(
 ### 上传媒体并发布
 
 ```python
-# Media upload uses v1.1 endpoint
+# 媒体上传使用 v1.1 endpoint
 
-# Step 1: Upload media
+# 步骤 1：上传媒体
 media_resp = oauth.post(
     "https://upload.twitter.com/1.1/media/upload.json",
     files={"media": open("image.png", "rb")}
 )
 media_id = media_resp.json()["media_id_string"]
 
-# Step 2: Post with media
+# 步骤 2：带媒体发布
 resp = oauth.post(
     "https://api.x.com/2/tweets",
     json={"text": "Check this out", "media": {"media_ids": [media_id]}}
 )
 ```
 
-## 速率限制
+## Rate Limit
 
-X API 的速率限制因端点、认证方法和账户等级而异，并且会随时间变化。请始终：
-
-* 在硬编码假设之前，查看当前的 X 开发者文档
-* 在运行时读取 `x-rate-limit-remaining` 和 `x-rate-limit-reset` 头部信息
-* 自动退避，而不是依赖代码中的静态表格
+X API 的 rate limit 因 endpoint、认证方式和账户层级而异，并且会随时间变化。务必：
+- 在硬编码假设之前，先查阅当前 X 开发者文档
+- 在运行时读取 `x-rate-limit-remaining` 和 `x-rate-limit-reset` header
+- 自动退避，而不是依赖代码中的静态表
 
 ```python
 import time
@@ -187,24 +206,28 @@ else:
     raise Exception(f"X API error {resp.status_code}: {resp.text}")
 ```
 
-## 安全性
+## 安全
 
-* **切勿硬编码令牌。** 使用环境变量或 `.env` 文件。
-* **切勿提交 `.env` 文件。** 将其添加到 `.gitignore`。
-* **如果令牌暴露，请轮换令牌。** 在 developer.x.com 重新生成。
-* **当不需要写权限时，使用只读令牌。**
-* **安全存储 OAuth 密钥** — 不要存储在源代码或日志中。
+- **切勿硬编码 token。** 使用环境变量或 `.env` 文件。
+- **切勿提交 `.env` 文件。** 将其加入 `.gitignore`。
+- **若 token 泄露，立即轮换。** 在 developer.x.com 重新生成。
+- **不需要写入权限时，使用只读 token。**
+- **安全存储 OAuth 密钥** — 不要放在源代码或日志中。
 
-## 与内容引擎集成
+## 与 Content Engine 集成
 
-使用 `content-engine` 技能生成平台原生内容，然后通过 X API 发布：
+使用 `brand-voice` 加 `content-engine` 生成平台原生内容，然后通过 X API 发布：
+1. 当需要语气匹配时，拉取最近的原创帖子
+2. 构建或复用一个 `VOICE PROFILE`
+3. 用 `content-engine` 以 X 原生格式生成内容
+4. 校验长度和 thread 结构
+5. 返回草稿以供审批，除非用户明确要求立即发布
+6. 仅在获批后通过 X API 发布
+7. 通过 public_metrics 追踪互动
 
-1. 使用内容引擎生成内容（X 平台格式）
-2. 验证长度（单条推文 280 字符）
-3. 使用上述模式通过 X API 发布
-4. 通过 public\_metrics 跟踪参与度
+## 相关 skill
 
-## 相关技能
-
-* `content-engine` — 为 X 生成平台原生内容
-* `crosspost` — 在 X、LinkedIn 和其他平台分发内容
+- `brand-voice` — 从真实的 X 和站点/来源素材构建可复用的语气档案
+- `content-engine` — 为 X 生成平台原生内容
+- `crosspost` — 跨 X、LinkedIn 等平台分发内容
+- `connections-optimizer` — 在起草基于网络的人脉拓展之前重组 X 关系图

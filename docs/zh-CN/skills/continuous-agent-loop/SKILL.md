@@ -1,46 +1,46 @@
 ---
 name: continuous-agent-loop
-description: 具有质量门、评估和恢复控制的连续自主代理循环模式。
-origin: ECC
+description: 用于持续 autonomous agent loop 的模式，涵盖 quality gates、evals 与恢复控制。
+metadata:
+  origin: ECC
 ---
 
-# 持续代理循环
+# Continuous Agent Loop
 
-这是 v1.8+ 的规范循环技能名称。它在保持一个发布版本的兼容性的同时，取代了 `autonomous-loops`。
+这是 v1.8+ 的规范 loop skill 名称。它取代了 `autonomous-loops`，同时在一个版本内保持兼容。
 
-## 循环选择流程
+## Loop 选择流程
 
 ```text
 Start
   |
-  +-- 需要严格的 CI/PR 控制？ -- yes --> continuous-pr
+  +-- 需要严格的 CI/PR 控制？ -- 是 --> continuous-pr
   |
-  +-- 需要 RFC 分解？ -- yes --> rfc-dag
+  +-- 需要 RFC 分解？ -- 是 --> rfc-dag
   |
-  +-- 需要探索性并行生成？ -- yes --> infinite
+  +-- 需要探索式并行生成？ -- 是 --> infinite
   |
-  +-- default --> sequential
+  +-- 默认 --> sequential
 ```
 
 ## 组合模式
 
-推荐的生产栈：
+推荐的生产技术栈：
+1. RFC 分解（`ralphinho-rfc-pipeline`）
+2. quality gates（`plankton-code-quality` + `/quality-gate`）
+3. eval loop（`eval-harness`）
+4. session 持久化（`nanoclaw-repl`）
 
-1. RFC 分解 (`ralphinho-rfc-pipeline`)
-2. 质量门 (`plankton-code-quality` + `/quality-gate`)
-3. 评估循环 (`eval-harness`)
-4. 会话持久化 (`nanoclaw-repl`)
+## 失败模式
 
-## 故障模式
-
-* 循环空转，没有可衡量的进展
-* 因相同根本原因而重复重试
-* 合并队列停滞
-* 无限制升级导致的成本漂移
+- loop 空转且没有可衡量的进展
+- 在相同根因下反复重试
+- merge queue 停滞
+- 无限制的升级导致成本漂移
 
 ## 恢复
 
-* 冻结循环
-* 运行 `/harness-audit`
-* 将范围缩小到失败单元
-* 使用明确的验收标准重放
+- 冻结 loop
+- 运行 `/harness-audit`
+- 将范围缩小到失败的单元
+- 使用明确的验收标准重放

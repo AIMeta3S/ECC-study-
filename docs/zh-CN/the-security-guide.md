@@ -16,7 +16,7 @@ WhatsApp 只是一个例子。电子邮件附件是一个巨大的攻击向量�
 
 ### Claude Code 的 CVE（2026 年 2 月）
 
-Check Point 研究发布了 Claude Code 中的四个漏洞。所有漏洞均在 2025 年 7 月至 12 月期间报告，并于 2026 年 2 月前全部修复。
+Check Point 研究发布了 Claude Code 中的四个漏洞。所有 issues 均在 2025 年 7 月至 12 月期间报告，并于 2026 年 2 月前全部修复。
 
 **CVE-2025-59536（CVSS 8.7）。** `.claude/settings.json` 中的钩子会自动执行 shell 命令而无需确认。攻击者通过恶意仓库注入钩子配置。会话开始时，钩子会触发一个反向 shell。除了克隆仓库和打开 Claude Code 之外，不需要任何用户交互。
 

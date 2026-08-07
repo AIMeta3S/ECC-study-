@@ -1,46 +1,47 @@
 ---
 name: rust-testing
-description: Rust测试模式，包括单元测试、集成测试、异步测试、基于属性的测试、模拟和覆盖率。遵循TDD方法学。
-origin: ECC
+description: Rust 测试模式，涵盖 unit test、integration test、async 测试、property-based testing、mocking 与 coverage。遵循 TDD 方法论。
+metadata:
+  origin: ECC
 ---
 
 # Rust 测试模式
 
-遵循 TDD 方法论编写可靠、可维护测试的全面 Rust 测试模式。
+全面的 Rust 测试模式，用于按照 TDD 方法论编写可靠、可维护的测试。
 
 ## 何时使用
 
-* 编写新的 Rust 函数、方法或特征
-* 为现有代码添加测试覆盖率
-* 为性能关键代码创建基准测试
-* 为输入验证实现基于属性的测试
-* 在 Rust 项目中遵循 TDD 工作流
+- 编写新的 Rust 函数、方法或 trait
+- 为现有代码添加 test coverage
+- 为性能关键代码创建 benchmark
+- 为输入校验实现 property-based test
+- 在 Rust 项目中遵循 TDD workflow
 
 ## 工作原理
 
-1. **识别目标代码** — 找到要测试的函数、特征或模块
-2. **编写测试** — 在 `#[cfg(test)]` 模块中使用 `#[test]`，使用 rstest 进行参数化测试，或使用 proptest 进行基于属性的测试
-3. **模拟依赖项** — 使用 mockall 来隔离被测单元
-4. **运行测试 (RED)** — 验证测试是否按预期失败
-5. **实现 (GREEN)** — 编写最少代码以通过测试
-6. **重构** — 改进代码同时保持测试通过
-7. **检查覆盖率** — 使用 cargo-llvm-cov，目标 80% 以上
+1. **识别目标代码** — 找到要测试的函数、trait 或 module
+2. **编写测试** — 在 `#[cfg(test)]` module 中使用 `#[test]`，parameterized test 使用 rstest，property-based test 使用 proptest
+3. **mock 依赖** — 使用 mockall 隔离被测单元
+4. **运行测试（RED）** — 验证测试以预期错误失败
+5. **实现（GREEN）** — 编写最少代码使测试通过
+6. **重构** — 在保持测试通过的同时改进代码
+7. **检查 coverage** — 使用 cargo-llvm-cov，目标 80%+
 
-## Rust 的 TDD 工作流
+## Rust 的 TDD workflow
 
 ### RED-GREEN-REFACTOR 循环
 
 ```
 RED     → 先写一个失败的测试
-GREEN   → 编写最少代码使测试通过
-REFACTOR → 重构代码，同时保持测试通过
+GREEN   → 写最少代码使测试通过
+REFACTOR → 在保持测试通过的同时改进代码
 REPEAT  → 继续下一个需求
 ```
 
-### Rust 中的分步 TDD
+### Rust 中的逐步 TDD
 
 ```rust
-// RED: Write test first, use todo!() as placeholder
+// RED：先写测试，使用 todo!() 作为占位符
 pub fn add(a: i32, b: i32) -> i32 { todo!() }
 
 #[cfg(test)]
@@ -49,18 +50,18 @@ mod tests {
     #[test]
     fn test_add() { assert_eq!(add(2, 3), 5); }
 }
-// cargo test → panics at 'not yet implemented'
+// cargo test → 在 'not yet implemented' 处 panic
 ```
 
 ```rust
-// GREEN: Replace todo!() with minimal implementation
+// GREEN：用最小实现替换 todo!()
 pub fn add(a: i32, b: i32) -> i32 { a + b }
-// cargo test → PASS, then REFACTOR while keeping tests green
+// cargo test → PASS，然后 REFACTOR 同时保持测试通过
 ```
 
-## 单元测试
+## Unit Test
 
-### 模块级测试组织
+### module 级测试组织
 
 ```rust
 // src/user.rs
@@ -103,19 +104,19 @@ mod tests {
 }
 ```
 
-### 断言宏
+### Assertion 宏
 
 ```rust
-assert_eq!(2 + 2, 4);                                    // Equality
-assert_ne!(2 + 2, 5);                                    // Inequality
-assert!(vec![1, 2, 3].contains(&2));                     // Boolean
-assert_eq!(value, 42, "expected 42 but got {value}");    // Custom message
-assert!((0.1_f64 + 0.2 - 0.3).abs() < f64::EPSILON);   // Float comparison
+assert_eq!(2 + 2, 4);                                    // 相等
+assert_ne!(2 + 2, 5);                                    // 不相等
+assert!(vec![1, 2, 3].contains(&2));                     // 布尔值
+assert_eq!(value, 42, "expected 42 but got {value}");    // 自定义消息
+assert!((0.1_f64 + 0.2 - 0.3).abs() < f64::EPSILON);   // 浮点数比较
 ```
 
-## 错误与 Panic 测试
+## Error 和 Panic 测试
 
-### 测试 `Result` 返回值
+### 测试 `Result` 返回
 
 ```rust
 #[test]
@@ -123,7 +124,7 @@ fn parse_returns_error_for_invalid_input() {
     let result = parse_config("}{invalid");
     assert!(result.is_err());
 
-    // Assert specific error variant
+    // 断言特定的 error variant
     let err = result.unwrap_err();
     assert!(matches!(err, ConfigError::ParseError(_)));
 }
@@ -132,7 +133,7 @@ fn parse_returns_error_for_invalid_input() {
 fn parse_succeeds_for_valid_input() -> Result<(), Box<dyn std::error::Error>> {
     let config = parse_config(r#"{"port": 8080}"#)?;
     assert_eq!(config.port, 8080);
-    Ok(()) // Test fails if any ? returns Err
+    Ok(()) // 若任何 ? 返回 Err 则测试失败
 }
 ```
 
@@ -153,7 +154,7 @@ fn panics_with_specific_message() {
 }
 ```
 
-## 集成测试
+## Integration Test
 
 ### 文件结构
 
@@ -161,14 +162,14 @@ fn panics_with_specific_message() {
 my_crate/
 ├── src/
 │   └── lib.rs
-├── tests/              # 集成测试
-│   ├── api_test.rs     # 每个文件都是一个独立的测试二进制文件
+├── tests/              # integration test
+│   ├── api_test.rs     # 每个文件是独立的 test binary
 │   ├── db_test.rs
-│   └── common/         # 共享测试工具
+│   └── common/         # 共享的测试工具
 │       └── mod.rs
 ```
 
-### 编写集成测试
+### 编写 Integration Test
 
 ```rust
 // tests/api_test.rs
@@ -185,7 +186,7 @@ fn full_request_lifecycle() {
 }
 ```
 
-## 异步测试
+## Async 测试
 
 ### 使用 Tokio
 
@@ -212,7 +213,7 @@ async fn handles_timeout() {
 
 ## 测试组织模式
 
-### 使用 `rstest` 进行参数化测试
+### 使用 `rstest` 的 Parameterized Test
 
 ```rust
 use rstest::{rstest, fixture};
@@ -225,7 +226,7 @@ fn test_string_length(#[case] input: &str, #[case] expected: usize) {
     assert_eq!(input.len(), expected);
 }
 
-// Fixtures
+// fixture
 #[fixture]
 fn test_db() -> TestDb {
     TestDb::new_in_memory()
@@ -245,7 +246,7 @@ fn test_insert(test_db: TestDb) {
 mod tests {
     use super::*;
 
-    /// Creates a test user with sensible defaults.
+    /// 创建一个具有合理默认值的测试用户。
     fn make_user(name: &str) -> User {
         User::new(name, &format!("{name}@test.com")).unwrap()
     }
@@ -258,9 +259,9 @@ mod tests {
 }
 ```
 
-## 使用 `proptest` 进行基于属性的测试
+## 使用 `proptest` 的 Property-Based Testing
 
-### 基本属性测试
+### 基础 property test
 
 ```rust
 use proptest::prelude::*;
@@ -290,7 +291,7 @@ proptest! {
 }
 ```
 
-### 自定义策略
+### 自定义 Strategy
 
 ```rust
 use proptest::prelude::*;
@@ -308,9 +309,9 @@ proptest! {
 }
 ```
 
-## 使用 `mockall` 进行模拟
+## 使用 `mockall` 进行 mocking
 
-### 基于特征的模拟
+### 基于 trait 的 mocking
 
 ```rust
 use mockall::{automock, predicate::eq};
@@ -345,12 +346,12 @@ fn service_returns_none_when_not_found() {
 }
 ```
 
-## 文档测试
+## Doc Test
 
-### 可执行的文档
+### 可执行文档
 
-````rust
-/// Adds two numbers together.
+```rust
+/// 将两个数字相加。
 ///
 /// # Examples
 ///
@@ -364,11 +365,11 @@ pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
 
-/// Parses a config string.
+/// 解析 config 字符串。
 ///
 /// # Errors
 ///
-/// Returns `Err` if the input is not valid TOML.
+/// 若输入不是有效的 TOML 则返回 `Err`。
 ///
 /// ```no_run
 /// use my_crate::parse_config;
@@ -385,9 +386,9 @@ pub fn add(a: i32, b: i32) -> i32 {
 pub fn parse_config(input: &str) -> Result<Config, ParseError> {
     todo!()
 }
-````
+```
 
-## 使用 Criterion 进行基准测试
+## 使用 Criterion 进行 benchmark
 
 ```toml
 # Cargo.toml
@@ -418,59 +419,57 @@ criterion_group!(benches, bench_fibonacci);
 criterion_main!(benches);
 ```
 
-## 测试覆盖率
+## Test Coverage
 
-### 运行覆盖率
+### 运行 coverage
 
 ```bash
-# Install: cargo install cargo-llvm-cov (or use taiki-e/install-action in CI)
-cargo llvm-cov                    # Summary
-cargo llvm-cov --html             # HTML report
-cargo llvm-cov --lcov > lcov.info # LCOV format for CI
-cargo llvm-cov --fail-under-lines 80  # Fail if below threshold
+# 安装：cargo install cargo-llvm-cov（或在 CI 中使用 taiki-e/install-action）
+cargo llvm-cov                    # 摘要
+cargo llvm-cov --html             # HTML 报告
+cargo llvm-cov --lcov > lcov.info # 用于 CI 的 LCOV 格式
+cargo llvm-cov --fail-under-lines 80  # 低于阈值则失败
 ```
 
-### 覆盖率目标
+### Coverage 目标
 
 | 代码类型 | 目标 |
 |-----------|--------|
 | 关键业务逻辑 | 100% |
-| 公共 API | 90%+ |
+| Public API | 90%+ |
 | 通用代码 | 80%+ |
-| 生成的 / FFI 绑定 | 排除 |
+| 生成的代码 / FFI bindings | 排除 |
 
 ## 测试命令
 
 ```bash
-cargo test                        # Run all tests
-cargo test -- --nocapture         # Show println output
-cargo test test_name              # Run tests matching pattern
-cargo test --lib                  # Unit tests only
-cargo test --test api_test        # Integration tests only
-cargo test --doc                  # Doc tests only
-cargo test --no-fail-fast         # Don't stop on first failure
-cargo test -- --ignored           # Run ignored tests
+cargo test                        # 运行所有测试
+cargo test -- --nocapture         # 显示 println 输出
+cargo test test_name              # 运行匹配模式的测试
+cargo test --lib                  # 仅运行 unit test
+cargo test --test api_test        # 仅运行 integration test
+cargo test --doc                  # 仅运行 doc test
+cargo test --no-fail-fast         # 不在首次失败时停止
+cargo test -- --ignored           # 运行被忽略的测试
 ```
 
 ## 最佳实践
 
-**应该做：**
+**应做：**
+- 先写测试（TDD）
+- 为 unit test 使用 `#[cfg(test)]` module
+- 测试行为，而非实现
+- 使用能说明场景的描述性测试名称
+- 优先使用 `assert_eq!` 而非 `assert!` 以获得更好的 error message
+- 在返回 `Result` 的测试中使用 `?` 以获得更清晰的错误输出
+- 保持测试独立 — 不共享可变状态
 
-* 先写测试 (TDD)
-* 使用 `#[cfg(test)]` 模块进行单元测试
-* 测试行为，而非实现
-* 使用描述性测试名称来解释场景
-* 为了更好的错误信息，优先使用 `assert_eq!` 而非 `assert!`
-* 在返回 `Result` 的测试中使用 `?` 以获得更清晰的错误输出
-* 保持测试独立 — 没有共享的可变状态
-
-**不应该做：**
-
-* 在可以测试 `Result::is_err()` 时使用 `#[should_panic]`
-* 模拟所有内容 — 在可行时优先考虑集成测试
-* 忽略不稳定的测试 — 修复或隔离它们
-* 在测试中使用 `sleep()` — 使用通道、屏障或 `tokio::time::pause()`
-* 跳过错误路径测试
+**不要：**
+- 在可以改用 `Result::is_err()` 测试时使用 `#[should_panic]`
+- mock 一切 — 尽可能优先使用 integration test
+- 忽略 flaky test — 修复或隔离它们
+- 在测试中使用 `sleep()` — 应使用 channel、barrier 或 `tokio::time::pause()`
+- 跳过 error 路径测试
 
 ## CI 集成
 
@@ -499,4 +498,4 @@ test:
       run: cargo llvm-cov --fail-under-lines 80
 ```
 
-**记住**：测试就是文档。它们展示了你的代码应如何使用。清晰编写并保持更新。
+**切记**：测试即文档。它们展示了你的代码应如何被使用。请清晰地编写它们并保持最新。

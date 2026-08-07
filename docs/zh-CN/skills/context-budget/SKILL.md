@@ -1,91 +1,87 @@
 ---
 name: context-budget
-description: 审核Claude Code上下文窗口在代理、技能、MCP服务器和规则中的消耗情况。识别膨胀、冗余组件，并提供优先的令牌节省建议。
-origin: ECC
+description: 审计 Claude Code 在 agents、skills、MCP servers 和 rules 上的 context window 消耗。识别臃肿、冗余组件，并生成按优先级排序的 token 节省建议。
+metadata:
+  origin: ECC
 ---
 
-# 上下文预算
+# Context Budget
 
-分析 Claude Code 会话中每个已加载组件的令牌开销，并提供可操作的优化建议以回收上下文空间。
+分析 Claude Code 会话中每个已加载组件的 token 开销，并给出可执行的优化建议以回收 context 空间。
 
-## 使用时机
+## 何时使用
 
-* 会话性能感觉迟缓或输出质量下降
-* 你最近添加了许多技能、代理或 MCP 服务器
-* 你想知道实际有多少上下文余量
-* 计划添加更多组件，需要知道是否有空间
-* 运行 `/context-budget` 命令（本技能为其提供支持）
+- 会话性能迟缓或输出质量下降
+- 近期添加了大量 skills、agents 或 MCP servers
+- 想了解实际可用的 context 余量
+- 计划添加更多组件，需要确认是否还有空间
+- 运行 `/context-budget` 命令（本 skill 为其提供支持）
 
 ## 工作原理
 
-### 阶段 1：清单
+### 阶段 1：盘点
 
-扫描所有组件目录并估算令牌消耗：
+扫描所有组件目录并估算 token 消耗：
 
-**代理** (`agents/*.md`)
+**Agents**（`agents/*.md`）
+- 统计每个文件的行数和 token 数（words × 1.3）
+- 提取 `description` frontmatter 的长度
+- 标记：文件 >200 行（过重），description >30 words（frontmatter 臃肿）
 
-* 统计每个文件的行数和令牌数（单词数 × 1.3）
-* 提取 `description` 前言长度
-* 标记：文件 >200 行（繁重），描述 >30 词（臃肿的前言）
+**Skills**（`skills/*/SKILL.md`）
+- 统计每个 SKILL.md 的 token 数
+- 标记：文件 >400 行
+- 检查 `.agents/skills/` 中是否有重复副本——跳过相同副本以避免重复计数
 
-**技能** (`skills/*/SKILL.md`)
+**Rules**（`rules/**/*.md`）
+- 统计每个文件的 token 数
+- 标记：文件 >100 行
+- 检测同一语言模块下 rules 文件之间的内容重叠
 
-* 统计 SKILL.md 的令牌数
-* 标记：文件 >400 行
-* 检查 `.agents/skills/` 中的重复副本 — 跳过相同副本以避免重复计数
-
-**规则** (`rules/**/*.md`)
-
-* 统计每个文件的令牌数
-* 标记：文件 >100 行
-* 检测同一语言模块中规则文件之间的内容重叠
-
-**MCP 服务器** (`.mcp.json` 或活动的 MCP 配置)
-
-* 统计配置的服务器数量和工具总数
-* 估算模式开销约为每个工具 500 令牌
-* 标记：工具数 >20 的服务器，包装简单 CLI 命令的服务器 (`gh`, `git`, `npm`, `supabase`, `vercel`)
+**MCP Servers**（`.mcp.json` 或活动的 MCP 配置）
+- 统计已配置的 server 数量和总 tool 数
+- 估算每个 tool 的 schema 开销约为 500 tokens
+- 标记：tool 数 >20 的 server，以及封装简单 CLI 命令（`gh`、`git`、`npm`、`supabase`、`vercel`）的 server
 
 **CLAUDE.md**（项目级 + 用户级）
-
-* 统计 CLAUDE.md 链中每个文件的令牌数
-* 标记：合并总数 >300 行
+- 统计 CLAUDE.md 链中每个文件的 token 数
+- 标记：合计 >300 行
 
 ### 阶段 2：分类
 
-将每个组件归入一个类别：
+将每个组件归入相应类别：
 
 | 类别 | 标准 | 操作 |
 |--------|----------|--------|
-| **始终需要** | 在 CLAUDE.md 中被引用，支持活动命令，或匹配当前项目类型 | 保留 |
-| **有时需要** | 特定领域（例如语言模式），未在 CLAUDE.md 中引用 | 考虑按需激活 |
-| **很少需要** | 无命令引用，内容重叠，或无明显的项目匹配 | 移除或延迟加载 |
+| **始终需要** | 在 CLAUDE.md 中被引用、为某个活跃 command 提供支持，或匹配当前项目类型 | 保留 |
+| **有时需要** | 特定领域（如语言 patterns），且未在 CLAUDE.md 中引用 | 考虑按需激活 |
+| **很少需要** | 无 command 引用、内容重叠，或无明显的项目匹配 | 移除或 lazy-load |
 
 ### 阶段 3：检测问题
 
 识别以下问题模式：
 
-* **臃肿的代理描述** — 前言中描述 >30 词，会在每次任务工具调用时加载
-* **繁重的代理** — 文件 >200 行，每次生成时都会增加任务工具的上下文
-* **冗余组件** — 重复代理逻辑的技能，重复 CLAUDE.md 的规则
-* **MCP 超额订阅** — >10 个服务器，或包装了可免费使用的 CLI 工具的服务器
-* **CLAUDE.md 臃肿** — 冗长的解释、过时的部分、本应成为规则的指令
+- **agent description 臃肿** —— frontmatter 中超过 30 words 的 description 会被加载进每次 Task tool 调用
+- **过重的 agents** —— 超过 200 行的文件会在每次 spawn 时撑大 Task tool 的 context
+- **冗余组件** —— skill 重复 agent 逻辑，rules 重复 CLAUDE.md 内容
+- **MCP 过度订阅** —— server 数 >10，或 server 封装了本可免费使用的 CLI tool
+- **CLAUDE.md 臃肿** —— 冗长的解释、过时的章节、本应作为 rules 的指令
 
 ### 阶段 4：报告
 
-生成上下文预算报告：
+生成 context budget 报告：
 
 ```
-上下文预算报告
+Context Budget Report
 ═══════════════════════════════════════
 
-总预估开销：约 XX,XXX 个词元
-上下文模型：Claude Sonnet (200K 窗口)
-有效可用上下文：约 XXX,XXX 个词元 (XX%)
+Total estimated overhead: ~XX,XXX tokens
+Context model: Claude Sonnet (200K window)
+Effective available context: ~XXX,XXX tokens (XX%)
 
-组件细分：
+Component Breakdown:
 ┌─────────────────┬────────┬───────────┐
-│ 组件            │ 数量   │ 词元数    │
+│ Component       │ Count  │ Tokens    │
 ├─────────────────┼────────┼───────────┤
 │ Agents          │ N      │ ~X,XXX    │
 │ Skills          │ N      │ ~X,XXX    │
@@ -94,50 +90,47 @@ origin: ECC
 │ CLAUDE.md       │ N      │ ~X,XXX    │
 └─────────────────┴────────┴───────────┘
 
-WARNING: 发现的问题 (N)：
-[按可节省词元数排序]
+WARNING: Issues Found (N):
+[ranked by token savings]
 
-前 3 项优化建议：
-1. [action] → 节省约 X,XXX 个词元
-2. [action] → 节省约 X,XXX 个词元
-3. [action] → 节省约 X,XXX 个词元
+Top 3 Optimizations:
+1. [action] → save ~X,XXX tokens
+2. [action] → save ~X,XXX tokens
+3. [action] → save ~X,XXX tokens
 
-潜在节省空间：约 XX,XXX 个词元 (占当前开销的 XX%)
+Potential savings: ~XX,XXX tokens (XX% of current overhead)
 ```
 
-在详细模式下，额外输出每个文件的令牌计数、最繁重文件的行级细分、重叠组件之间的具体冗余行，以及 MCP 工具列表和每个工具模式大小的估算。
+在 verbose 模式下，额外输出每个文件的 token 计数、最重文件的逐行明细、重叠组件之间具体的重复行，以及带每个 tool schema 大小估算的 MCP tool 列表。
 
 ## 示例
 
-**基本审计**
-
+**基础审计**
 ```
-/context-budget
-技能：扫描设置 → 16个代理（12,400个令牌），28个技能（6,200），87个MCP工具（43,500），2个CLAUDE.md（1,200）
-       标记：3个重型代理，14个MCP服务器（3个可替换为CLI）
-       最高节省：移除3个MCP服务器 → -27,500个令牌（减少47%开销）
-```
-
-**详细模式**
-
-```
-/context-budget --verbose
-技能：完整报告 + 按文件细目显示 planner.md（213 行，1,840 个令牌），
-       MCP 工具列表及每个工具的大小，重复规则行并排显示
+User: /context-budget
+Skill: Scans setup → 16 agents (12,400 tokens), 28 skills (6,200), 87 MCP tools (43,500), 2 CLAUDE.md (1,200)
+       Flags: 3 heavy agents, 14 MCP servers (3 CLI-replaceable)
+       Top saving: remove 3 MCP servers → -27,500 tokens (47% overhead reduction)
 ```
 
-**扩容前检查**
-
+**Verbose 模式**
 ```
-User: 我想再添加5个MCP服务器，有空间吗？
-Skill: 当前开销33% → 添加5个服务器（约50个工具）会增加约25,000个tokens → 开销将升至45%
-       建议：先移除2个可用CLI替代的服务器以保持在40%以下
+User: /context-budget --verbose
+Skill: Full report + per-file breakdown showing planner.md (213 lines, 1,840 tokens),
+       MCP tool list with per-tool sizes, duplicated rule lines side by side
+```
+
+**扩展前检查**
+```
+User: I want to add 5 more MCP servers, do I have room?
+Skill: Current overhead 33% → adding 5 servers (~50 tools) would add ~25,000 tokens → pushes to 45% overhead
+       Recommendation: remove 2 CLI-replaceable servers first to stay under 40%
 ```
 
 ## 最佳实践
 
-* **令牌估算**：对散文使用 `words × 1.3`，对代码密集型文件使用 `chars / 4`
-* **MCP 是最大的杠杆**：每个工具模式约消耗 500 令牌；一个 30 个工具的服务器开销超过你所有技能的总和
-* **代理描述始终加载**：即使代理从未被调用，其描述字段也存在于每个任务工具上下文中
-* **详细模式用于调试**：需要精确定位导致开销的确切文件时使用，而非用于常规审计
-* **变更后审计**：添加任何代理、技能或 MCP 服务器后运行，以便及早发现增量
+- **Token 估算**：对散文类内容使用 `words × 1.3`，对代码密集型文件使用 `chars / 4`
+- **MCP 是最大的杠杆**：每个 tool schema 约耗费 500 tokens；一个含 30 个 tool 的 server 比你所有 skills 加起来还耗费更多
+- **Agent description 始终被加载**：即使 agent 从未被调用，其 description 字段也会出现在每次 Task tool 的 context 中
+- **Verbose 模式用于调试**：当需要精确定位驱动开销的具体文件时使用，不用于常规审计
+- **变更后审计**：在添加任何 agent、skill 或 MCP server 后运行，以尽早发现蔓延

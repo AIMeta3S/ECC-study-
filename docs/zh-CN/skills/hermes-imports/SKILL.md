@@ -1,88 +1,89 @@
 ---
 name: hermes-imports
-description: 将本地 Hermes 操作员工作流转换为经过清理的 ECC 技能和发布包工件。在准备将 Hermes 工作流用于公共 ECC 重用而不泄露私有工作区状态、凭据或仅本地路径时使用。
-origin: ECC
+description: 将本地 Hermes operator 工作流转换为经过脱敏处理的 ECC skill 与 release-pack artifact。在准备将 Hermes 工作流用于公开 ECC 复用、且需要避免泄露私有 workspace 状态、credentials 或本地专属路径时使用。
+metadata:
+  origin: ECC
 ---
 
-# Hermes 导入
+# Hermes Imports
 
-当需要将重复的 Hermes 工作流转化为可在 ECC 中安全发布的内容时，使用此技能。
+当需要将一个反复使用的 Hermes 工作流转变为可安全交付到 ECC 的内容时，使用此 skill。
 
-Hermes 是操作员外壳。ECC 是可复用工作流层。导入操作应将稳定模式从 Hermes 迁移至 ECC，同时避免移动私有状态。
+Hermes 是 operator shell。ECC 是可复用的工作流层。Import 应当将稳定的模式从 Hermes 迁移到 ECC，但不迁移私有状态。
 
-## 使用时机
+## 何时使用
 
-* Hermes 工作流重复次数足够多，已具备可复用性
-* 本地操作员提示词需要升级为公共 ECC 技能
-* 启动、内容、研究或工程工作流需要经过净化的交接文档
-* 工作流中包含本地路径、凭证、个人数据集或私有账户名，发布前必须移除
+- 一个 Hermes 工作流已重复足够多次，足以成为可复用的工作流。
+- 一个本地 operator prompt 应当成为一个公开的 ECC skill。
+- 一个 launch、内容、研究或工程工作流需要经过脱敏处理的交接文档。
+- 一个工作流提到了本地路径、credentials、个人数据集或私有账户名，且这些必须在发布前移除。
 
-## 导入规则
+## Import 规则
 
-* 将本地路径转换为仓库相对路径或占位符
-* 用角色标签（如 `operator`、`default profile`、`workspace owner`）替换真实账户名
-* 仅通过提供商名称描述凭证要求
-* 保持示例简洁且可操作
-* 不得发布原始工作区导出文件、令牌、OAuth 文件、健康数据、CRM 数据或财务数据
-* 若工作流依赖私有状态才能理解，则保留在本地
+- 将本地路径转换为 repo-relative 路径或占位符。
+- 用角色标签（如 `operator`、`default profile` 或 `workspace owner`）替换真实的账户名。
+- 仅按 provider 名称描述 credential 需求。
+- 保持示例聚焦且具备可操作性。
+- 不要交付原始的 workspace 导出、token、OAuth 文件、health data、CRM data 或 finance data。
+- 如果该工作流必须依赖私有状态才能讲清楚，就让它留在本地。
 
-## 净化检查清单
+## 脱敏检查清单
 
-提交导入的工作流前，需扫描：
+在 commit 一个被 import 的工作流之前，扫描以下内容：
 
-* 绝对路径（如 `/Users/...`）
-* `~/.hermes` 路径（除非文档明确说明本地设置）
-* API 密钥、令牌、Cookie、OAuth 文件或 Bearer 字符串
-* 电话号码、私人邮箱地址及个人联系人图谱
-* 尚未公开的客户名称、家族名称或账户名
-* 收入、健康或 CRM 详情
-* 包含私有系统工具输出的原始日志
+- 绝对路径，例如 `/Users/...`
+- `~/.hermes` 路径（除非文档明确在解释本地 setup）
+- API key、token、cookie、OAuth 文件或 bearer string
+- 电话号码、私人邮箱地址以及个人联系关系图
+- 客户名、家族名或尚未公开的账户名
+- 营收、健康或 CRM 细节
+- 包含来自私有系统的 tool 输出的原始 log
 
 ## 转换模式
 
-1. 识别可重复的操作员循环
-2. 剥离私有输入与输出
-3. 将本地路径重写为仓库相对路径示例
-4. 将一次性指令转化为 `When To Use` 章节及简短流程
-5. 添加具体输出要求
-6. 在发起 PR 前执行密钥与本地路径扫描
+1. 识别可重复的 operator loop。
+2. 剥离私有的输入与输出。
+3. 将本地路径改写为 repo-relative 示例。
+4. 将一次性指令转化为 `When To Use` 章节和一段简短流程。
+5. 加入具体的输出要求。
+6. 在开启 PR 之前运行一次 secret 与本地路径扫描。
 
-## 示例：启动交接
+## 示例：Launch 交接
 
-本地 Hermes 提示词：
+本地 Hermes prompt：
 
 ```text
-读取我的本地工作区文件并最终确定发布文案。
+Read my local workspace files and finalize launch copy.
 ```
 
-ECC 安全版本：
+ECC-safe 版本：
 
 ```text
-使用 docs/releases/<version>/ 下的公开发布包。
-返回一条 X 帖子、一条 LinkedIn 帖子、一份录制检查清单以及缺失资源列表。
+Use the public release pack under docs/releases/<version>/.
+Return one X thread, one LinkedIn post, one recording checklist, and the missing assets list.
 ```
 
-## 示例：静默时段操作员任务
+## 示例：静默时段 Operator 任务
 
-本地 Hermes 任务：
+本地 Hermes job：
 
 ```text
-夜间运行我的私人收件箱、财务和内容检查。
+Run my private inbox, finance, and content checks overnight.
 ```
 
-ECC 安全版本：
+ECC-safe 版本：
 
 ```text
-描述调度器策略、静默时段、升级规则以及检查类别。请勿包含私有数据源或凭据。
+Describe the scheduler policy, the quiet-hours window, the escalation rules, and the categories of checks. Do not include private data sources or credentials.
 ```
 
 ## 输出契约
 
 返回：
 
-* 候选 ECC 技能名称
-* 净化后的工作流摘要
-* 必需的公共输入
-* 已移除的私有输入
-* 剩余风险
-* 应创建或更新的文件
+- 候选的 ECC skill 名称
+- 经过脱敏处理的工作流摘要
+- 所需的公开输入
+- 已移除的私有输入
+- 剩余风险
+- 应被创建或更新的文件

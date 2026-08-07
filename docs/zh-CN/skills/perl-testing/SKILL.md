@@ -1,28 +1,29 @@
 ---
 name: perl-testing
-description: 使用Test2::V0、Test::More、prove runner、模拟、Devel::Cover覆盖率和TDD方法的Perl测试模式。
-origin: ECC
+description: 采用 Test2::V0、Test::More、prove runner、mocking、通过 Devel::Cover 进行覆盖率分析以及 TDD 方法论的 Perl 测试模式。
+metadata:
+  origin: ECC
 ---
 
 # Perl 测试模式
 
-使用 Test2::V0、Test::More、prove 和 TDD 方法论为 Perl 应用程序提供全面的测试策略。
+使用 Test2::V0、Test::More、prove 和 TDD 方法论为 Perl 应用提供的全面测试策略。
 
-## 何时激活
+## 何时启用
 
-* 编写新的 Perl 代码（遵循 TDD：红、绿、重构）
-* 为 Perl 模块或应用程序设计测试套件
-* 审查 Perl 测试覆盖率
-* 设置 Perl 测试基础设施
-* 将测试从 Test::More 迁移到 Test2::V0
-* 调试失败的 Perl 测试
+- 编写新的 Perl 代码时（遵循 TDD：red、green、refactor）
+- 为 Perl module 或应用设计 test suite 时
+- 审查 Perl 测试覆盖率时
+- 搭建 Perl 测试基础设施时
+- 将测试从 Test::More 迁移到 Test2::V0 时
+- debug 失败的 Perl 测试时
 
-## TDD 工作流程
+## TDD 工作流
 
 始终遵循 RED-GREEN-REFACTOR 循环。
 
 ```perl
-# Step 1: RED — Write a failing test
+# 步骤 1：RED — 编写一个失败的测试
 # t/unit/calculator.t
 use v5.36;
 use Test2::V0;
@@ -38,7 +39,7 @@ subtest 'addition' => sub {
 
 done_testing;
 
-# Step 2: GREEN — Write minimal implementation
+# 步骤 2：GREEN — 编写最小实现
 # lib/Calculator.pm
 package Calculator;
 use v5.36;
@@ -50,13 +51,13 @@ sub add($self, $a, $b) {
 
 1;
 
-# Step 3: REFACTOR — Improve while tests stay green
-# Run: prove -lv t/unit/calculator.t
+# 步骤 3：REFACTOR — 在测试保持 green 的同时进行改进
+# 运行：prove -lv t/unit/calculator.t
 ```
 
 ## Test::More 基础
 
-标准的 Perl 测试模块 —— 广泛使用，随核心发行。
+标准的 Perl 测试 module — 使用广泛，随核心发行版一同发布。
 
 ### 基本断言
 
@@ -64,29 +65,29 @@ sub add($self, $a, $b) {
 use v5.36;
 use Test::More;
 
-# Plan upfront or use done_testing
-# plan tests => 5;  # Fixed plan (optional)
+# 预先 plan 或使用 done_testing
+# plan tests => 5;  # 固定的 plan（可选）
 
-# Equality
+# 相等性
 is($result, 42, 'returns correct value');
 isnt($result, 0, 'not zero');
 
-# Boolean
+# 布尔值
 ok($user->is_active, 'user is active');
 ok(!$user->is_banned, 'user is not banned');
 
-# Deep comparison
+# 深度比较
 is_deeply(
     $got,
     { name => 'Alice', roles => ['admin'] },
     'returns expected structure'
 );
 
-# Pattern matching
+# 模式匹配
 like($error, qr/not found/i, 'error mentions not found');
 unlike($output, qr/password/, 'output hides password');
 
-# Type check
+# 类型检查
 isa_ok($obj, 'MyApp::User');
 can_ok($obj, 'save', 'delete');
 
@@ -99,7 +100,7 @@ done_testing;
 use v5.36;
 use Test::More;
 
-# Skip tests conditionally
+# 有条件地跳过测试
 SKIP: {
     skip 'No database configured', 2 unless $ENV{TEST_DB};
 
@@ -108,7 +109,7 @@ SKIP: {
     is($db->version, '15', 'correct PostgreSQL version');
 }
 
-# Mark expected failures
+# 标记预期失败
 TODO: {
     local $TODO = 'Caching not yet implemented';
     is($cache->get('key'), 'value', 'cache returns value');
@@ -119,30 +120,30 @@ done_testing;
 
 ## Test2::V0 现代框架
 
-Test2::V0 是 Test::More 的现代替代品 —— 更丰富的断言、更好的诊断和可扩展性。
+Test2::V0 是 Test::More 的现代替代品 — 断言更丰富、诊断信息更完善，并且可扩展。
 
 ### 为什么选择 Test2？
 
-* 使用哈希/数组构建器进行卓越的深层比较
-* 失败时提供更好的诊断输出
-* 具有更清晰作用域的子测试
-* 可通过 Test2::Tools::\* 插件扩展
-* 与 Test::More 测试向后兼容
+- 通过 hash/array builder 实现更强大的深度比较
+- 失败时提供更好的诊断输出
+- subtest 具有更清晰的作用域
+- 通过 Test2::Tools::* plugin 可扩展
+- 与 Test::More 测试向后兼容
 
-### 使用构建器进行深层比较
+### 使用 Builder 进行深度比较
 
 ```perl
 use v5.36;
 use Test2::V0;
 
-# Hash builder — check partial structure
+# Hash builder — 检查部分结构
 is(
     $user->to_hash,
     hash {
         field name  => 'Alice';
         field email => match(qr/\@example\.com$/);
         field age   => validator(sub { $_ >= 18 });
-        # Ignore other fields
+        # 忽略其他字段
         etc();
     },
     'user has expected fields'
@@ -154,12 +155,12 @@ is(
     array {
         item 'first';
         item match(qr/^second/);
-        item DNE();  # Does Not Exist — verify no extra items
+        item DNE();  # Does Not Exist — 验证没有多余的 item
     },
     'result matches expected list'
 );
 
-# Bag — order-independent comparison
+# Bag — 与顺序无关的比较
 is(
     $tags,
     bag {
@@ -171,7 +172,7 @@ is(
 );
 ```
 
-### 子测试
+### Subtest
 
 ```perl
 use v5.36;
@@ -200,17 +201,17 @@ done_testing;
 use v5.36;
 use Test2::V0;
 
-# Test that code dies
+# 测试代码会 dies
 like(
     dies { divide(10, 0) },
     qr/Division by zero/,
     'dies on division by zero'
 );
 
-# Test that code lives
+# 测试代码会 lives
 ok(lives { divide(10, 2) }, 'division succeeds') or note($@);
 
-# Combined pattern
+# 组合模式
 subtest 'error handling' => sub {
     ok(lives { parse_config('valid.json') }, 'valid config parses');
     like(
@@ -229,17 +230,17 @@ done_testing;
 
 ```text
 t/
-├── 00-load.t              # 验证模块编译
+├── 00-load.t              # 验证 module 能否编译
 ├── 01-basic.t             # 核心功能
 ├── unit/
-│   ├── config.t           # 按模块划分的单元测试
+│   ├── config.t           # 按模块组织的单元测试
 │   ├── user.t
 │   └── util.t
 ├── integration/
 │   ├── database.t
 │   └── api.t
 ├── lib/
-│   └── TestHelper.pm      # 共享测试工具
+│   └── TestHelper.pm      # 共享的测试工具
 └── fixtures/
     ├── config.json        # 测试数据文件
     └── users.csv
@@ -248,28 +249,28 @@ t/
 ### prove 命令
 
 ```bash
-# Run all tests
+# 运行所有测试
 prove -l t/
 
-# Verbose output
+# 详细输出
 prove -lv t/
 
-# Run specific test
+# 运行特定测试
 prove -lv t/unit/user.t
 
-# Recursive search
+# 递归搜索
 prove -lr t/
 
-# Parallel execution (8 jobs)
+# 并行执行（8 个 job）
 prove -lr -j8 t/
 
-# Run only failing tests from last run
+# 仅运行上次运行中失败的测试
 prove -l --state=failed t/
 
-# Colored output with timer
+# 带计时器的彩色输出
 prove -l --color --timer t/
 
-# TAP output for CI
+# 用于 CI 的 TAP 输出
 prove -l --formatter TAP::Formatter::JUnit t/ > results.xml
 ```
 
@@ -284,9 +285,9 @@ prove -l --formatter TAP::Formatter::JUnit t/ > results.xml
 --state=save
 ```
 
-## 夹具与设置/拆卸
+## Fixture 与 Setup/Teardown
 
-### 子测试隔离
+### Subtest 隔离
 
 ```perl
 use v5.36;
@@ -300,19 +301,19 @@ subtest 'file processing' => sub {
     my $file = path($dir, 'input.txt');
     $file->spew_utf8("line1\nline2\nline3\n");
 
-    # Test
+    # 测试
     my $result = process_file("$file");
     is($result->{line_count}, 3, 'counts lines');
 
-    # Teardown happens automatically (CLEANUP => 1)
+    # Teardown 会自动执行（CLEANUP => 1）
 };
 ```
 
-### 共享测试助手
+### 共享的测试 helper
 
-将可重用的助手放在 `t/lib/TestHelper.pm` 中，并通过 `use lib 't/lib'` 加载。通过 `Exporter` 导出工厂函数，例如 `create_test_db()`、`create_temp_dir()` 和 `fixture_path()`。
+将可复用的 helper 放在 `t/lib/TestHelper.pm` 中，使用 `use lib 't/lib'` 加载。通过 `Exporter` 导出工厂函数，如 `create_test_db()`、`create_temp_dir()` 和 `fixture_path()`。
 
-## 模拟
+## Mocking
 
 ### Test::MockModule
 
@@ -324,7 +325,7 @@ use Test::MockModule;
 subtest 'mock external API' => sub {
     my $mock = Test::MockModule->new('MyApp::API');
 
-    # Good: Mock returns controlled data
+    # 好：mock 返回受控数据
     $mock->mock(fetch_user => sub ($self, $id) {
         return { id => $id, name => 'Mock User', email => 'mock@test.com' };
     });
@@ -333,49 +334,49 @@ subtest 'mock external API' => sub {
     my $user = $api->fetch_user(42);
     is($user->{name}, 'Mock User', 'returns mocked user');
 
-    # Verify call count
+    # 验证调用次数
     my $call_count = 0;
     $mock->mock(fetch_user => sub { $call_count++; return {} });
     $api->fetch_user(1);
     $api->fetch_user(2);
     is($call_count, 2, 'fetch_user called twice');
 
-    # Mock is automatically restored when $mock goes out of scope
+    # 当 $mock 离开作用域时，mock 会自动恢复
 };
 
-# Bad: Monkey-patching without restoration
-# *MyApp::API::fetch_user = sub { ... };  # NEVER — leaks across tests
+# 坏：不恢复原状的 monkey-patching
+# *MyApp::API::fetch_user = sub { ... };  # 绝不这样做 — 会在测试之间泄漏
 ```
 
-对于轻量级的模拟对象，使用 `Test::MockObject` 创建可注入的测试替身，使用 `->mock()` 并验证调用 `->called_ok()`。
+对于轻量级的 mock 对象，使用 `Test::MockObject` 创建可注入的 test double，通过 `->mock()` 设置行为，并用 `->called_ok()` 验证调用。
 
-## 使用 Devel::Cover 进行覆盖率分析
+## 使用 Devel::Cover 的覆盖率
 
-### 运行覆盖率分析
+### 运行覆盖率
 
 ```bash
-# Basic coverage report
+# 基本覆盖率报告
 cover -test
 
-# Or step by step
+# 或者分步执行
 perl -MDevel::Cover -Ilib t/unit/user.t
 cover
 
-# HTML report
+# HTML 报告
 cover -report html
 open cover_db/coverage.html
 
-# Specific thresholds
+# 特定 threshold
 cover -test -report text | grep 'Total'
 
-# CI-friendly: fail under threshold
+# 对 CI 友好：低于 threshold 则失败
 cover -test && cover -report text -select '^lib/' \
   | perl -ne 'if (/Total.*?(\d+\.\d+)/) { exit 1 if $1 < 80 }'
 ```
 
 ### 集成测试
 
-对数据库测试使用内存中的 SQLite，对 API 测试模拟 HTTP::Tiny。
+数据库测试使用内存中的 SQLite，API 测试则 mock HTTP::Tiny。
 
 ```perl
 use v5.36;
@@ -398,28 +399,28 @@ done_testing;
 
 ## 最佳实践
 
-### 应做事项
+### 应该做的
 
-* **遵循 TDD**：在实现之前编写测试（红-绿-重构）
-* **使用 Test2::V0**：现代断言，更好的诊断
-* **使用子测试**：分组相关断言，隔离状态
-* **模拟外部依赖**：网络、数据库、文件系统
-* **使用 `prove -l`**：始终将 lib/ 包含在 `@INC` 中
-* **清晰命名测试**：`'user login with invalid password fails'`
-* **测试边界情况**：空字符串、undef、零、边界值
-* **目标 80%+ 覆盖率**：专注于业务逻辑路径
-* **保持测试快速**：模拟 I/O，使用内存数据库
+- **遵循 TDD**：在实现之前先写测试（red-green-refactor）
+- **使用 Test2::V0**：现代的断言，更好的诊断信息
+- **使用 subtest**：将相关的断言分组，隔离状态
+- **mock 外部依赖**：网络、数据库、文件系统
+- **使用 `prove -l`**：始终将 lib/ 包含在 `@INC` 中
+- **清晰地命名测试**：`'user login with invalid password fails'`
+- **测试边缘情况**：空字符串、undef、零、边界值
+- **以 80% 以上的覆盖率为目标**：重点关注业务逻辑路径
+- **保持测试快速**：mock I/O，使用内存数据库
 
-### 禁止事项
+### 不应该做的
 
-* **不要测试实现**：测试行为和输出，而非内部细节
-* **不要在子测试之间共享状态**：每个子测试都应是独立的
-* **不要跳过 `done_testing`**：确保所有计划的测试都已运行
-* **不要过度模拟**：仅模拟边界，而非被测试的代码
-* **不要在新项目中使用 `Test::More`**：首选 Test2::V0
-* **不要忽略测试失败**：所有测试必须在合并前通过
-* **不要测试 CPAN 模块**：相信库能正常工作
-* **不要编写脆弱的测试**：避免过度具体的字符串匹配
+- **不要测试实现细节**：测试行为和输出，而非内部细节
+- **不要在 subtest 之间共享状态**：每个 subtest 应当独立
+- **不要省略 `done_testing`**：它确保所有计划中的测试都已运行
+- **不要过度 mock**：只 mock 边界，不要 mock 被测代码
+- **不要在新项目中使用 `Test::More`**：优先使用 Test2::V0
+- **不要忽略测试失败**：合并前所有测试必须通过
+- **不要测试 CPAN module**：信任这些库能正常工作
+- **不要写脆弱的测试**：避免过于具体的字符串匹配
 
 ## 快速参考
 
@@ -427,13 +428,13 @@ done_testing;
 |---|---|
 | 运行所有测试 | `prove -lr t/` |
 | 详细运行单个测试 | `prove -lv t/unit/user.t` |
-| 并行测试运行 | `prove -lr -j8 t/` |
+| 并行运行测试 | `prove -lr -j8 t/` |
 | 覆盖率报告 | `cover -test && cover -report html` |
 | 测试相等性 | `is($got, $expected, 'label')` |
-| 深层比较 | `is($got, hash { field k => 'v'; etc() }, 'label')` |
+| 深度比较 | `is($got, hash { field k => 'v'; etc() }, 'label')` |
 | 测试异常 | `like(dies { ... }, qr/msg/, 'label')` |
 | 测试无异常 | `ok(lives { ... }, 'label')` |
-| 模拟一个方法 | `Test::MockModule->new('Pkg')->mock(m => sub { ... })` |
+| mock 一个方法 | `Test::MockModule->new('Pkg')->mock(m => sub { ... })` |
 | 跳过测试 | `SKIP: { skip 'reason', $count unless $cond; ... }` |
 | TODO 测试 | `TODO: { local $TODO = 'reason'; ... }` |
 
@@ -442,34 +443,34 @@ done_testing;
 ### 忘记 `done_testing`
 
 ```perl
-# Bad: Test file runs but doesn't verify all tests executed
+# 坏：测试文件运行了，但没有验证所有测试都已执行
 use Test2::V0;
 is(1, 1, 'works');
-# Missing done_testing — silent bugs if test code is skipped
+# 缺少 done_testing — 如果测试代码被跳过，会产生静默 bug
 
-# Good: Always end with done_testing
+# 好：始终以 done_testing 结尾
 use Test2::V0;
 is(1, 1, 'works');
 done_testing;
 ```
 
-### 缺少 `-l` 标志
+### 缺少 `-l` flag
 
 ```bash
-# Bad: Modules in lib/ not found
+# 坏：找不到 lib/ 中的 module
 prove t/unit/user.t
 # Can't locate MyApp/User.pm in @INC
 
-# Good: Include lib/ in @INC
+# 好：将 lib/ 包含进 @INC
 prove -l t/unit/user.t
 ```
 
-### 过度模拟
+### 过度 mock
 
-模拟*依赖项*，而非被测试的代码。如果你的测试只验证模拟返回了你告诉它的内容，那么它什么也没测试。
+mock 的是*依赖*，而不是被测代码。如果你的测试只是验证一个 mock 返回了你告诉它要返回的内容，那它什么都没有测试。
 
 ### 测试污染
 
-在子测试内部使用 `my` 变量 —— 永远不要用 `our` —— 以防止状态在测试之间泄漏。
+在 subtest 内部使用 `my` 变量 — 绝不使用 `our` — 以防止状态在测试之间泄漏。
 
-**记住**：测试是你的安全网。保持它们快速、专注和独立。新项目使用 Test2::V0，运行使用 prove，问责使用 Devel::Cover。
+**记住**：测试是你的安全网。保持它们快速、聚焦、独立。新项目使用 Test2::V0，用 prove 运行，用 Devel::Cover 来确保覆盖率问责。

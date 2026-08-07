@@ -1,46 +1,45 @@
 ---
 name: dart-flutter-patterns
-description: 生产就绪的 Dart 和 Flutter 模式，涵盖空安全、不可变状态、异步组合、Widget 架构、流行的状态管理框架（BLoC、Riverpod、Provider）、GoRouter 导航、Dio 网络请求、Freezed 代码生成和整洁架构。
-origin: ECC
+description: 生产级 Dart 与 Flutter 模式，涵盖 null safety、immutable state、async composition、widget 架构、主流 state management 框架（BLoC、Riverpod、Provider）、GoRouter 导航、Dio 网络请求、Freezed 代码生成以及 clean architecture。
+metadata:
+  origin: ECC
 ---
 
 # Dart/Flutter 模式
 
-## 使用场景
+## 何时使用
 
-在以下情况使用此技能：
-
-* 开始新的 Flutter 功能，需要状态管理、导航或数据访问的惯用模式
-* 审查或编写 Dart 代码，需要空安全、密封类型或异步组合的指导
-* 搭建新的 Flutter 项目，在 BLoC、Riverpod 或 Provider 之间做选择
-* 实现安全的 HTTP 客户端、WebView 集成或本地存储
-* 为 Flutter 组件、Cubit 或 Riverpod 提供者编写测试
-* 使用认证守卫配置 GoRouter
+在以下场景使用本 skill：
+- 开始开发新的 Flutter 功能，需要 state management、navigation 或数据访问的惯用模式
+- 审查或编写 Dart 代码，需要 null safety、sealed type 或 async composition 的指导
+- 搭建新的 Flutter 项目，需要在 BLoC、Riverpod 或 Provider 之间做选择
+- 实现安全的 HTTP 客户端、WebView 集成或本地存储
+- 为 Flutter widget、Cubit 或 Riverpod provider 编写测试
+- 将 GoRouter 与 authentication guard 集成
 
 ## 工作原理
 
-此技能提供按关注点组织的、可直接复制粘贴的 Dart/Flutter 代码模式：
-
-1. **空安全** — 避免 `!`，优先使用 `?.`/`??`/模式匹配
-2. **不可变状态** — 密封类、`freezed`、`copyWith`
-3. **异步组合** — 并发 `Future.wait`、`BuildContext` 后安全使用 `await`
-4. **组件架构** — 提取为类（而非方法）、`const` 传播、作用域重建
-5. **状态管理** — BLoC/Cubit 事件、Riverpod 通知器和派生提供者
-6. **导航** — 通过 `refreshListenable` 实现带响应式认证守卫的 GoRouter
-7. **网络请求** — 带拦截器的 Dio、带一次性重试守卫的令牌刷新
-8. **错误处理** — 全局捕获、`ErrorWidget.builder`、Crashlytics 集成
-9. **测试** — 单元测试（BLoC 测试）、组件测试（ProviderScope 覆盖）、使用假对象而非模拟对象
+本 skill 提供按关注点组织、可直接复制粘贴的 Dart/Flutter 代码模式：
+1. **Null safety** —— 避免 `!`，优先使用 `?.`/`??`/模式匹配
+2. **Immutable state** —— sealed class、`freezed`、`copyWith`
+3. **Async composition** —— 并发 `Future.wait`、`await` 之后安全的 `BuildContext`
+4. **Widget 架构** —— 提取为类（而非方法）、`const` 传递、scoped rebuild
+5. **State management** —— BLoC/Cubit 事件、Riverpod notifier 与 derived provider
+6. **Navigation** —— 通过 `refreshListenable` 实现 GoRouter 的响应式 auth guard
+7. **Networking** —— 带 interceptor 的 Dio、带一次性 retry guard 的 token 刷新
+8. **Error handling** —— 全局捕获、`ErrorWidget.builder`、crashlytics 接入
+9. **Testing** —— 单元测试（BLoC 测试）、widget 测试（ProviderScope override）、fake 优先于 mock
 
 ## 示例
 
 ```dart
-// Sealed state — prevents impossible states
+// Sealed state —— 避免不可能的状态
 sealed class AsyncState<T> {}
 final class Loading<T> extends AsyncState<T> {}
 final class Success<T> extends AsyncState<T> { final T data; const Success(this.data); }
 final class Failure<T> extends AsyncState<T> { final Object error; const Failure(this.error); }
 
-// GoRouter with reactive auth redirect
+// 带响应式 auth 重定向的 GoRouter
 final router = GoRouter(
   refreshListenable: GoRouterRefreshStream(authCubit.stream),
   redirect: (context, state) {
@@ -51,7 +50,7 @@ final router = GoRouter(
   routes: [...],
 );
 
-// Riverpod derived provider with safe firstWhereOrNull
+// 使用安全 firstWhereOrNull 的 Riverpod derived provider
 @riverpod
 double cartTotal(Ref ref) {
   final cart = ref.watch(cartNotifierProvider);
@@ -63,47 +62,47 @@ double cartTotal(Ref ref) {
 }
 ```
 
-***
+---
 
-适用于 Dart 和 Flutter 应用程序的实用、生产就绪模式。尽可能保持库无关性，并明确覆盖最常见的生态系统包。
+适用于 Dart 与 Flutter 应用的实用、生产级模式。尽可能与库无关，同时明确覆盖最常用的生态 package。
 
-***
+---
 
-## 1. 空安全基础
+## 1. Null Safety 基础
 
-### 优先使用模式而非感叹号操作符
+### 优先使用模式而非 Bang Operator
 
 ```dart
-// BAD — crashes at runtime if null
+// 反例 —— 为 null 时运行时崩溃
 final name = user!.name;
 
-// GOOD — provide fallback
+// 正例 —— 提供回退值
 final name = user?.name ?? 'Unknown';
 
-// GOOD — Dart 3 pattern matching (preferred for complex cases)
+// 正例 —— Dart 3 模式匹配（复杂场景首选）
 final display = switch (user) {
   User(:final name, :final email) => '$name <$email>',
   null => 'Guest',
 };
 
-// GOOD — guard early return
+// 正例 —— guard 提前返回
 String getUserName(User? user) {
   if (user == null) return 'Unknown';
-  return user.name; // promoted to non-null after check
+  return user.name; // 检查后提升为 non-null
 }
 ```
 
 ### 避免过度使用 `late`
 
 ```dart
-// BAD — defers null error to runtime
+// 反例 —— 将 null 错误推迟到运行时
 late String userId;
 
-// GOOD — nullable with explicit initialization
+// 正例 —— nullable 并显式初始化
 String? userId;
 
-// OK — use late only when initialization is guaranteed before first access
-// (e.g., in initState() before any widget interaction)
+// 可接受 —— 仅当能保证首次访问前完成初始化时才使用 late
+// （例如，在 initState() 中、任何 widget 交互之前）
 late final AnimationController _controller;
 
 @override
@@ -113,11 +112,11 @@ void initState() {
 }
 ```
 
-***
+---
 
-## 2. 不可变状态
+## 2. Immutable State
 
-### 状态层次结构的密封类
+### 用于状态层级结构的 Sealed Class
 
 ```dart
 sealed class UserState {}
@@ -136,7 +135,7 @@ final class UserError extends UserState {
   final String message;
 }
 
-// Exhaustive switch — compiler enforces all branches
+// 穷举 switch —— 编译器强制覆盖所有分支
 Widget buildFrom(UserState state) => switch (state) {
   UserInitial() => const SizedBox.shrink(),
   UserLoading() => const CircularProgressIndicator(),
@@ -145,7 +144,7 @@ Widget buildFrom(UserState state) => switch (state) {
 };
 ```
 
-### 使用 Freezed 实现无模板代码的不可变性
+### 使用 Freezed 实现免样板代码的 Immutability
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -165,40 +164,40 @@ class User with _$User {
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }
 
-// Usage
+// 用法
 final user = User(id: '1', name: 'Alice', email: 'alice@example.com');
-final updated = user.copyWith(name: 'Alice Smith'); // immutable update
+final updated = user.copyWith(name: 'Alice Smith'); // immutable 更新
 final json = user.toJson();
 final fromJson = User.fromJson(json);
 ```
 
-***
+---
 
-## 3. 异步组合
+## 3. Async Composition
 
 ### 使用 Future.wait 的结构化并发
 
 ```dart
 Future<DashboardData> loadDashboard(UserRepository users, OrderRepository orders) async {
-  // Run concurrently — don't await sequentially
+  // 并发执行 —— 不要顺序 await
   final (userList, orderList) = await (
     users.getAll(),
     orders.getRecent(),
-  ).wait; // Dart 3 record destructuring + Future.wait extension
+  ).wait; // Dart 3 record 解构 + Future.wait 扩展
 
   return DashboardData(users: userList, orders: orderList);
 }
 ```
 
-### 流模式
+### Stream 模式
 
 ```dart
-// Repository exposes reactive streams for live data
+// Repository 暴露响应式 stream 以提供实时数据
 Stream<List<Item>> watchCartItems() => _db
     .watchTable('cart_items')
     .map((rows) => rows.map(Item.fromRow).toList());
 
-// In widget layer — declarative, no manual subscription
+// 在 widget 层 —— 声明式，无需手动订阅
 StreamBuilder<List<Item>>(
   stream: cartRepository.watchCartItems(),
   builder: (context, snapshot) => switch (snapshot) {
@@ -211,15 +210,15 @@ StreamBuilder<List<Item>>(
 )
 ```
 
-### Await 后的 BuildContext
+### Await 之后的 BuildContext
 
 ```dart
-// CRITICAL — always check mounted after any await in StatefulWidget
+// 关键 —— 在 StatefulWidget 中，任何 await 之后都要检查 mounted
 Future<void> _handleSubmit() async {
   setState(() => _isLoading = true);
   try {
     await authService.login(_email, _password);
-    if (!mounted) return; // ← guard before using context
+    if (!mounted) return; // ← 使用 context 前的 guard
     context.go('/home');
   } on AuthException catch (e) {
     if (!mounted) return;
@@ -230,14 +229,14 @@ Future<void> _handleSubmit() async {
 }
 ```
 
-***
+---
 
-## 4. 组件架构
+## 4. Widget 架构
 
 ### 提取为类，而非方法
 
 ```dart
-// BAD — private method returning widget, prevents optimization
+// 反例 —— 返回 widget 的私有方法，阻碍优化
 Widget _buildHeader() {
   return Container(
     padding: const EdgeInsets.all(16),
@@ -245,7 +244,7 @@ Widget _buildHeader() {
   );
 }
 
-// GOOD — separate widget class, enables const, element reuse
+// 正例 —— 独立的 widget 类，支持 const、元素复用
 class _PageHeader extends StatelessWidget {
   const _PageHeader(this.title);
   final String title;
@@ -260,41 +259,41 @@ class _PageHeader extends StatelessWidget {
 }
 ```
 
-### const 传播
+### const 传递
 
 ```dart
-// BAD — new instances every rebuild
+// 反例 —— 每次 rebuild 都创建新实例
 child: Padding(
-  padding: EdgeInsets.all(16.0),       // not const
-  child: Icon(Icons.home, size: 24.0), // not const
+  padding: EdgeInsets.all(16.0),       // 非 const
+  child: Icon(Icons.home, size: 24.0), // 非 const
 )
 
-// GOOD — const stops rebuild propagation
+// 正例 —— const 阻止 rebuild 传递
 child: const Padding(
   padding: EdgeInsets.all(16.0),
   child: Icon(Icons.home, size: 24.0),
 )
 ```
 
-### 作用域重建
+### Scoped Rebuild
 
 ```dart
-// BAD — entire page rebuilds on every counter change
+// 反例 —— 每次 counter 变化都 rebuild 整页
 class CounterPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(counterProvider); // rebuilds everything
+    final count = ref.watch(counterProvider); // rebuild 所有内容
     return Scaffold(
       body: Column(children: [
-        const ExpensiveHeader(), // unnecessarily rebuilt
+        const ExpensiveHeader(), // 不必要地 rebuild
         Text('$count'),
-        const ExpensiveFooter(), // unnecessarily rebuilt
+        const ExpensiveFooter(), // 不必要地 rebuild
       ]),
     );
   }
 }
 
-// GOOD — isolate the rebuilding part
+// 正例 —— 隔离需要 rebuild 的部分
 class CounterPage extends StatelessWidget {
   const CounterPage({super.key});
 
@@ -302,9 +301,9 @@ class CounterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Column(children: [
-        ExpensiveHeader(),        // never rebuilt (const)
-        _CounterDisplay(),        // only this rebuilds
-        ExpensiveFooter(),        // never rebuilt (const)
+        ExpensiveHeader(),        // 永不 rebuild（const）
+        _CounterDisplay(),        // 仅此处 rebuild
+        ExpensiveFooter(),        // 永不 rebuild（const）
       ]),
     );
   }
@@ -321,12 +320,12 @@ class _CounterDisplay extends ConsumerWidget {
 }
 ```
 
-***
+---
 
-## 5. 状态管理：BLoC/Cubit
+## 5. State Management：BLoC/Cubit
 
 ```dart
-// Cubit — synchronous or simple async state
+// Cubit —— 同步或简单 async 的 state
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._authService) : super(const AuthState.initial());
   final AuthService _authService;
@@ -347,7 +346,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 }
 
-// In widget
+// 在 widget 中
 BlocBuilder<AuthCubit, AuthState>(
   builder: (context, state) => switch (state) {
     AuthInitial() => const LoginForm(),
@@ -358,19 +357,19 @@ BlocBuilder<AuthCubit, AuthState>(
 )
 ```
 
-***
+---
 
-## 6. 状态管理：Riverpod
+## 6. State Management：Riverpod
 
 ```dart
-// Auto-dispose async provider
+// 自动 dispose 的 async provider
 @riverpod
 Future<List<Product>> products(Ref ref) async {
   final repo = ref.watch(productRepositoryProvider);
   return repo.getAll();
 }
 
-// Notifier with complex mutations
+// 带复杂 mutation 的 notifier
 @riverpod
 class CartNotifier extends _$CartNotifier {
   @override
@@ -395,7 +394,7 @@ class CartNotifier extends _$CartNotifier {
   void clear() => state = [];
 }
 
-// Derived provider (selector pattern)
+// Derived provider（selector 模式）
 @riverpod
 int cartCount(Ref ref) => ref.watch(cartNotifierProvider).length;
 
@@ -404,21 +403,21 @@ double cartTotal(Ref ref) {
   final cart = ref.watch(cartNotifierProvider);
   final products = ref.watch(productsProvider).valueOrNull ?? [];
   return cart.fold(0.0, (total, item) {
-    // firstWhereOrNull (from collection package) avoids StateError when product is missing
+    // firstWhereOrNull（来自 collection package）避免 product 缺失时抛出 StateError
     final product = products.firstWhereOrNull((p) => p.id == item.productId);
     return total + (product?.price ?? 0) * item.quantity;
   });
 }
 ```
 
-***
+---
 
-## 7. 使用 GoRouter 的导航
+## 7. 使用 GoRouter 的 Navigation
 
 ```dart
 final router = GoRouter(
   initialLocation: '/',
-  // refreshListenable re-evaluates redirect whenever auth state changes
+  // refreshListenable 会在 auth state 变化时重新评估 redirect
   refreshListenable: GoRouterRefreshStream(authCubit.stream),
   redirect: (context, state) {
     final isLoggedIn = context.read<AuthCubit>().state is AuthAuthenticated;
@@ -444,9 +443,9 @@ final router = GoRouter(
 );
 ```
 
-***
+---
 
-## 8. 使用 Dio 的 HTTP 请求
+## 8. 使用 Dio 的 HTTP
 
 ```dart
 final dio = Dio(BaseOptions(
@@ -456,7 +455,7 @@ final dio = Dio(BaseOptions(
   headers: {'Content-Type': 'application/json'},
 ));
 
-// Add auth interceptor
+// 添加 auth interceptor
 dio.interceptors.add(InterceptorsWrapper(
   onRequest: (options, handler) async {
     final token = await secureStorage.read(key: 'auth_token');
@@ -464,7 +463,7 @@ dio.interceptors.add(InterceptorsWrapper(
     handler.next(options);
   },
   onError: (error, handler) async {
-    // Guard against infinite retry loops: only attempt refresh once per request
+    // 防止无限 retry 循环：每个请求仅尝试刷新一次
     final isRetry = error.requestOptions.extra['_isRetry'] == true;
     if (!isRetry && error.response?.statusCode == 401) {
       final refreshed = await attemptTokenRefresh();
@@ -477,7 +476,7 @@ dio.interceptors.add(InterceptorsWrapper(
   },
 ));
 
-// Repository using Dio
+// 使用 Dio 的 Repository
 class UserApiDataSource {
   const UserApiDataSource(this._dio);
   final Dio _dio;
@@ -489,12 +488,12 @@ class UserApiDataSource {
 }
 ```
 
-***
+---
 
-## 9. 错误处理架构
+## 9. Error Handling 架构
 
 ```dart
-// Global error capture — set up in main()
+// 全局错误捕获 —— 在 main() 中设置
 void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -509,7 +508,7 @@ void main() {
   runApp(const App());
 }
 
-// Custom ErrorWidget for production
+// 生产环境自定义 ErrorWidget
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -519,19 +518,19 @@ class App extends StatelessWidget {
 }
 ```
 
-***
+---
 
-## 10. 测试快速参考
+## 10. Testing 速查
 
 ```dart
-// Unit test — use case
+// 单元测试 —— use case
 test('GetUserUseCase returns null for missing user', () async {
   final repo = FakeUserRepository();
   final useCase = GetUserUseCase(repo);
   expect(await useCase('missing-id'), isNull);
 });
 
-// BLoC test
+// BLoC 测试
 blocTest<AuthCubit, AuthState>(
   'emits loading then error on failed login',
   build: () => AuthCubit(FakeAuthService(throwsOn: 'login')),
@@ -539,7 +538,7 @@ blocTest<AuthCubit, AuthState>(
   expect: () => [const AuthState.loading(), isA<AuthError>()],
 );
 
-// Widget test
+// Widget 测试
 testWidgets('CartBadge shows item count', (tester) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -551,15 +550,15 @@ testWidgets('CartBadge shows item count', (tester) async {
 });
 ```
 
-***
+---
 
-## 参考
+## 参考资料
 
-* [Effective Dart: 设计](https://dart.dev/effective-dart/design)
-* [Flutter 性能最佳实践](https://docs.flutter.dev/perf/best-practices)
-* [Riverpod 文档](https://riverpod.dev/)
-* [BLoC 库](https://bloclibrary.dev/)
-* [GoRouter](https://pub.dev/packages/go_router)
-* [Freezed](https://pub.dev/packages/freezed)
-* 技能：`flutter-dart-code-review` — 全面审查清单
-* 规则：`rules/dart/` — 编码风格、模式、安全性、测试、钩子
+- [Effective Dart: Design](https://dart.dev/effective-dart/design)
+- [Flutter Performance Best Practices](https://docs.flutter.dev/perf/best-practices)
+- [Riverpod Documentation](https://riverpod.dev/)
+- [BLoC Library](https://bloclibrary.dev/)
+- [GoRouter](https://pub.dev/packages/go_router)
+- [Freezed](https://pub.dev/packages/freezed)
+- Skill：`flutter-dart-code-review` —— 全面的审查清单
+- Rules：`rules/dart/` —— 编码风格、模式、安全、测试、hook

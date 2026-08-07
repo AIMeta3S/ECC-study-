@@ -6,14 +6,13 @@ paths:
   - "**/*.psgi"
   - "**/*.cgi"
 ---
-
 # Perl 测试
 
-> 本文档在 [common/testing.md](../common/testing.md) 的基础上扩展了针对 Perl 的内容。
+> 本文件扩展了 [common/testing.md](../common/testing.md)，补充 Perl 特定内容。
 
-## 框架
+## Framework
 
-在新项目中使用 **Test2::V0**（而非 Test::More）：
+新项目使用 **Test2::V0**（而非 Test::More）：
 
 ```perl
 use Test2::V0;
@@ -23,33 +22,33 @@ is($result, 42, 'answer is correct');
 done_testing;
 ```
 
-## 测试运行器
+## Runner
 
 ```bash
-prove -l t/              # adds lib/ to @INC
-prove -lr -j8 t/         # recursive, 8 parallel jobs
+prove -l t/              # 将 lib/ 加入 @INC
+prove -lr -j8 t/         # 递归，8 个并行作业
 ```
 
-始终使用 `-l` 以确保 `lib/` 位于 `@INC` 上。
+始终使用 `-l` 以确保 `lib/` 在 `@INC` 中。
 
-## 覆盖率
+## Coverage
 
-使用 **Devel::Cover** —— 目标覆盖率 80%+：
+使用 **Devel::Cover** —— 目标 80%+：
 
 ```bash
 cover -test
 ```
 
-## 模拟
+## Mocking
 
-* **Test::MockModule** —— 模拟现有模块上的方法
-* **Test::MockObject** —— 从头创建测试替身
+- **Test::MockModule** —— mock 现有模块的方法
+- **Test::MockObject** —— 从零创建 test double
 
-## 常见陷阱
+## Pitfalls
 
-* 测试文件末尾始终使用 `done_testing`
-* 使用 `prove` 时切勿忘记 `-l` 标志
+- 测试文件始终以 `done_testing` 结尾
+- 切勿忘记 `prove` 的 `-l` flag
 
-## 参考
+## Reference
 
-有关使用 Test2::V0、prove 和 Devel::Cover 的详细 Perl TDD 模式，请参阅技能：`perl-testing`。
+参见 skill：`perl-testing`，了解使用 Test2::V0、prove 和 Devel::Cover 的详细 Perl TDD 模式。

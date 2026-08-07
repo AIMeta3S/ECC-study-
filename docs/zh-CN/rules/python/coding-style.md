@@ -3,17 +3,16 @@ paths:
   - "**/*.py"
   - "**/*.pyi"
 ---
-
 # Python 编码风格
 
-> 本文件在 [common/coding-style.md](../common/coding-style.md) 的基础上扩展了 Python 特定的内容。
+> 本文件扩展了 [common/coding-style.md](../common/coding-style.md)，补充 Python 专属内容。
 
 ## 标准
 
-* 遵循 **PEP 8** 规范
-* 在所有函数签名上使用 **类型注解**
+- 遵循 **PEP 8** 规范
+- 在所有函数签名上使用 **类型注解**
 
-## 不变性
+## 不可变性
 
 优先使用不可变数据结构：
 
@@ -34,10 +33,10 @@ class Point(NamedTuple):
 
 ## 格式化
 
-* 使用 **black** 进行代码格式化
-* 使用 **isort** 进行导入排序
-* 使用 **ruff** 进行代码检查
+- **black** 用于代码格式化
+- **isort** 用于 import 排序
+- **ruff** 用于 linting
 
 ## 参考
 
-查看技能：`python-patterns` 以获取全面的 Python 惯用法和模式。
+参见 skill：`python-patterns`，了解全面的 Python 惯用法与模式。

@@ -1,51 +1,52 @@
 ---
 name: healthcare-cdss-patterns
-description: 临床决策支持系统（CDSS）开发模式。药物相互作用检查、剂量验证、临床评分（NEWS2、qSOFA）、警报严重性分类以及集成到电子病历工作流程中。
-origin: Health1 Super Speciality Hospitals — contributed by Dr. Keyur Patel
+description: 临床决策支持系统（CDSS）开发模式。涵盖药物相互作用检查、剂量校验、临床评分（NEWS2、qSOFA）、警报严重程度分级，以及与 EMR 工作流的集成。
+metadata:
+  origin: Health1 Super Speciality Hospitals — 由 Dr. Keyur Patel 贡献
 version: "1.0.0"
 ---
 
-# 医疗CDSS开发模式
+# 医疗 CDSS 开发模式
 
-构建可集成至EMR工作流的临床决策支持系统的模式。CDSS模块关乎患者安全——对假阴性零容忍。
+用于构建集成到 EMR 工作流的临床决策支持系统的模式。CDSS 模块关乎患者安全——对漏报零容忍。
 
-## 适用场景
+## 何时使用
 
-* 实现药物相互作用检查
-* 构建剂量验证引擎
-* 实现临床评分系统（NEWS2、qSOFA、APACHE、GCS）
-* 设计异常临床值警报系统
-* 构建带安全校验的用药医嘱录入
-* 结合临床上下文解读检验结果
+- 实现药物相互作用检查
+- 构建剂量校验引擎
+- 实现临床评分系统（NEWS2、qSOFA、APACHE、GCS）
+- 设计异常临床值警报系统
+- 构建带安全校验的医嘱录入
+- 将检验结果解读与临床上下文集成
 
 ## 工作原理
 
-CDSS引擎是一个**无副作用的纯函数库**。输入临床数据，输出警报。这使得它完全可测试。
+CDSS 引擎是一个**无副作用的纯函数库**。输入临床数据，输出警报。这使得它完全可测试。
 
-三个核心模块：
+三个主要模块：
 
-1. **`checkInteractions(newDrug, currentMeds, allergies)`** — 检查新药物与现有用药及已知过敏的冲突。返回按严重程度排序的`InteractionAlert[]`。使用`DrugInteractionPair`数据模型。
-2. **`validateDose(drug, dose, route, weight, age, renalFunction)`** — 根据体重、年龄和肾功能调整规则验证处方剂量。返回`DoseValidationResult`。
-3. **`calculateNEWS2(vitals)`** — 基于`NEWS2Input`计算国家早期预警评分2。返回包含总分、风险等级和升级指导的`NEWS2Result`。
+1. **`checkInteractions(newDrug, currentMeds, allergies)`** — 将新药与当前用药和已知过敏反应进行校验。返回按严重程度排序的 `InteractionAlert[]`。使用 `DrugInteractionPair` 数据模型。
+2. **`validateDose(drug, dose, route, weight, age, renalFunction)`** — 依据基于体重、年龄校正和肾功能校正的规则校验处方剂量。返回 `DoseValidationResult`。
+3. **`calculateNEWS2(vitals)`** — 根据 `NEWS2Input` 计算 National Early Warning Score 2。返回 `NEWS2Result`，包含总分、风险等级和处置升级指引。
 
 ```
 EMR UI
   ↓ (用户输入数据)
-CDSS 引擎（纯函数，无副作用）
+CDSS Engine（纯函数，无副作用）
   ├── 药物相互作用检查器
-  ├── 剂量验证器
+  ├── 剂量校验器
   ├── 临床评分（NEWS2、qSOFA 等）
   └── 警报分类器
   ↓ (返回警报)
-EMR UI（内联显示警报，严重时阻止操作）
+EMR UI（内联展示警报，critical 级别则阻断）
 ```
 
 ### 药物相互作用检查
 
 ```typescript
 interface DrugInteractionPair {
-  drugA: string;           // generic name
-  drugB: string;           // generic name
+  drugA: string;           // 通用名
+  drugB: string;           // 通用名
   severity: 'critical' | 'major' | 'minor';
   mechanism: string;
   clinicalEffect: string;
@@ -77,9 +78,9 @@ function checkInteractions(
 }
 ```
 
-相互作用对必须**双向**：若药物A与药物B相互作用，则药物B与药物A相互作用。
+相互作用对必须是**双向的**：如果药物 A 与药物 B 存在相互作用，那么药物 B 也与药物 A 存在相互作用。
 
-### 剂量验证
+### 剂量校验
 
 ```typescript
 interface DoseValidationResult {
@@ -102,6 +103,7 @@ function validateDose(
   const factors: string[] = [];
 
   // SAFETY: if rules require weight but weight missing, BLOCK (not pass)
+  // 安全性：如果规则要求体重但体重缺失，则阻断（而非放行）
   if (rules.weightBased) {
     if (!patientWeight || patientWeight <= 0) {
       return { valid: false, message: `Weight required for ${drug} (mg/kg drug)`,
@@ -116,6 +118,7 @@ function validateDose(
   }
 
   // Age-based adjustment (when rules define age brackets and age is provided)
+  // 基于年龄的校正（当规则定义了年龄段且提供了年龄时）
   if (rules.ageAdjusted && patientAge !== undefined) {
     factors.push('age');
     const ageMax = rules.getAgeAdjustedMax(patientAge);
@@ -126,6 +129,7 @@ function validateDose(
   }
 
   // Renal adjustment (when rules define eGFR brackets and eGFR is provided)
+  // 肾功能校正（当规则定义了 eGFR 区段且提供了 eGFR 时）
   if (rules.renalAdjusted && renalFunction !== undefined) {
     factors.push('renal');
     const renalMax = rules.getRenalAdjustedMax(renalFunction);
@@ -136,6 +140,7 @@ function validateDose(
   }
 
   // Absolute max
+  // 绝对上限
   if (dose > rules.absoluteMax) {
     return { valid: false, message: `Exceeds absolute max ${rules.absoluteMax}${rules.unit}`,
       suggestedRange: { min: rules.typicalMin, max: rules.absoluteMax, unit: rules.unit },
@@ -162,19 +167,19 @@ interface NEWS2Result {
 }
 ```
 
-评分表必须严格符合皇家内科医师学会规范。
+评分表必须与 Royal College of Physicians 规范完全一致。
 
-### 警报严重程度与UI行为
+### 警报严重程度与 UI 行为
 
-| 严重程度 | UI行为 | 临床医生操作要求 |
-|----------|--------|------------------|
-| 危急 | 阻止操作。不可关闭的模态框。红色。 | 必须记录覆盖原因才能继续 |
-| 主要 | 行内警告横幅。橙色。 | 必须确认后才能继续 |
-| 次要 | 行内信息提示。黄色。 | 仅需知晓，无需操作 |
+| 严重程度 | UI 行为 | 需临床医生执行的操作 |
+|----------|-------------|--------------------------|
+| Critical | 阻断操作。不可关闭的弹窗。红色。 | 必须记录覆盖原因才能继续 |
+| Major | 内联警告横幅。橙色。 | 必须确认后才能继续 |
+| Minor | 内联提示。黄色。 | 仅需知悉，无需操作 |
 
-危急警报**绝不能**自动关闭或实现为Toast通知。覆盖原因必须存储在审计追踪中。
+Critical 级别的警报绝不能自动消失，也不能实现为 toast 通知。覆盖原因必须记录到审计日志中。
 
-### 测试CDSS（对假阴性零容忍）
+### 测试 CDSS（对漏报零容忍）
 
 ```typescript
 describe('CDSS — Patient Safety', () => {
@@ -200,20 +205,20 @@ describe('CDSS — Patient Safety', () => {
 });
 ```
 
-通过标准：100%。一次遗漏的相互作用即构成患者安全事件。
+通过标准：100%。漏掉一次相互作用就是一次患者安全事件。
 
 ### 反模式
 
-* 使CDSS检查变为可选或可跳过且无记录原因
-* 将相互作用检查实现为Toast通知
-* 使用`any`类型处理药物或临床数据
-* 硬编码相互作用对而非使用可维护的数据结构
-* 静默捕获CDSS引擎错误（必须大声暴露失败）
-* 在体重数据缺失时跳过基于体重的验证（必须阻止，而非通过）
+- 将 CDSS 校验设为可选或可跳过，且无文档化说明
+- 将相互作用检查实现为 toast 通知
+- 对药物或临床数据使用 `any` 类型
+- 硬编码相互作用对，而非使用可维护的数据结构
+- 在 CDSS 引擎中静默捕获错误（必须显著暴露失败）
+- 当体重不可用时跳过基于体重的校验（必须阻断，而非放行）
 
 ## 示例
 
-### 示例1：药物相互作用检查
+### 示例 1：药物相互作用检查
 
 ```typescript
 const alerts = checkInteractions('warfarin', ['aspirin', 'metformin'], ['penicillin']);
@@ -221,7 +226,7 @@ const alerts = checkInteractions('warfarin', ['aspirin', 'metformin'], ['penicil
 //    message: 'Increased bleeding risk', recommendation: 'Avoid combination' }]
 ```
 
-### 示例2：剂量验证
+### 示例 2：剂量校验
 
 ```typescript
 const ok = validateDose('paracetamol', 1000, 'oral', 70, 45);
@@ -234,7 +239,7 @@ const noWeight = validateDose('gentamicin', 300, 'iv');
 // { valid: false, factors: ['weight_missing'] }
 ```
 
-### 示例3：NEWS2评分
+### 示例 3：NEWS2 评分
 
 ```typescript
 const result = calculateNEWS2({

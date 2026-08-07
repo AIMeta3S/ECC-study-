@@ -29,7 +29,7 @@
 
 示例：与其始终加载 GitHub MCP，不如创建一个包装了 `gh pr create` 并带有你偏好选项的 `/gh-pr` 命令。与其让 Supabase MCP 消耗上下文，不如创建直接使用 Supabase CLI 的技能。
 
-有了延迟加载，上下文窗口问题基本解决了。但令牌使用和成本问题并未以同样的方式解决。CLI + 技能的方法仍然是一种令牌优化方法。
+有了延迟加载，上下文窗口 issue 基本解决了。但令牌使用和成本问题并未以同样的方式解决。CLI + 技能的方法仍然是一种令牌优化方法。
 
 ***
 
@@ -107,14 +107,14 @@ alias claude-research='claude --system-prompt "$(cat ~/.claude/contexts/research
 
 **主要策略：子代理架构**
 
-优化你使用的工具和子代理架构，旨在将任务委托给最便宜且足以胜任的模型。
+优化你使用的工具和子代理架构，旨在将 task 委托给最便宜且足以胜任的模型。
 
 **模型选择快速参考：**
 
 ![Model Selection Table](../../assets/images/longform/04-model-selection.png)
-*针对各种常见任务的子代理假设设置及选择背后的推理*
+*针对各种常见 tasks 的子代理假设设置及选择背后的推理*
 
-| 任务类型                 | 模型   | 原因                                       |
+| Task 类型                | 模型   | 原因                                       |
 | ------------------------- | ------ | ------------------------------------------ |
 | 探索/搜索                | Haiku  | 快速、便宜，足以用于查找文件               |
 | 简单编辑                 | Haiku  | 单文件更改，指令清晰                       |
@@ -125,7 +125,7 @@ alias claude-research='claude --system-prompt "$(cat ~/.claude/contexts/research
 | 编写文档                 | Haiku  | 结构简单                                   |
 | 调试复杂错误             | Opus   | 需要将整个系统记在脑中                     |
 
-对于 90% 的编码任务，默认使用 Sonnet。当第一次尝试失败、任务涉及 5 个以上文件、架构决策或安全关键代码时，升级到 Opus。
+对于 90% 的编码 tasks，默认使用 Sonnet。当第一次尝试失败、task 涉及 5 个以上文件、架构决策或安全关键代码时，升级到 Opus。
 
 **定价参考：**
 
@@ -137,11 +137,11 @@ alias claude-research='claude --system-prompt "$(cat ~/.claude/contexts/research
 用 mgrep 替换 grep——与传统 grep 或 ripgrep 相比，平均减少约 50% 的令牌：
 
 ![mgrep 基准测试](../../assets/images/longform/06-mgrep-benchmark.png)
-*在我们的 50 个任务基准测试中，mgrep + Claude Code 在相似或更好的判断质量下，使用的 token 数比基于 grep 的工作流少约 2 倍。来源：@mixedbread-ai 的 mgrep*
+*在我们的 50-task 基准测试中，mgrep + Claude Code 在相似或更好的判断质量下，使用的 token 数比基于 grep 的工作流少约 2 倍。来源：@mixedbread-ai 的 mgrep*
 
 **模块化代码库的好处：**
 
-拥有一个更模块化的代码库，主文件只有数百行而不是数千行，这有助于降低令牌优化成本，并确保任务在第一次尝试时就正确完成。
+拥有一个更模块化的代码库，主文件只有数百行而不是数千行，这有助于降低令牌优化成本，并确保 task 在第一次尝试时就正确完成。
 
 ***
 
@@ -210,9 +210,9 @@ cd ../project-feature-a && claude
 
 当运行多个 Claude Code 实例时，使用“级联”模式进行组织：
 
-* 在右侧的新标签页中打开新任务
+* 在右侧的新标签页中打开新 tasks
 * 从左到右、从旧到新进行扫描
-* 一次最多专注于 3-4 个任务
+* 一次最多专注于 3-4 个 tasks
 
 ***
 

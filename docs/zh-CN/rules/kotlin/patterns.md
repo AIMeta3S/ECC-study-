@@ -3,33 +3,32 @@ paths:
   - "**/*.kt"
   - "**/*.kts"
 ---
-
 # Kotlin 模式
 
-> 此文件扩展了 [common/patterns.md](../common/patterns.md) 的内容，增加了 Kotlin 和 Android/KMP 特定的内容。
+> 本文件在 [common/patterns.md](../common/patterns.md) 基础上扩展了 Kotlin 与 Android/KMP 特定内容。
 
-## 依赖注入
+## Dependency Injection
 
-首选构造函数注入。使用 Koin（KMP）或 Hilt（仅限 Android）：
+优先使用 constructor injection。使用 Koin（KMP）或 Hilt（仅限 Android）：
 
 ```kotlin
-// Koin — declare modules
+// Koin — 声明模块
 val dataModule = module {
     single<ItemRepository> { ItemRepositoryImpl(get(), get()) }
     factory { GetItemsUseCase(get()) }
     viewModelOf(::ItemListViewModel)
 }
 
-// Hilt — annotations
+// Hilt — 注解
 @HiltViewModel
 class ItemListViewModel @Inject constructor(
     private val getItems: GetItemsUseCase
 ) : ViewModel()
 ```
 
-## ViewModel 模式
+## ViewModel Pattern
 
-单一状态对象、事件接收器、单向数据流：
+单一 state object、event sink、单向 data flow：
 
 ```kotlin
 data class ScreenState(
@@ -50,11 +49,11 @@ class ScreenViewModel(private val useCase: GetItemsUseCase) : ViewModel() {
 }
 ```
 
-## 仓库模式
+## Repository Pattern
 
-* `suspend` 函数返回 `Result<T>` 或自定义错误类型
-* 对于响应式流使用 `Flow`
-* 协调本地和远程数据源
+- `suspend` 函数返回 `Result<T>` 或自定义错误类型
+- `Flow` 用于响应式流
+- 协调本地与远程数据源
 
 ```kotlin
 interface ItemRepository {
@@ -64,7 +63,7 @@ interface ItemRepository {
 }
 ```
 
-## 用例模式
+## UseCase Pattern
 
 单一职责，`operator fun invoke`：
 
@@ -109,13 +108,13 @@ actual class SecureStorage {
 }
 ```
 
-## 协程模式
+## Coroutine 模式
 
-* 在 ViewModels 中使用 `viewModelScope`，对于结构化的子工作使用 `coroutineScope`
-* 对于来自冷流的 StateFlow 使用 `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue)`
-* 当子任务失败应独立处理时使用 `supervisorScope`
+- 在 ViewModel 中使用 `viewModelScope`，用 `coroutineScope` 处理结构化子任务
+- 将 cold Flow 转换为 StateFlow 时，使用 `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialValue)`
+- 当子作业失败需要相互独立时，使用 `supervisorScope`
 
-## 使用 DSL 的构建器模式
+## 使用 DSL 的 Builder Pattern
 
 ```kotlin
 class HttpClientConfig {
@@ -133,7 +132,7 @@ fun httpClient(block: HttpClientConfig.() -> Unit): HttpClient {
     return HttpClient(config)
 }
 
-// Usage
+// 用法
 val client = httpClient {
     baseUrl = "https://api.example.com"
     timeout = 15_000
@@ -141,7 +140,7 @@ val client = httpClient {
 }
 ```
 
-## 参考
+## 参考资料
 
-有关详细的协程模式，请参阅技能：`kotlin-coroutines-flows`。
-有关模块和分层模式，请参阅技能：`android-clean-architecture`。
+详细 coroutine 模式参见 skill：`kotlin-coroutines-flows`。
+module 与 layer 模式参见 skill：`android-clean-architecture`。

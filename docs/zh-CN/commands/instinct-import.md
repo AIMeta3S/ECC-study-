@@ -1,26 +1,26 @@
 ---
 name: instinct-import
-description: 从文件或URL导入本能到项目/全局作用域
+description: 从文件或 URL 导入 instincts 到 project/global scope
 command: true
 ---
 
-# 本能导入命令
+# Instinct 导入命令
 
 ## 实现
 
-使用插件根路径运行本能 CLI：
+使用 plugin 根路径运行 instinct CLI：
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
 ```
 
-或者，如果 `CLAUDE_PLUGIN_ROOT` 未设置（手动安装）：
+或者如果 `CLAUDE_PLUGIN_ROOT` 未设置（手动安装）：
 
 ```bash
 python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import <file-or-url>
 ```
 
-从本地文件路径或 HTTP(S) URL 导入本能。
+从本地文件路径或 HTTP(S) URL 导入 instincts。
 
 ## 用法
 
@@ -31,60 +31,58 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import <
 /instinct-import team-instincts.yaml --scope global --force
 ```
 
-## 执行步骤
+## 操作步骤
 
-1. 获取本能文件（本地路径或 URL）
+1. 获取 instinct 文件（本地路径或 URL）
 2. 解析并验证格式
-3. 检查与现有本能的重复项
-4. 合并或添加新本能
-5. 保存到继承的本能目录：
-   * 项目范围：`~/.claude/homunculus/projects/<project-id>/instincts/inherited/`
-   * 全局范围：`~/.claude/homunculus/instincts/inherited/`
+3. 检查与现有 instincts 的重复
+4. 合并或添加新 instincts
+5. 保存到 inherited instincts 目录：
+   - Project scope：`~/.claude/homunculus/projects/<project-id>/instincts/inherited/`
+   - Global scope：`~/.claude/homunculus/instincts/inherited/`
 
-## 导入过程
+## 导入流程
 
 ```
- 从 team-instincts.yaml 导入本能
+ Importing instincts from: team-instincts.yaml
 ================================================
 
-发现 12 个待导入的本能。
+Found 12 instincts to import.
 
-正在分析冲突...
+Analyzing conflicts...
 
-## 新本能 (8)
-这些将被添加：
-  ✓ use-zod-validation (置信度: 0.7)
-  ✓ prefer-named-exports (置信度: 0.65)
-  ✓ test-async-functions (置信度: 0.8)
-  ...
+## New Instincts (8)
+These will be added:
+  ✓ use-zod-validation (confidence: 0.7)
+  ✓ prefer-named-exports (confidence: 0.65)
+  ✓ test-async-functions (confidence: 0.8)
+...
 
-## 重复本能 (3)
-已存在类似本能：
+## Duplicate Instincts (3)
+Already have similar instincts:
   WARNING: prefer-functional-style
-     本地: 0.8 置信度, 12 次观察
-     导入: 0.7 置信度
-     → 保留本地 (置信度更高)
+     Local: 0.8 confidence, 12 observations
+     Import: 0.7 confidence
+     → Keep local (higher confidence)
 
   WARNING: test-first-workflow
-     本地: 0.75 置信度
-     导入: 0.9 置信度
-     → 更新为导入 (置信度更高)
+     Local: 0.75 confidence
+     Import: 0.9 confidence
+     → Update to import (higher confidence)
 
-导入 8 个新的，更新 1 个？
+Import 8 new, update 1?
 ```
 
 ## 合并行为
 
-当导入一个已存在 ID 的本能时：
-
-* 置信度更高的导入会成为更新候选
-* 置信度相等或更低的导入将被跳过
-* 除非使用 `--force`，否则需要用户确认
+当导入的 instinct 与现有 ID 重复时：
+- 更高 confidence 的导入成为更新候选
+- 相同/更低 confidence 的导入被跳过
+- 除非使用 `--force`，否则需要用户确认
 
 ## 来源追踪
 
-导入的本能被标记为：
-
+导入的 instincts 会被标记为：
 ```yaml
 source: inherited
 scope: project
@@ -93,25 +91,24 @@ project_id: "a1b2c3d4e5f6"
 project_name: "my-project"
 ```
 
-## 标志
+## Flags
 
-* `--dry-run`：仅预览而不导入
-* `--force`：跳过确认提示
-* `--min-confidence <n>`：仅导入高于阈值的本能
-* `--scope <project|global>`：选择目标范围（默认：`project`）
+- `--dry-run`：预览而不导入
+- `--force`：跳过确认提示
+- `--min-confidence <n>`：只导入高于 threshold 的 instincts
+- `--scope <project|global>`：选择目标 scope（默认：`project`）
 
 ## 输出
 
 导入后：
-
 ```
-PASS: 导入完成！
+PASS: Import complete!
 
-新增：8 项本能
-更新：1 项本能
-跳过：3 项本能（已存在同等或更高置信度的版本）
+Added: 8 instincts
+Updated: 1 instinct
+Skipped: 3 instincts (equal/higher confidence already exists)
 
-新本能已保存至：~/.claude/homunculus/instincts/inherited/
+New instincts saved to: ~/.claude/homunculus/instincts/inherited/
 
-运行 /instinct-status 以查看所有本能。
+Run /instinct-status to see all instincts.
 ```

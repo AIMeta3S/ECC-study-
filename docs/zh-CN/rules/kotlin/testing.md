@@ -3,17 +3,16 @@ paths:
   - "**/*.kt"
   - "**/*.kts"
 ---
-
 # Kotlin 测试
 
-> 本文档扩展了 [common/testing.md](../common/testing.md)，补充了 Kotlin 和 Android/KMP 特有的内容。
+> 本文件在 [common/testing.md](../common/testing.md) 基础上扩展了 Kotlin 及 Android/KMP 特定内容。
 
 ## 测试框架
 
-* **kotlin.test** 用于跨平台 (KMP) — `@Test`, `assertEquals`, `assertTrue`
-* **JUnit 4/5** 用于 Android 特定测试
-* **Turbine** 用于测试 Flow 和 StateFlow
-* **kotlinx-coroutines-test** 用于协程测试 (`runTest`, `TestDispatcher`)
+- **kotlin.test** 用于跨平台（KMP）— `@Test`、`assertEquals`、`assertTrue`
+- **JUnit 4/5** 用于 Android 专用测试
+- **Turbine** 用于测试 Flow 和 StateFlow
+- **kotlinx-coroutines-test** 用于 coroutine 测试（`runTest`、`TestDispatcher`）
 
 ## 使用 Turbine 测试 ViewModel
 
@@ -25,17 +24,17 @@ fun `loading state emitted then data`() = runTest {
     val viewModel = ItemListViewModel(GetItemsUseCase(repo))
 
     viewModel.state.test {
-        assertEquals(ItemListState(), awaitItem())     // initial state
+        assertEquals(ItemListState(), awaitItem())     // 初始状态
         viewModel.onEvent(ItemListEvent.Load)
-        assertTrue(awaitItem().isLoading)               // loading
-        assertEquals(listOf(testItem), awaitItem().items) // loaded
+        assertTrue(awaitItem().isLoading)               // 加载中
+        assertEquals(listOf(testItem), awaitItem().items) // 已加载
     }
 }
 ```
 
-## 使用伪造对象而非模拟对象
+## Fakes Over Mocks
 
-优先使用手写的伪造对象，而非模拟框架：
+优先使用手写 fake 而非 mock 框架：
 
 ```kotlin
 class FakeItemRepository : ItemRepository {
@@ -53,7 +52,7 @@ class FakeItemRepository : ItemRepository {
 }
 ```
 
-## 协程测试
+## coroutine 测试
 
 ```kotlin
 @Test
@@ -66,7 +65,7 @@ fun `parallel operations complete`() = runTest {
 }
 ```
 
-使用 `runTest` — 它会自动推进虚拟时间并提供 `TestScope`。
+使用 `runTest` —— 它会自动推进 virtual time 并提供 `TestScope`。
 
 ## Ktor MockEngine
 
@@ -88,8 +87,8 @@ val client = HttpClient(mockEngine) {
 
 ## Room/SQLDelight 测试
 
-* Room: 使用 `Room.inMemoryDatabaseBuilder()` 进行内存测试
-* SQLDelight: 在 JVM 测试中使用 `JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)`
+- Room: 使用 `Room.inMemoryDatabaseBuilder()` 进行内存测试
+- SQLDelight: 在 JVM 测试中使用 `JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)`
 
 ```kotlin
 @Test
@@ -106,7 +105,7 @@ fun `insert and query items`() = runTest {
 
 ## 测试命名
 
-使用反引号包裹的描述性名称：
+使用反引号包裹的描述性命名：
 
 ```kotlin
 @Test
@@ -122,8 +121,8 @@ fun `delete item emits updated list without deleted item`() = runTest { }
 src/
 ├── commonTest/kotlin/     # 共享测试（ViewModel、UseCase、Repository）
 ├── androidUnitTest/kotlin/ # Android 单元测试（JUnit）
-├── androidInstrumentedTest/kotlin/  # 仪器化测试（Room、UI）
-└── iosTest/kotlin/        # iOS 专用测试
+├── androidInstrumentedTest/kotlin/  # 插桩测试（Room、UI）
+└── iosTest/kotlin/        # iOS 特定测试
 ```
 
-最低测试覆盖率：每个功能都需要覆盖 ViewModel + UseCase。
+最低测试覆盖：每个功能至少包含 ViewModel + UseCase。

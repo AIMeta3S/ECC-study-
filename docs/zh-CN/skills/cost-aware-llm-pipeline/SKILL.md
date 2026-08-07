@@ -1,32 +1,33 @@
 ---
 name: cost-aware-llm-pipeline
-description: LLM API 使用成本优化模式 —— 基于任务复杂度的模型路由、预算跟踪、重试逻辑和提示缓存。
-origin: ECC
+description: 针对 LLM API 使用的成本优化模式——按任务复杂度进行 model routing、预算跟踪、retry 逻辑和 prompt caching。
+metadata:
+  origin: ECC
 ---
 
-# 成本感知型 LLM 流水线
+# 成本感知 LLM Pipeline
 
-在保持质量的同时控制 LLM API 成本的模式。将模型路由、预算跟踪、重试逻辑和提示词缓存组合成一个可组合的流水线。
+在维持质量的同时控制 LLM API 成本的模式。将 model routing、预算跟踪、retry 逻辑和 prompt caching 结合成一个可组合的 pipeline。
 
 ## 何时激活
 
-* 构建调用 LLM API（Claude、GPT 等）的应用程序时
-* 处理具有不同复杂度的批量项目时
-* 需要将 API 支出控制在预算范围内时
-* 需要在复杂任务上优化成本而不牺牲质量时
+- 构建调用 LLM API（Claude、GPT 等）的应用
+- 处理由不同复杂度项目组成的 batch
+- 需要将 API 花费控制在预算之内
+- 在复杂任务上优化成本而不牺牲质量
 
 ## 核心概念
 
-### 1. 根据任务复杂度进行模型路由
+### 1. 按任务复杂度进行 Model Routing
 
-自动为简单任务选择更便宜的模型，为复杂任务保留昂贵的模型。
+自动为简单任务选择更便宜的 model，将昂贵的 model 留给复杂任务。
 
 ```python
 MODEL_SONNET = "claude-sonnet-4-6"
 MODEL_HAIKU = "claude-haiku-4-5-20251001"
 
-_SONNET_TEXT_THRESHOLD = 10_000  # chars
-_SONNET_ITEM_THRESHOLD = 30     # items
+_SONNET_TEXT_THRESHOLD = 10_000  # 字符数
+_SONNET_ITEM_THRESHOLD = 30     # 项目数
 
 def select_model(
     text_length: int,
@@ -37,13 +38,13 @@ def select_model(
     if force_model is not None:
         return force_model
     if text_length >= _SONNET_TEXT_THRESHOLD or item_count >= _SONNET_ITEM_THRESHOLD:
-        return MODEL_SONNET  # Complex task
-    return MODEL_HAIKU  # Simple task (3-4x cheaper)
+        return MODEL_SONNET  # 复杂任务
+    return MODEL_HAIKU  # 简单任务（便宜 3-4 倍）
 ```
 
-### 2. 不可变的成本跟踪
+### 2. Immutable 成本跟踪
 
-使用冻结的数据类跟踪累计支出。每个 API 调用都会返回一个新的跟踪器 —— 永不改变状态。
+用 frozen dataclass 跟踪累计花费。每次 API 调用返回一个新的 tracker——绝不修改状态。
 
 ```python
 from dataclasses import dataclass
@@ -76,9 +77,9 @@ class CostTracker:
         return self.total_cost > self.budget_limit
 ```
 
-### 3. 窄范围重试逻辑
+### 3. 受限的 Retry 逻辑
 
-仅在暂时性错误时重试。对于认证或错误请求错误，快速失败。
+仅在 transient 错误时 retry。遇到 authentication 或 bad request 错误时 fail fast。
 
 ```python
 from anthropic import (
@@ -99,12 +100,12 @@ def call_with_retry(func, *, max_retries: int = _MAX_RETRIES):
             if attempt == max_retries - 1:
                 raise
             time.sleep(2 ** attempt)  # Exponential backoff
-    # AuthenticationError, BadRequestError etc. → raise immediately
+    # AuthenticationError、BadRequestError 等 → 立即抛出
 ```
 
-### 4. 提示词缓存
+### 4. Prompt Caching
 
-缓存长的系统提示词，以避免在每个请求上重新发送它们。
+缓存长 system prompt，避免每次请求都重新发送。
 
 ```python
 messages = [
@@ -114,11 +115,11 @@ messages = [
             {
                 "type": "text",
                 "text": system_prompt,
-                "cache_control": {"type": "ephemeral"},  # Cache this
+                "cache_control": {"type": "ephemeral"},  # 缓存此项
             },
             {
                 "type": "text",
-                "text": user_input,  # Variable part
+                "text": user_input,  # 可变部分
             },
         ],
     }
@@ -127,33 +128,33 @@ messages = [
 
 ## 组合
 
-将所有四种技术组合到一个流水线函数中：
+将这四种技术组合到一个 pipeline 函数中：
 
 ```python
 def process(text: str, config: Config, tracker: CostTracker) -> tuple[Result, CostTracker]:
-    # 1. Route model
+    # 1. 路由 model
     model = select_model(len(text), estimated_items, config.force_model)
 
-    # 2. Check budget
+    # 2. 检查预算
     if tracker.over_budget:
         raise BudgetExceededError(tracker.total_cost, tracker.budget_limit)
 
-    # 3. Call with retry + caching
+    # 3. 使用 retry + caching 调用
     response = call_with_retry(lambda: client.messages.create(
         model=model,
         messages=build_cached_messages(system_prompt, text),
     ))
 
-    # 4. Track cost (immutable)
+    # 4. 跟踪成本（immutable）
     record = CostRecord(model=model, input_tokens=..., output_tokens=..., cost_usd=...)
     tracker = tracker.add(record)
 
     return parse_result(response), tracker
 ```
 
-## 价格参考（2025-2026）
+## 定价参考（2025-2026）
 
-| 模型 | 输入（美元/百万令牌） | 输出（美元/百万令牌） | 相对成本 |
+| Model | Input（$/1M tokens） | Output（$/1M tokens） | 相对成本 |
 |-------|---------------------|----------------------|---------------|
 | Haiku 4.5 | $0.80 | $4.00 | 1x |
 | Sonnet 4.6 | $3.00 | $15.00 | ~4x |
@@ -161,23 +162,23 @@ def process(text: str, config: Config, tracker: CostTracker) -> tuple[Result, Co
 
 ## 最佳实践
 
-* **从最便宜的模型开始**，仅在达到复杂度阈值时才路由到昂贵的模型
-* **在处理批次之前设置明确的预算限制** —— 尽早失败而不是超支
-* **记录模型选择决策**，以便您可以根据实际数据调整阈值
-* **对于超过 1024 个令牌的系统提示词，使用提示词缓存** —— 既能节省成本，又能降低延迟
-* **切勿在认证或验证错误时重试** —— 仅针对暂时性故障（网络、速率限制、服务器错误）重试
+- **从最便宜的 model 开始**，仅当达到复杂度 threshold 时才路由到昂贵的 model
+- 在处理 batch 之前**设置明确的预算上限**——fail early 而非超支
+- **记录 model 选择决策**，以便根据真实数据调优 threshold
+- 对超过 1024 token 的 system prompt **使用 prompt caching**——既节省成本又降低延迟
+- **绝不在 authentication 或 validation 错误时 retry**——仅对 transient 故障（网络、rate limit、服务器错误）进行 retry
 
-## 应避免的反模式
+## 要避免的 Anti-Pattern
 
-* 无论复杂度如何，对所有请求都使用最昂贵的模型
-* 对所有错误都进行重试（在永久性故障上浪费预算）
-* 改变成本跟踪状态（使调试和审计变得困难）
-* 在整个代码库中硬编码模型名称（使用常量或配置）
-* 对重复的系统提示词忽略提示词缓存
+- 无论复杂度如何，对所有请求都使用最昂贵的 model
+- 对所有错误都 retry（在永久性故障上浪费预算）
+- 修改成本跟踪状态（让 debug 和审计变得困难）
+- 在整个 codebase 中硬编码 model 名（应使用常量或 config）
+- 对重复的 system prompt 忽略 prompt caching
 
-## 适用场景
+## 何时使用
 
-* 任何调用 Claude、OpenAI 或类似 LLM API 的应用程序
-* 成本快速累积的批处理流水线
-* 需要智能路由的多模型架构
-* 需要预算护栏的生产系统
+- 任何调用 Claude、OpenAI 或类似 LLM API 的应用
+- 成本会迅速累积的 batch 处理 pipeline
+- 需要智能路由的多 model 架构
+- 需要预算 guardrail 的生产系统

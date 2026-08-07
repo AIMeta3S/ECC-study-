@@ -1,34 +1,34 @@
 ---
 name: liquid-glass-design
-description: iOS 26 液态玻璃设计系统 — 适用于 SwiftUI、UIKit 和 WidgetKit 的动态玻璃材质，具有模糊、反射和交互式变形效果。
+description: iOS 26 Liquid Glass 设计系统 —— 具备模糊、反射与交互式形变的动态玻璃材质，适用于 SwiftUI、UIKit 和 WidgetKit。
 ---
 
-# Liquid Glass 设计系统 (iOS 26)
+# Liquid Glass 设计系统（iOS 26）
 
-实现苹果 Liquid Glass 的模式指南——这是一种动态材质，会模糊其后的内容，反射周围内容的颜色和光线，并对触摸和指针交互做出反应。涵盖 SwiftUI、UIKit 和 WidgetKit 集成。
+实现 Apple 的 Liquid Glass 的模式 —— 这是一种动态材质，能模糊其背后的内容，反射周围内容的颜色与光线，并对触摸和指针交互做出反应。涵盖 SwiftUI、UIKit 与 WidgetKit 的集成。
 
-## 何时启用
+## 何时激活
 
-* 为 iOS 26+ 构建或更新采用新设计语言的应用程序时
-* 实现玻璃风格的按钮、卡片、工具栏或容器时
-* 在玻璃元素之间创建变形过渡时
-* 将 Liquid Glass 效果应用于小组件时
-* 将现有的模糊/材质效果迁移到新的 Liquid Glass API 时
+- 使用新设计语言为 iOS 26+ 构建或更新 app
+- 实现 glass 风格的按钮、卡片、工具栏或容器
+- 在 glass 元素之间创建形变过渡
+- 将 Liquid Glass 效果应用于 widget
+- 将现有的模糊/材质效果迁移到新的 Liquid Glass API
 
-## 核心模式 — SwiftUI
+## 核心模式 —— SwiftUI
 
-### 基本玻璃效果
+### 基础 Glass 效果
 
-为任何视图添加 Liquid Glass 的最简单方法：
+向任何视图添加 Liquid Glass 的最简方式：
 
 ```swift
 Text("Hello, World!")
     .font(.title)
     .padding()
-    .glassEffect()  // Default: regular variant, capsule shape
+    .glassEffect()  // 默认：regular 变体，capsule 形状
 ```
 
-### 自定义形状和色调
+### 自定义 Shape 与 Tint
 
 ```swift
 Text("Hello, World!")
@@ -38,25 +38,24 @@ Text("Hello, World!")
 ```
 
 关键自定义选项：
+- `.regular` — 标准 glass 效果
+- `.tint(Color)` — 添加色调以突出显示
+- `.interactive()` — 对触摸和指针交互做出反应
+- Shape：`.capsule`（默认）、`.rect(cornerRadius:)`、`.circle`
 
-* `.regular` — 标准玻璃效果
-* `.tint(Color)` — 添加颜色色调以增强突出度
-* `.interactive()` — 对触摸和指针交互做出反应
-* 形状：`.capsule`（默认）、`.rect(cornerRadius:)`、`.circle`
-
-### 玻璃按钮样式
+### Glass 按钮样式
 
 ```swift
-Button("Click Me") { /* action */ }
+Button("Click Me") { /* 动作 */ }
     .buttonStyle(.glass)
 
-Button("Important") { /* action */ }
+Button("Important") { /* 动作 */ }
     .buttonStyle(.glassProminent)
 ```
 
 ### 用于多个元素的 GlassEffectContainer
 
-出于性能和变形考虑，始终将多个玻璃视图包装在一个容器中：
+为提升性能并支持形变，始终将多个 glass 视图包裹在容器中：
 
 ```swift
 GlassEffectContainer(spacing: 40.0) {
@@ -74,11 +73,11 @@ GlassEffectContainer(spacing: 40.0) {
 }
 ```
 
-`spacing` 参数控制合并距离——距离更近的元素会将其玻璃形状融合在一起。
+`spacing` 参数控制合并距离 —— 元素越近，其 glass 形状越会融合在一起。
 
-### 统一玻璃效果
+### 合并 Glass 效果
 
-使用 `glassEffectUnion` 将多个视图组合成单个玻璃形状：
+使用 `glassEffectUnion` 将多个视图合并为单个 glass 形状：
 
 ```swift
 @Namespace private var namespace
@@ -95,9 +94,9 @@ GlassEffectContainer(spacing: 20.0) {
 }
 ```
 
-### 变形过渡
+### 形变过渡
 
-在玻璃元素出现/消失时创建平滑的变形效果：
+当 glass 元素出现/消失时创建平滑的形变效果：
 
 ```swift
 @State private var isExpanded = false
@@ -125,13 +124,13 @@ Button("Toggle") {
 .buttonStyle(.glass)
 ```
 
-### 将水平滚动延伸到侧边栏下方
+### 在 Sidebar 下方扩展水平滚动
 
-要允许水平滚动内容延伸到侧边栏或检查器下方，请确保 `ScrollView` 内容到达容器的 leading/trailing 边缘。当布局延伸到边缘时，系统会自动处理侧边栏下方的滚动行为——无需额外的修饰符。
+要允许水平滚动内容延伸到 sidebar 或 inspector 下方，需确保 `ScrollView` 的内容触及容器的 leading/trailing 边缘。当布局延伸到边缘时，系统会自动处理 sidebar 下方滚动行为 —— 无需额外的 modifier。
 
-## 核心模式 — UIKit
+## 核心模式 —— UIKit
 
-### 基本 UIGlassEffect
+### 基础 UIGlassEffect
 
 ```swift
 let glassEffect = UIGlassEffect()
@@ -151,7 +150,7 @@ NSLayoutConstraint.activate([
     visualEffectView.heightAnchor.constraint(equalToConstant: 120)
 ])
 
-// Add content to contentView
+// 向 contentView 添加内容
 let label = UILabel()
 label.text = "Liquid Glass"
 label.translatesAutoresizingMaskIntoConstraints = false
@@ -177,7 +176,7 @@ containerView.contentView.addSubview(firstGlass)
 containerView.contentView.addSubview(secondGlass)
 ```
 
-### 滚动边缘效果
+### Scroll Edge Effects
 
 ```swift
 scrollView.topEdgeEffect.style = .automatic
@@ -185,14 +184,14 @@ scrollView.bottomEdgeEffect.style = .hard
 scrollView.leftEdgeEffect.isHidden = true
 ```
 
-### 工具栏玻璃集成
+### Toolbar Glass 集成
 
 ```swift
 let favoriteButton = UIBarButtonItem(image: UIImage(systemName: "heart"), style: .plain, target: self, action: #selector(favoriteAction))
-favoriteButton.hidesSharedBackground = true  // Opt out of shared glass background
+favoriteButton.hidesSharedBackground = true  // 不使用共享 glass 背景
 ```
 
-## 核心模式 — WidgetKit
+## 核心模式 —— WidgetKit
 
 ### 渲染模式检测
 
@@ -202,15 +201,15 @@ struct MyWidgetView: View {
 
     var body: some View {
         if renderingMode == .accented {
-            // Tinted mode: white-tinted, themed glass background
+            // Tinted 模式：白色色调、带主题的 glass 背景
         } else {
-            // Full color mode: standard appearance
+            // Full color 模式：标准外观
         }
     }
 }
 ```
 
-### 用于视觉层次结构的强调色组
+### 用于视觉层级的 Accent Group
 
 ```swift
 HStack {
@@ -218,14 +217,14 @@ HStack {
         Text("Title")
             .widgetAccentable()  // Accent group
         Text("Subtitle")
-            // Primary group (default)
+            // Primary group（默认）
     }
     Image(systemName: "star.fill")
         .widgetAccentable()  // Accent group
 }
 ```
 
-### 强调模式下的图像渲染
+### Accented 模式下的图片渲染
 
 ```swift
 Image("myImage")
@@ -235,7 +234,7 @@ Image("myImage")
 ### 容器背景
 
 ```swift
-VStack { /* content */ }
+VStack { /* 内容 */ }
     .containerBackground(for: .widget) {
         Color.blue.opacity(0.2)
     }
@@ -245,36 +244,36 @@ VStack { /* content */ }
 
 | 决策 | 理由 |
 |----------|-----------|
-| 使用 GlassEffectContainer 包装 | 性能优化，实现玻璃元素之间的变形 |
-| `spacing` 参数 | 控制合并距离——微调元素需要多近才能融合 |
-| `@Namespace` + `glassEffectID` | 在视图层次结构变化时实现平滑的变形过渡 |
-| `interactive()` 修饰符 | 明确选择加入触摸/指针反应——并非所有玻璃都应响应 |
+| GlassEffectContainer 包裹 | 性能优化，支持 glass 元素之间的形变 |
+| `spacing` 参数 | 控制合并距离 —— 微调元素需要多近才会融合 |
+| `@Namespace` + `glassEffectID` | 在视图层级变化时实现平滑的形变过渡 |
+| `interactive()` modifier | 显式 opt-in 以响应触摸/指针交互 —— 并非所有 glass 都应响应 |
 | UIKit 中的 UIGlassContainerEffect | 与 SwiftUI 保持一致的容器模式 |
-| 小组件中的强调色渲染模式 | 当用户选择带色调的主屏幕时，系统会应用带色调的玻璃效果 |
+| widget 中的 Accented rendering mode | 当用户选择着色主屏幕时，系统会应用着色 glass |
 
 ## 最佳实践
 
-* **始终使用 GlassEffectContainer** 来为多个兄弟视图应用玻璃效果——它支持变形并提高渲染性能
-* **在其他外观修饰符**（frame、font、padding）**之后应用** `.glassEffect()`
-* **仅在响应用户交互的元素**（按钮、可切换项目）**上使用** `.interactive()`
-* **仔细选择容器中的间距**，以控制玻璃效果何时合并
-* 在更改视图层次结构时**使用** `withAnimation`，以启用平滑的变形过渡
-* **在各种外观模式下测试**——浅色模式、深色模式和强调色/色调模式
-* **确保可访问性对比度**——玻璃上的文本必须保持可读性
+- 在向多个同级视图应用 glass 时，**务必使用 GlassEffectContainer** —— 它能实现形变并提升渲染性能
+- 在其他外观 modifier（frame、font、padding）之后**应用 `.glassEffect()`**
+- 仅对响应用户交互的元素（按钮、可切换项）**使用 `.interactive()`**
+- 在容器中**谨慎选择 spacing**，以控制 glass 效果何时合并
+- 在更改视图层级时**使用 `withAnimation`**，以实现平滑的形变过渡
+- **在不同外观下测试** —— light mode、dark mode 以及 accented/tinted 模式
+- **确保无障碍对比度** —— glass 上的文本必须保持可读
 
 ## 应避免的反模式
 
-* 使用多个独立的 `.glassEffect()` 视图而不使用 GlassEffectContainer
-* 嵌套过多玻璃效果——会降低性能和视觉清晰度
-* 对每个视图都应用玻璃效果——保留给交互元素、工具栏和卡片
-* 在 UIKit 中使用圆角时忘记 `clipsToBounds = true`
-* 忽略小组件中的强调色渲染模式——破坏带色调的主屏幕外观
-* 在玻璃效果后面使用不透明背景——破坏了半透明效果
+- 在没有 GlassEffectContainer 的情况下使用多个独立的 `.glassEffect()` 视图
+- 嵌套过多 glass 效果 —— 会降低性能与视觉清晰度
+- 对每个视图都应用 glass —— 应保留给交互元素、工具栏和卡片
+- 在 UIKit 中使用圆角时忘记设置 `clipsToBounds = true`
+- 忽略 widget 中的 accented rendering mode —— 会破坏着色主屏幕的外观
+- 在 glass 后方使用不透明背景 —— 会破坏半透明效果
 
-## 使用场景
+## 何时使用
 
-* 采用 iOS 26 新设计的导航栏、工具栏和标签栏
-* 浮动操作按钮和卡片式容器
-* 需要视觉深度和触摸反馈的交互控件
-* 应与系统 Liquid Glass 外观集成的小组件
-* 相关 UI 状态之间的变形过渡
+- 采用新 iOS 26 设计的导航栏、工具栏和标签栏
+- 悬浮操作按钮和卡片式容器
+- 需要视觉深度和触摸反馈的交互控件
+- 应与系统 Liquid Glass 外观集成的 widget
+- 相关 UI 状态之间的形变过渡

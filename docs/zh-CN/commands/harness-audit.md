@@ -1,72 +1,84 @@
-# 工具链审计命令
+---
+description: 对仓库运行确定性的 harness audit，并返回按优先级排序的评分卡。
+---
 
-运行确定性仓库框架审计并返回优先级评分卡。
+# Harness Audit 命令
 
-## 使用方式
+对仓库运行确定性的 harness audit，并返回按优先级排序的评分卡。
 
-`/harness-audit [scope] [--format text|json]`
+## 用法
 
-* `scope` (可选): `repo` (默认), `hooks`, `skills`, `commands`, `agents`
-* `--format`: 输出样式 (`text` 默认, `json` 用于自动化)
+`/harness-audit [scope] [--format text|json] [--root path]`
+
+- `scope`（可选）：`repo`（默认）、`hooks`、`skills`、`commands`、`agents`
+- `--format`：输出格式（默认 `text`，`json` 用于自动化）
+- `--root`：对指定路径（而非当前工作目录）执行 audit
 
 ## 确定性引擎
 
 始终运行：
 
 ```bash
-node scripts/harness-audit.js <scope> --format <text|json>
+node scripts/harness-audit.js <scope> --format <text|json> [--root <path>]
 ```
 
-此脚本是评分和检查的单一事实来源。不要发明额外的维度或临时添加评分点。
+该脚本是评分与检查的唯一事实来源。不要臆造额外的维度或临时性得分项。
 
-评分标准版本：`2026-03-16`。
+Rubric 版本：`2026-05-19`。
 
-该脚本计算 7 个固定类别（每个类别标准化为 `0-10`）：
+该脚本最多计算 12 个固定类别（每个类别归一化到 `0-10`）。前七个类别始终适用；GitHub Integration 始终适用；deploy-target 类别仅在检测到匹配的标记时适用。
 
-1. 工具覆盖度
-2. 上下文效率
-3. 质量门禁
-4. 记忆持久化
-5. 评估覆盖度
-6. 安全护栏
-7. 成本效率
+1. Tool Coverage
+2. Context Efficiency
+3. Quality Gates
+4. Memory Persistence
+5. Eval Coverage
+6. Security Guardrails
+7. Cost Efficiency
+8. GitHub Integration
+9. Vercel Integration *（当存在 `vercel.json` 或 `.vercel/` 时）*
+10. Netlify Integration *（当存在 `netlify.toml` 或 `.netlify/` 时）*
+11. Cloudflare Integration *（当存在 `wrangler.toml` 或 `wrangler.jsonc` 时）*
+12. Fly Integration *（当存在 `fly.toml` 时）*
 
-分数源自显式的文件/规则检查，并且对于同一提交是可复现的。
+得分基于显式的文件/规则检查得出，对同一 commit 可复现。
+该脚本默认对当前工作目录执行 audit，并自动检测目标是 ECC 仓库本身还是使用 ECC 的消费方项目。
 
-## 输出约定
+## 输出契约
 
 返回：
 
-1. `overall_score` 分（满分 `max_score` 分；`repo` 为 70 分；范围限定审计则分数更小）
-2. 类别分数及具体发现项
-3. 失败的检查及其确切的文件路径
-4. 确定性输出的前 3 项行动（`top_actions`）
-5. 建议接下来应用的 ECC 技能
+1. `overall_score`（满分 `max_score`）。`max_score` 取决于哪些类别适用于目标；绝不假设固定总分。
+2. `applicable_categories[]` 和 `category_count`，描述哪些类别参与了计分。
+3. 各类别得分及具体发现。
+4. 失败的检查项及精确的文件路径。
+5. 来自确定性输出的前 3 项动作（`top_actions`）。
+6. 建议接下来应用的 ECC skill。
 
 ## 检查清单
 
-* 直接使用脚本输出；不要手动重新评分。
-* 如果请求 `--format json`，则原样返回脚本的 JSON 输出。
-* 如果请求文本输出，则总结失败的检查和首要行动。
-* 包含来自 `checks[]` 和 `top_actions[]` 的确切文件路径。
+- 直接使用脚本输出；不要手动重新评分。
+- 如果请求 `--format json`，原样返回脚本的 JSON 输出。
+- 如果请求 text 格式，汇总失败的检查项和 top actions。
+- 包含来自 `checks[]` 和 `top_actions[]` 的精确文件路径。
 
-## 结果示例
+## 示例结果
 
 ```text
-Harness 审计 (代码库): 66/70
-- 工具覆盖率: 10/10 (10/10 分)
-- 上下文效率: 9/10 (9/10 分)
-- 质量门禁: 10/10 (10/10 分)
+Harness Audit (repo, repo): 71/80
+- Tool Coverage: 10/10 (10/10 pts)
+- Context Efficiency: 9/10 (9/10 pts)
+- Quality Gates: 10/10 (10/10 pts)
+- GitHub Integration: 2/10 (2/10 pts)
 
-首要三项行动:
-1) [安全防护] 在 hooks/hooks.json 中添加提示/工具预检安全防护。 (hooks/hooks.json)
-2) [工具覆盖率] 同步 commands/harness-audit.md 和 .opencode/commands/harness-audit.md。 (.opencode/commands/harness-audit.md)
-3) [评估覆盖率] 提升 scripts/hooks/lib 目录下的自动化测试覆盖率。 (tests/)
+Top 3 Actions:
+1) [GitHub Integration] Add at least one workflow under .github/workflows/. (.github/workflows/)
+2) [Security Guardrails] Add prompt/tool preflight security guards in hooks/hooks.json. (hooks/hooks.json)
+3) [Eval Coverage] Increase automated test coverage across scripts/hooks/lib. (tests/)
 ```
 
 ## 参数
 
 $ARGUMENTS:
-
-* `repo|hooks|skills|commands|agents` (可选范围)
-* `--format text|json` (可选输出格式)
+- `repo|hooks|skills|commands|agents`（可选 scope）
+- `--format text|json`（可选输出格式）

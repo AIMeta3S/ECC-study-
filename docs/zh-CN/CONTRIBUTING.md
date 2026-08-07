@@ -20,7 +20,7 @@
 
 ### 智能体
 
-能够很好地处理特定任务的新智能体：
+能够很好地处理特定 tasks 的新智能体：
 
 * 语言特定的审查员（Python、Go、Rust）
 * 框架专家（Django、Rails、Laravel、Spring）
@@ -136,7 +136,7 @@ function example() {
 
 ## 贡献智能体
 
-智能体是通过任务工具调用的专业助手。
+智能体是通过 Task 工具调用的专业助手。
 
 ### 文件位置
 
@@ -165,7 +165,7 @@ model: sonnet
 ## 工作流程
 
 ### 步骤 1：理解
-你如何着手处理任务。
+你如何着手处理 task。
 
 ### 步骤 2：执行
 你如何开展工作。
@@ -381,7 +381,7 @@ ECC 为其他平台提供了技能子集：
 
 ### 翻译
 
-翻译文件位于 `docs/` 下（例如 `docs/zh-CN`、`docs/zh-TW`、`docs/ja-JP`）。如果您更改了已被翻译的智能体、命令或技能，请考虑更新相应的翻译文件，或创建一个问题，以便维护者或翻译人员可以更新它们。
+翻译文件位于 `docs/` 下（例如 `docs/zh-CN`、`docs/zh-TW`、`docs/ja-JP`）。如果您更改了已被翻译的智能体、命令或技能，请考虑更新相应的翻译文件，或创建一个 issue，以便维护者或翻译人员可以更新它们。
 
 ***
 
@@ -457,7 +457,7 @@ docs: 完善贡献指南
 
 ## 有问题吗？
 
-* **问题：** [github.com/affaan-m/everything-claude-code/issues](https://github.com/affaan-m/everything-claude-code/issues)
+* **Issues：** [github.com/affaan-m/everything-claude-code/issues](https://github.com/affaan-m/everything-claude-code/issues)
 * **X/Twitter：** [@affaanmustafa](https://x.com/affaanmustafa)
 
 ***

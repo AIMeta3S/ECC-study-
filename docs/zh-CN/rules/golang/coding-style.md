@@ -4,23 +4,22 @@ paths:
   - "**/go.mod"
   - "**/go.sum"
 ---
-
 # Go 编码风格
 
-> 本文件在 [common/coding-style.md](../common/coding-style.md) 的基础上，扩展了 Go 语言的特定内容。
+> 本文件在 [common/coding-style.md](../common/coding-style.md) 基础上扩展了 Go 特定内容。
 
 ## 格式化
 
-* **gofmt** 和 **goimports** 是强制性的 —— 无需进行风格辩论
+- **gofmt** 和 **goimports** 是强制使用的——没有风格争议
 
 ## 设计原则
 
-* 接受接口，返回结构体
-* 保持接口小巧（1-3 个方法）
+- 接收 interfaces，返回 structs
+- 保持 interfaces 精简（1-3 个 methods）
 
 ## 错误处理
 
-始终用上下文包装错误：
+始终为错误附加上下文：
 
 ```go
 if err != nil {
@@ -30,4 +29,4 @@ if err != nil {
 
 ## 参考
 
-查看技能：`golang-patterns` 以获取全面的 Go 语言惯用法和模式。
+参见 skill：`golang-patterns`，了解全面的 Go 惯用法与模式。

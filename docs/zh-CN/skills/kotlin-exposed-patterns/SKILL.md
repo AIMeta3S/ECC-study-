@@ -1,25 +1,26 @@
 ---
 name: kotlin-exposed-patterns
-description: JetBrains Exposed ORM 模式，包括 DSL 查询、DAO 模式、事务、HikariCP 连接池、Flyway 迁移和仓库模式。
-origin: ECC
+description: JetBrains Exposed ORM 模式，包括 DSL 查询、DAO 模式、事务、HikariCP 连接池、Flyway 迁移和 repository 模式。
+metadata:
+  origin: ECC
 ---
 
 # Kotlin Exposed 模式
 
-使用 JetBrains Exposed ORM 进行数据库访问的全面模式，包括 DSL 查询、DAO、事务以及生产就绪的配置。
+使用 JetBrains Exposed ORM 进行数据库访问的全面模式，包括 DSL 查询、DAO、事务和生产级配置。
 
 ## 何时使用
 
-* 使用 Exposed 设置数据库访问
-* 使用 Exposed DSL 或 DAO 编写 SQL 查询
-* 使用 HikariCP 配置连接池
-* 使用 Flyway 创建数据库迁移
-* 使用 Exposed 实现仓储模式
-* 处理 JSON 列和复杂查询
+- 使用 Exposed 设置数据库访问
+- 使用 Exposed DSL 或 DAO 编写 SQL 查询
+- 使用 HikariCP 配置连接池
+- 使用 Flyway 创建数据库迁移
+- 使用 Exposed 实现 repository 模式
+- 处理 JSON 列和复杂查询
 
 ## 工作原理
 
-Exposed 提供两种查询风格：用于直接类似 SQL 表达式的 DSL 和用于实体生命周期管理的 DAO。HikariCP 通过 `HikariConfig` 配置来管理可重用的数据库连接池。Flyway 在启动时运行版本化的 SQL 迁移脚本以保持模式同步。所有数据库操作都在 `newSuspendedTransaction` 块内运行，以确保协程安全和原子性。仓储模式将 Exposed 查询包装在接口之后，使业务逻辑与数据层解耦，并且测试可以使用内存中的 H2 数据库。
+Exposed 提供两种查询风格：DSL 用于直接的类 SQL 表达式，DAO 用于实体生命周期管理。HikariCP 通过 `HikariConfig` 管理一个可复用数据库连接池。Flyway 在启动时运行版本化的 SQL 迁移脚本以保持 schema 同步。所有数据库操作都在 `newSuspendedTransaction` 块中运行，以确保协程安全性和原子性。repository 模式将 Exposed 查询封装在接口之后，使业务逻辑与数据层解耦，并且测试可以使用内存 H2 数据库。
 
 ## 示例
 
@@ -108,7 +109,7 @@ fun runMigrations(config: DatabaseConfig) {
         .migrate()
 }
 
-// Application startup
+// 应用启动
 fun Application.module() {
     val config = DatabaseConfig(
         url = environment.config.property("database.url").getString(),
@@ -182,10 +183,10 @@ object UserRolesTable : Table("user_roles") {
 
 ## DSL 查询
 
-### 基本 CRUD
+### 基础 CRUD
 
 ```kotlin
-// Insert
+// 插入
 suspend fun insertUser(name: String, email: String, role: Role): UUID =
     newSuspendedTransaction {
         UsersTable.insertAndGetId {
@@ -195,7 +196,7 @@ suspend fun insertUser(name: String, email: String, role: Role): UUID =
         }.value
     }
 
-// Select by ID
+// 按 ID 查询
 suspend fun findUserById(id: UUID): UserRow? =
     newSuspendedTransaction {
         UsersTable.selectAll()
@@ -204,7 +205,7 @@ suspend fun findUserById(id: UUID): UserRow? =
             .singleOrNull()
     }
 
-// Select with conditions
+// 带条件查询
 suspend fun findActiveAdmins(): List<UserRow> =
     newSuspendedTransaction {
         UsersTable.selectAll()
@@ -213,7 +214,7 @@ suspend fun findActiveAdmins(): List<UserRow> =
             .map { it.toUser() }
     }
 
-// Update
+// 更新
 suspend fun updateUserEmail(id: UUID, newEmail: String): Boolean =
     newSuspendedTransaction {
         UsersTable.update({ UsersTable.id eq id }) {
@@ -222,13 +223,13 @@ suspend fun updateUserEmail(id: UUID, newEmail: String): Boolean =
         } > 0
     }
 
-// Delete
+// 删除
 suspend fun deleteUser(id: UUID): Boolean =
     newSuspendedTransaction {
         UsersTable.deleteWhere { UsersTable.id eq id } > 0
     }
 
-// Row mapping
+// 行映射
 private fun ResultRow.toUser() = UserRow(
     id = this[UsersTable.id].value,
     name = this[UsersTable.name],
@@ -243,7 +244,7 @@ private fun ResultRow.toUser() = UserRow(
 ### 高级查询
 
 ```kotlin
-// Join queries
+// 连接查询
 suspend fun findOrdersWithUser(userId: UUID): List<OrderWithUser> =
     newSuspendedTransaction {
         (OrdersTable innerJoin UsersTable)
@@ -260,7 +261,7 @@ suspend fun findOrdersWithUser(userId: UUID): List<OrderWithUser> =
             }
     }
 
-// Aggregation
+// 聚合
 suspend fun countUsersByRole(): Map<Role, Long> =
     newSuspendedTransaction {
         UsersTable
@@ -271,7 +272,7 @@ suspend fun countUsersByRole(): Map<Role, Long> =
             }
     }
 
-// Subqueries
+// 子查询
 suspend fun findUsersWithOrders(): List<UserRow> =
     newSuspendedTransaction {
         UsersTable.selectAll()
@@ -282,7 +283,7 @@ suspend fun findUsersWithOrders(): List<UserRow> =
             .map { it.toUser() }
     }
 
-// LIKE and pattern matching — always escape user input to prevent wildcard injection
+// LIKE 和模式匹配——始终对用户输入进行转义以防止通配符注入
 private fun escapeLikePattern(input: String): String =
     input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
@@ -328,7 +329,7 @@ suspend fun findUsersPaginated(page: Int, limit: Int): Page<UserRow> =
 ### 批量操作
 
 ```kotlin
-// Batch insert
+// 批量插入
 suspend fun insertUsers(users: List<CreateUserRequest>): List<UUID> =
     newSuspendedTransaction {
         UsersTable.batchInsert(users) { user ->
@@ -338,7 +339,7 @@ suspend fun insertUsers(users: List<CreateUserRequest>): List<UUID> =
         }.map { it[UsersTable.id].value }
     }
 
-// Upsert (insert or update on conflict)
+// Upsert（冲突时插入或更新）
 suspend fun upsertUser(id: UUID, name: String, email: String) {
     newSuspendedTransaction {
         UsersTable.upsert(UsersTable.email) {
@@ -424,10 +425,10 @@ suspend fun updateUser(id: UUID, request: UpdateUserRequest): User? =
 
 ## 事务
 
-### 挂起事务支持
+### Suspend 事务支持
 
 ```kotlin
-// Good: Use newSuspendedTransaction for coroutine support
+// 良好实践：使用 newSuspendedTransaction 以支持协程
 suspend fun performDatabaseOperation(): Result<User> =
     runCatching {
         newSuspendedTransaction {
@@ -435,28 +436,28 @@ suspend fun performDatabaseOperation(): Result<User> =
                 name = "Alice"
                 email = "alice@example.com"
             }
-            // All operations in this block are atomic
+            // 此块中的所有操作都是原子的
             user.toModel()
         }
     }
 
-// Good: Nested transactions with savepoints
+// 良好实践：带保存点的嵌套事务
 suspend fun transferFunds(fromId: UUID, toId: UUID, amount: Long) {
     newSuspendedTransaction {
         val from = UserEntity.findById(fromId) ?: throw NotFoundException("User $fromId not found")
         val to = UserEntity.findById(toId) ?: throw NotFoundException("User $toId not found")
 
-        // Debit
+        // 扣款
         from.balance -= amount
-        // Credit
+        // 入账
         to.balance += amount
 
-        // Both succeed or both fail
+        // 两者同时成功或同时失败
     }
 }
 ```
 
-### 事务隔离级别
+### 事务隔离
 
 ```kotlin
 suspend fun readCommittedQuery(): List<User> =
@@ -466,12 +467,12 @@ suspend fun readCommittedQuery(): List<User> =
 
 suspend fun serializableOperation() {
     newSuspendedTransaction(transactionIsolation = Connection.TRANSACTION_SERIALIZABLE) {
-        // Strictest isolation level for critical operations
+        // 用于关键操作的最严格隔离级别
     }
 }
 ```
 
-## 仓储模式
+## Repository 模式
 
 ### 接口定义
 
@@ -577,10 +578,10 @@ class ExposedUserRepository(
 
 ## JSON 列
 
-### 使用 kotlinx.serialization 的 JSONB
+### 结合 kotlinx.serialization 的 JSONB
 
 ```kotlin
-// Custom column type for JSONB
+// JSONB 自定义列类型
 inline fun <reified T : Any> Table.jsonb(
     name: String,
     json: Json,
@@ -604,7 +605,7 @@ inline fun <reified T : Any> Table.jsonb(
         }
 })
 
-// Usage in table
+// 表中用法
 @Serializable
 data class UserMetadata(
     val preferences: Map<String, String> = emptyMap(),
@@ -618,7 +619,7 @@ object UsersTable : UUIDTable("users") {
 
 ## 使用 Exposed 进行测试
 
-### 用于测试的内存数据库
+### 测试用内存数据库
 
 ```kotlin
 class UserRepositoryTest : FunSpec({
@@ -674,7 +675,7 @@ class UserRepositoryTest : FunSpec({
 })
 ```
 
-## Gradle 依赖项
+## Gradle 依赖
 
 ```kotlin
 // build.gradle.kts
@@ -686,26 +687,26 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:1.0.0")
     implementation("org.jetbrains.exposed:exposed-json:1.0.0")
 
-    // Database driver
+    // 数据库驱动
     implementation("org.postgresql:postgresql:42.7.5")
 
-    // Connection pooling
+    // 连接池
     implementation("com.zaxxer:HikariCP:6.2.1")
 
-    // Migrations
+    // 迁移
     implementation("org.flywaydb:flyway-core:10.22.0")
     implementation("org.flywaydb:flyway-database-postgresql:10.22.0")
 
-    // Testing
+    // 测试
     testImplementation("com.h2database:h2:2.3.232")
 }
 ```
 
 ## 快速参考：Exposed 模式
 
-| 模式 | 描述 |
+| 模式 | 说明 |
 |---------|-------------|
-| `object Table : UUIDTable("name")` | 定义具有 UUID 主键的表 |
+| `object Table : UUIDTable("name")` | 定义带 UUID 主键的表 |
 | `newSuspendedTransaction { }` | 协程安全的事务块 |
 | `Table.selectAll().where { }` | 带条件的查询 |
 | `Table.insertAndGetId { }` | 插入并返回生成的 ID |
@@ -716,4 +717,4 @@ dependencies {
 | `orderBy` / `limit` / `offset` | 排序和分页 |
 | `count()` / `sum()` / `avg()` | 聚合函数 |
 
-**记住**：对于简单查询使用 DSL 风格，当需要实体生命周期管理时使用 DAO 风格。始终使用 `newSuspendedTransaction` 以获得协程支持，并将数据库操作包装在仓储接口之后以提高可测试性。
+**切记**：对简单查询使用 DSL 风格，当需要实体生命周期管理时使用 DAO 风格。始终使用 `newSuspendedTransaction` 以支持协程，并将数据库操作封装在 repository 接口之后以保持可测试性。

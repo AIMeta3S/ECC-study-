@@ -7,7 +7,7 @@
 
 **技术栈:** Python 3.12+, Django 5.x, Django REST Framework, PostgreSQL, Celery + Redis, pytest, Docker Compose
 
-**架构:** 采用领域驱动设计，每个业务领域对应一个应用。DRF 用于 API 层，Celery 用于异步任务，pytest 用于测试。所有端点返回 JSON — 无模板渲染。
+**架构:** 采用领域驱动设计，每个业务领域对应一个应用。DRF 用于 API 层，Celery 用于异步 tasks，pytest 用于测试。所有端点返回 JSON — 无模板渲染。
 
 ## 关键规则
 
@@ -117,7 +117,7 @@ apps/
     serializers.py
     views.py
     services.py
-    tasks.py             # Celery 任务
+    tasks.py             # Celery tasks
     tests/
   products/              # 产品目录
     models.py

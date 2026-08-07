@@ -1,81 +1,99 @@
-# Browser QA — 自动化视觉测试与交互验证
+---
+name: browser-qa
+description: 部署功能后，使用本 skill 通过浏览器自动化进行视觉测试与 UI 交互验证。
+metadata:
+  origin: ECC
+---
 
-## When to use
+# 浏览器 QA — 自动化视觉测试与交互
 
-- 功能部署到 staging / preview 之后
-- 需要验证跨页面的 UI 行为时
-- 发布前确认布局、表单和交互是否真的可用
-- 审查涉及前端改动的 PR 时
-- 做可访问性审计和响应式测试时
+## 何时使用
 
-## How it works
+- 将功能部署到 staging/preview 之后
+- 需要跨页面验证 UI 行为时
+- 发布之前 — 确认布局、表单、交互确实可用
+- 在 review 涉及前端代码的 PR 时
+- 无障碍审计与响应式测试
 
-使用浏览器自动化 MCP（claude-in-chrome、Playwright 或 Puppeteer），像真实用户一样与线上页面交互。
+## 工作原理
 
-### 阶段 1：冒烟测试
+使用浏览器自动化 MCP（claude-in-chrome、Playwright 或 Puppeteer）像真实用户一样与线上页面交互。
+
+### 安全第一 — blast radius（默认以只读方式运行）
+
+Browser QA 会驱动真实 auth 和真实用户旅程，因此必须明确对待 blast radius。默认采用**只读**方式：绝不针对 production URL 运行 **mutating** 旅程（checkout、payment、delete、mass-update）— 必须有明确的 opt-in **且**提供 staging/preview URL。使用预置的**测试凭据**，绝不使用真实 production 登录信息，并在保存任何截图前对凭据/token/PII 进行**脱敏**。
+
+### Phase 1: 冒烟测试
 ```
-1. 打开目标 URL
-2. 检查控制台错误（过滤噪声：分析脚本、第三方库）
-3. 验证网络请求中没有 4xx / 5xx
-4. 在桌面和移动端视口截图首屏内容
-5. 检查 Core Web Vitals：LCP < 2.5s，CLS < 0.1，INP < 200ms
-```
-
-### 阶段 2：交互测试
-```
-1. 点击所有导航链接，验证没有死链
-2. 使用有效数据提交表单，验证成功态
-3. 使用无效数据提交表单，验证错误态
-4. 测试认证流程：登录 → 受保护页面 → 登出
-5. 测试关键用户路径（结账、引导、搜索）
-```
-
-### 阶段 3：视觉回归
-```
-1. 在 3 个断点（375px、768px、1440px）对关键页面截图
-2. 与基线截图对比（如果已保存）
-3. 标记 > 5px 的布局偏移、缺失元素、内容溢出
-4. 如适用，检查暗色模式
+1. Navigate to target URL
+2. Check for console errors (filter noise: analytics, third-party)
+3. Verify no 4xx/5xx in network requests
+4. Screenshot above-the-fold on desktop + mobile viewport
+5. Check Core Web Vitals: LCP < 2.5s, CLS < 0.1, INP < 200ms
+   (INP replaced FID in March 2024; thresholds per web.dev)
 ```
 
-### 阶段 4：可访问性
+### Phase 2: 交互测试
 ```
-1. 在每个页面运行 axe-core 或等价工具
-2. 标记 WCAG AA 违规（对比度、标签、焦点顺序）
-3. 验证键盘导航可以端到端工作
-4. 检查屏幕阅读器地标
+1. Click every nav link — verify no dead links
+2. Submit forms with valid data — verify success state
+3. Submit forms with invalid data — verify error state
+4. Test auth flow: login → protected page → logout (test creds only, never prod)
+5. Test critical user journeys (checkout, onboarding, search)
+   — read-only by default; only exercise mutating journeys against staging
+     with explicit opt-in (see "Safety first" above)
 ```
 
-## Examples
+### Phase 3: 视觉回归
+```
+1. Screenshot key pages at 3 breakpoints (375px, 768px, 1440px)
+2. Compare against committed baseline screenshots
+   — no baseline ⇒ report INCONCLUSIVE, never a silent PASS
+3. Flag layout shifts > 5px, missing elements, overflow
+4. Check dark mode if applicable
+```
+
+### Phase 4: 无障碍
+```
+1. Run axe-core or equivalent on each page
+2. Flag WCAG 2.2 AA violations (contrast, labels, focus order)
+3. Verify keyboard navigation works end-to-end
+4. Check screen reader landmarks
+```
+
+> 注意：axe-core 大约能自动覆盖 WCAG 的 30–40%。一次无报错的运行是**必要但非充分**的 — keyboard nav、focus order 和 screen-reader 检查仍需人工核查。不要仅凭自动化通过就报告 "accessible"。
+
+## 输出格式
 
 ```markdown
-## QA 报告 — [URL] — [timestamp]
+## QA Report — [URL] — [timestamp]
 
-### 冒烟测试
-- 控制台错误：0 个严重错误，2 个警告（分析脚本噪声）
-- 网络：全部 200/304，无失败请求
-- Core Web Vitals：LCP 1.2s，CLS 0.02，INP 89ms
+### Smoke Test
+- Console errors: 0 critical, 2 warnings (analytics noise)
+- Network: all 200/304, no failures
+- Core Web Vitals: LCP 1.2s ✓, CLS 0.02 ✓, INP 89ms ✓
 
-### 交互
-- [done] 导航链接：12/12 正常
-- [issue] 联系表单：无效邮箱缺少错误态
-- [done] 认证流程：登录 / 登出正常
+### Interactions
+- [✓] Nav links: 12/12 working
+- [✗] Contact form: missing error state for invalid email
+- [✓] Auth flow: login/logout working
 
-### 视觉
-- [issue] Hero 区域在 375px 视口下溢出
-- [done] 暗色模式：所有页面一致
+### Visual
+- [✗] Hero section overflows on 375px viewport
+- [✓] Dark mode: all pages consistent
 
-### 可访问性
-- 2 个 AA 级违规：Hero 图片缺少 alt 文本，页脚链接对比度过低
+### Accessibility
+- 2 AA violations: missing alt text on hero image, low contrast on footer links
 
-### 结论：修复后可发布（2 个问题，0 个阻塞项）
+### Verdict: SHIP WITH FIXES (2 issues, 0 blockers)
+# verdict ∈ SHIP / SHIP WITH FIXES / DO NOT SHIP; use INCONCLUSIVE if no visual baseline
 ```
 
 ## 集成
 
-可与任意浏览器 MCP 配合：
-- `mChild__claude-in-chrome__*` 工具（推荐，直接使用你的真实 Chrome）
+可与任何 browser MCP 配合使用：
+- `mChild__claude-in-chrome__*` 工具（首选 — 使用你实际的 Chrome）
 - 通过 `mcp__browserbase__*` 使用 Playwright
-- 直接运行 Puppeteer 脚本
+- 直接使用 Puppeteer 脚本
 
-可与 `/canary-watch` 搭配用于发布后的持续监控。
+配合 `/canary-watch` 进行部署后监控。

@@ -1,7 +1,8 @@
 ---
 name: git-workflow
-description: Git工作流模式，包括分支策略、提交约定、合并与变基、冲突解决以及适用于各种规模团队的协作开发最佳实践。
-origin: ECC
+description: Git 工作流模式，涵盖分支策略、commit 约定、merge 与 rebase 对比、冲突解决，以及适用于各种规模团队的协作开发最佳实践。
+metadata:
+  origin: ECC
 ---
 
 # Git 工作流模式
@@ -10,18 +11,18 @@ Git 版本控制、分支策略与协作开发的最佳实践。
 
 ## 何时启用
 
-* 为新项目设置 Git 工作流
-* 决定分支策略（GitFlow、主干开发、GitHub Flow）
-* 编写提交信息和 PR 描述
-* 解决合并冲突
-* 管理发布和版本标签
-* 让新团队成员熟悉 Git 实践
+- 为新项目设置 Git 工作流
+- 确定分支策略（GitFlow、trunk-based、GitHub flow）
+- 编写 commit message 和 PR 描述
+- 解决 merge conflict
+- 管理发布和版本 tag
+- 引导新成员熟悉团队的 Git 实践
 
 ## 分支策略
 
-### GitHub Flow（简单，推荐大多数场景使用）
+### GitHub Flow（简单，推荐大多数团队使用）
 
-最适合持续部署以及中小型团队。
+最适合持续部署和中小型团队。
 
 ```
 main (protected, always deployable)
@@ -32,68 +33,65 @@ main (protected, always deployable)
 ```
 
 **规则：**
+- `main` 始终处于可部署状态
+- 从 `main` 创建 feature 分支
+- 准备好评审时发起 Pull Request
+- 审批通过且 CI 通过后，merge 到 `main`
+- merge 后立即部署
 
-* `main` 始终可部署
-* 从 `main` 创建功能分支
-* 准备就绪后发起 Pull Request
-* 审核通过且 CI 通过后，合并到 `main`
-* 合并后立即部署
+### Trunk-Based Development（高速迭代的团队）
 
-### 主干开发（高速度团队）
-
-最适合具备强大 CI/CD 和功能开关的团队。
+最适合具备成熟 CI/CD 和 feature flag 的团队。
 
 ```
-main (主干)
+main (trunk)
   │
-  ├── 短期功能分支（最长1-2天）
-  ├── 短期功能分支
-  └── 短期功能分支
+  ├── short-lived feature (1-2 days max)
+  ├── short-lived feature
+  └── short-lived feature
 ```
 
 **规则：**
+- 所有人 commit 到 `main` 或非常短命的分支
+- 用 feature flag 隐藏未完成的工作
+- merge 前 CI 必须通过
+- 每天部署多次
 
-* 所有人直接提交到 `main` 或使用极短生命周期的分支
-* 功能开关隐藏未完成的工作
-* 合并前必须通过 CI
-* 每天多次部署
+### GitFlow（复杂，发布周期驱动）
 
-### GitFlow（复杂，基于发布周期）
-
-适合计划性发布和企业级项目。
+最适合计划性发布和企业级项目。
 
 ```
-main (生产发布版本)
+main (production releases)
   │
-  └── develop (集成分支)
+  └── develop (integration branch)
         │
         ├── feature/user-auth
         ├── feature/payment
         │
-        ├── release/1.0.0    → 合并到 main 和 develop
+        ├── release/1.0.0    → merge to main and develop
         │
-        └── hotfix/critical  → 合并到 main 和 develop
+        └── hotfix/critical  → merge to main and develop
 ```
 
 **规则：**
+- `main` 只包含生产可用的代码
+- `develop` 是集成分支
+- feature 分支从 `develop` 拉出，merge 回 `develop`
+- release 分支从 `develop` 拉出，merge 到 `main` 和 `develop`
+- hotfix 分支从 `main` 拉出，merge 到 `main` 和 `develop`
 
-* `main` 仅包含生产就绪代码
-* `develop` 是集成分支
-* 功能分支从 `develop` 创建，合并回 `develop`
-* 发布分支从 `develop` 创建，合并到 `main` 和 `develop`
-* 热修复分支从 `main` 创建，合并到 `main` 和 `develop`
+### 如何选择
 
-### 何时使用哪种策略
-
-| 策略 | 团队规模 | 发布频率 | 最佳适用场景 |
+| 策略 | 团队规模 | 发布节奏 | 最适合 |
 |----------|-----------|-----------------|----------|
-| GitHub Flow | 任意 | 持续 | SaaS、Web 应用、初创公司 |
-| 主干开发 | 5 人以上有经验 | 每天多次 | 高速度团队、功能开关 |
-| GitFlow | 10 人以上 | 计划性 | 企业、受监管行业 |
+| GitHub Flow | 任意规模 | 持续部署 | SaaS、Web 应用、初创团队 |
+| Trunk-Based | 5 人以上的成熟团队 | 每天多次 | 高速迭代团队、feature flag |
+| GitFlow | 10 人以上 | 计划性发布 | 企业级、受监管行业 |
 
-## 提交信息
+## Commit Message
 
-### 常规提交格式
+### Conventional Commits 格式
 
 ```
 <type>(<scope>): <subject>
@@ -108,117 +106,115 @@ main (生产发布版本)
 | 类型 | 用途 | 示例 |
 |------|---------|---------|
 | `feat` | 新功能 | `feat(auth): add OAuth2 login` |
-| `fix` | 错误修复 | `fix(api): handle null response in user endpoint` |
+| `fix` | Bug 修复 | `fix(api): handle null response in user endpoint` |
 | `docs` | 文档 | `docs(readme): update installation instructions` |
 | `style` | 格式调整，无代码变更 | `style: fix indentation in login component` |
 | `refactor` | 代码重构 | `refactor(db): extract connection pool to module` |
-| `test` | 添加/更新测试 | `test(auth): add unit tests for token validation` |
+| `test` | 新增/更新测试 | `test(auth): add unit tests for token validation` |
 | `chore` | 维护任务 | `chore(deps): update dependencies` |
 | `perf` | 性能改进 | `perf(query): add index to users table` |
 | `ci` | CI/CD 变更 | `ci: add PostgreSQL service to test workflow` |
-| `revert` | 回滚之前的提交 | `revert: revert "feat(auth): add OAuth2 login"` |
+| `revert` | 回退之前的 commit | `revert: revert "feat(auth): add OAuth2 login"` |
 
 ### 好与坏的示例
 
 ```
-# 不好：模糊，无上下文
-git commit -m "修复了一些东西"
-git commit -m "更新"
-git commit -m "进行中"
+# 坏：含糊其辞，缺乏上下文
+git commit -m "fixed stuff"
+git commit -m "updates"
+git commit -m "WIP"
 
-# 好：清晰，具体，解释原因
-git commit -m "fix(api): 在 503 服务不可用时重试请求
+# 好：清晰、具体，解释了原因
+git commit -m "fix(api): retry requests on 503 Service Unavailable
 
-外部 API 在高峰时段偶尔会返回 503 错误。
-添加了指数退避重试逻辑，最多尝试 3 次。
+The external API occasionally returns 503 errors during peak hours.
+Added exponential backoff retry logic with max 3 attempts.
 
-关闭 #123"
+Closes #123"
 ```
 
-### 提交信息模板
+### Commit Message 模板
 
 在仓库根目录创建 `.gitmessage`：
 
 ```
 # <type>(<scope>): <subject>
-# # 类型：feat, fix, docs, style, refactor, test, chore, perf, ci, revert
-# 范围：api, ui, db, auth 等
-# 主题：祈使语气，无句号，最多50个字符
+# # 类型：feat、fix、docs、style、refactor、test、chore、perf、ci、revert
+# scope：api、ui、db、auth 等
+# subject：祈使语气，不加句号，不超过 50 个字符
 #
-# [可选正文] - 解释原因，而非内容
-# [可选脚注] - 破坏性变更，关闭 #issue
+# [optional body] - 解释为什么，而不是做了什么
+# [optional footer] - Breaking changes、closes #issue
 ```
 
 启用方式：`git config commit.template .gitmessage`
 
-## 合并 vs 变基
+## Merge 与 Rebase 对比
 
-### 合并（保留历史）
+### Merge（保留历史）
 
 ```bash
-# Creates a merge commit
+# 创建一个 merge commit
 git checkout main
 git merge feature/user-auth
 
-# Result:
+# 结果：
 # *   merge commit
 # |\
-# | * feature commits
+# | * feature 的 commit
 # |/
-# * main commits
+# * main 的 commit
 ```
 
 **适用场景：**
+- 将 feature 分支 merge 到 `main`
+- 你希望保留完整的历史
+- 多人协作开发了该分支
+- 该分支已 push 且其他人可能基于它开展工作
 
-* 将功能分支合并到 `main`
-* 希望保留完整历史
-* 多人共同开发该分支
-* 分支已推送，其他人可能基于它开展工作
-
-### 变基（线性历史）
+### Rebase（线性历史）
 
 ```bash
-# Rewrites feature commits onto target branch
+# 将 feature 的 commit 重写到目标分支上
 git checkout feature/user-auth
 git rebase main
 
-# Result:
-# * feature commits (rewritten)
-# * main commits
+# 结果：
+# * feature 的 commit（已重写）
+# * main 的 commit
 ```
 
 **适用场景：**
+- 用最新的 `main` 更新本地 feature 分支
+- 你希望得到线性、干净的历史
+- 该分支仅在本地（未 push）
+- 你是该分支的唯一开发者
 
-* 用最新的 `main` 更新本地功能分支
-* 希望获得线性、干净的历史
-* 分支仅存在于本地（未推送）
-* 只有你一个人在该分支上工作
-
-### 变基工作流
+### Rebase 工作流
 
 ```bash
-# Update feature branch with latest main (before PR)
+# 用最新的 main 更新 feature 分支（发起 PR 之前）
 git checkout feature/user-auth
 git fetch origin
 git rebase origin/main
 
-# Fix any conflicts
-# Tests should still pass
+# 修复任何冲突
+# 测试应该仍然通过
 
-# Force push (only if you're the only contributor)
+# Force push（仅当你是唯一的贡献者时）
 git push --force-with-lease origin feature/user-auth
 ```
 
-### 何时不应变基
+### 何时不应 Rebase
 
 ```
-# 切勿变基以下分支：
-- 已推送至共享仓库的分支
-- 他人已基于其工作的分支
-- 受保护分支（main、develop）
-- 已合并的分支
+# 绝不要 rebase 以下分支：
+- 已 push 到共享仓库的分支
+- 其他人已基于它开展工作的分支
+- 受保护的分支（main、develop）
+- 已经 merge 过的分支
 
-# 原因：变基会重写历史，破坏他人的工作
+# 原因：Rebase 会重写历史，破坏他人的工作
 ```
 
 ## Pull Request 工作流
@@ -228,7 +224,7 @@ git push --force-with-lease origin feature/user-auth
 ```
 <type>(<scope>): <description>
 
-示例：
+Examples:
 feat(auth): add SSO support for enterprise users
 fix(api): resolve race condition in order processing
 docs(api): add OpenAPI specification for v2 endpoints
@@ -237,70 +233,70 @@ docs(api): add OpenAPI specification for v2 endpoints
 ### PR 描述模板
 
 ```markdown
-## 内容
+## What
 
-简要描述此 PR 的内容。
+Brief description of what this PR does.
 
-## 动机
+## Why
 
-解释动机和背景。
+Explain the motivation and context.
 
-## 实现方式
+## How
 
-值得强调的关键实现细节。
+Key implementation details worth highlighting.
 
-## 测试
+## Testing
 
-- [ ] 新增/更新单元测试
-- [ ] 新增/更新集成测试
-- [ ] 执行手动测试
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing performed
 
-## 截图（如适用）
+## Screenshots (if applicable)
 
-UI 变更的前后对比截图。
+Before/after screenshots for UI changes.
 
-## 检查清单
+## Checklist
 
-- [ ] 代码遵循项目风格指南
-- [ ] 完成自我审查
-- [ ] 为复杂逻辑添加注释
-- [ ] 更新文档
-- [ ] 未引入新警告
-- [ ] 测试在本地通过
-- [ ] 关联问题已链接
+- [ ] Code follows project style guidelines
+- [ ] Self-review completed
+- [ ] Comments added for complex logic
+- [ ] Documentation updated
+- [ ] No new warnings introduced
+- [ ] Tests pass locally
+- [ ] Related issues linked
 
-关闭 #123
+Closes #123
 ```
 
-### 代码审查清单
+### Code Review 检查清单
 
-**审查者：**
+**给 Reviewer：**
 
-* \[ ] 代码是否解决了所述问题？
-* \[ ] 是否处理了所有边界情况？
-* \[ ] 代码是否可读且易于维护？
-* \[ ] 是否有足够的测试？
-* \[ ] 是否存在安全问题？
-* \[ ] 提交历史是否干净（必要时已压缩）？
+- [ ] 代码是否解决了所述问题？
+- [ ] 是否存在未处理的边界情况？
+- [ ] 代码是否可读且可维护？
+- [ ] 测试是否充分？
+- [ ] 是否存在安全隐患？
+- [ ] commit 历史是否干净（必要时做了 squash）？
 
-**作者：**
+**给作者：**
 
-* \[ ] 在请求审查前已完成自我审查
-* \[ ] CI 通过（测试、lint、类型检查）
-* \[ ] PR 大小合理（理想情况下 <500 行）
-* \[ ] 与单个功能/修复相关
-* \[ ] 描述清晰解释了变更内容
+- [ ] 在请求评审前已完成 self-review
+- [ ] CI 通过（测试、lint、typecheck）
+- [ ] PR 体量合理（理想情况下 <500 行）
+- [ ] 仅涉及单一功能/修复
+- [ ] 描述清晰地解释了本次变更
 
 ## 冲突解决
 
 ### 识别冲突
 
 ```bash
-# Check for conflicts before merge
+# merge 前检查冲突
 git checkout main
 git merge feature/user-auth --no-commit --no-ff
 
-# If conflicts, Git will show:
+# 若存在冲突，Git 会显示：
 # CONFLICT (content): Merge conflict in src/auth/login.ts
 # Automatic merge failed; fix conflicts and then commit the result.
 ```
@@ -308,27 +304,27 @@ git merge feature/user-auth --no-commit --no-ff
 ### 解决冲突
 
 ```bash
-# See conflicted files
+# 查看冲突文件
 git status
 
-# View conflict markers in file
+# 查看文件中的 conflict marker
 # <<<<<<< HEAD
-# content from main
+# 来自 main 的内容
 # =======
-# content from feature branch
+# 来自 feature 分支的内容
 # >>>>>>> feature/user-auth
 
-# Option 1: Manual resolution
-# Edit file, remove markers, keep correct content
+# 方式 1：手动解决
+# 编辑文件，删除标记，保留正确的内容
 
-# Option 2: Use merge tool
+# 方式 2：使用 merge 工具
 git mergetool
 
-# Option 3: Accept one side
-git checkout --ours src/auth/login.ts    # Keep main version
-git checkout --theirs src/auth/login.ts  # Keep feature version
+# 方式 3：接受其中一侧
+git checkout --ours src/auth/login.ts    # 保留 main 版本
+git checkout --theirs src/auth/login.ts  # 保留 feature 版本
 
-# After resolving, stage and commit
+# 解决后，stage 并 commit
 git add src/auth/login.ts
 git commit
 ```
@@ -336,39 +332,39 @@ git commit
 ### 冲突预防策略
 
 ```bash
-# 1. Keep feature branches small and short-lived
-# 2. Rebase frequently onto main
+# 1. 保持 feature 分支小而短命
+# 2. 频繁 rebase 到 main
 git checkout feature/user-auth
 git fetch origin
 git rebase origin/main
 
-# 3. Communicate with team about touching shared files
-# 4. Use feature flags instead of long-lived branches
-# 5. Review and merge PRs promptly
+# 3. 与团队沟通涉及共享文件的改动
+# 4. 使用 feature flag 替代长生命周期的分支
+# 5. 及时 review 和 merge PR
 ```
 
 ## 分支管理
 
-### 命名规范
+### 命名约定
 
 ```
-# 功能分支
+# Feature 分支
 feature/user-authentication
 feature/JIRA-123-payment-integration
 
-# 错误修复
+# Bug 修复
 fix/login-redirect-loop
 fix/456-null-pointer-exception
 
-# 热修复（生产问题）
+# Hotfix（生产问题）
 hotfix/critical-security-patch
 hotfix/database-connection-leak
 
-# 发布版本
+# Release
 release/1.2.0
 release/2024-01-hotfix
 
-# 实验/概念验证
+# 实验/POC
 experiment/new-caching-strategy
 poc/graphql-migration
 ```
@@ -376,60 +372,60 @@ poc/graphql-migration
 ### 分支清理
 
 ```bash
-# Delete local branches that are merged
+# 删除已 merge 的本地分支
 git branch --merged main | grep -v "^\*\|main" | xargs -n 1 git branch -d
 
-# Delete remote-tracking references for deleted remote branches
+# 删除已删除远程分支的 remote-tracking 引用
 git fetch -p
 
-# Delete local branch
-git branch -d feature/user-auth  # Safe delete (only if merged)
-git branch -D feature/user-auth  # Force delete
+# 删除本地分支
+git branch -d feature/user-auth  # 安全删除（仅在已 merge 时）
+git branch -D feature/user-auth  # 强制删除
 
-# Delete remote branch
+# 删除远程分支
 git push origin --delete feature/user-auth
 ```
 
-### 暂存工作流
+### Stash 工作流
 
 ```bash
-# Save work in progress
+# 保存进行中的工作
 git stash push -m "WIP: user authentication"
 
-# List stashes
+# 列出所有 stash
 git stash list
 
-# Apply most recent stash
+# 应用最近的 stash
 git stash pop
 
-# Apply specific stash
+# 应用指定的 stash
 git stash apply stash@{2}
 
-# Drop stash
+# 丢弃 stash
 git stash drop stash@{0}
 ```
 
 ## 发布管理
 
-### 语义化版本
+### Semantic Versioning
 
 ```
 MAJOR.MINOR.PATCH
 
-MAJOR：破坏性变更
-MINOR：新功能，向后兼容
-PATCH：错误修复，向后兼容
+MAJOR: Breaking changes
+MINOR: New features, backward compatible
+PATCH: Bug fixes, backward compatible
 
-示例：
-1.0.0 → 1.0.1（补丁：错误修复）
-1.0.1 → 1.1.0（次要：新功能）
-1.1.0 → 2.0.0（主要：破坏性变更）
+Examples:
+1.0.0 → 1.0.1 (patch: bug fix)
+1.0.1 → 1.1.0 (minor: new feature)
+1.1.0 → 2.0.0 (major: breaking change)
 ```
 
 ### 创建发布
 
 ```bash
-# Create annotated tag
+# 创建 annotated tag
 git tag -a v1.2.0 -m "Release v1.2.0
 
 Features:
@@ -442,59 +438,59 @@ Fixes:
 Breaking Changes:
 - None"
 
-# Push tag to remote
+# push tag 到远程
 git push origin v1.2.0
 
-# List tags
+# 列出所有 tag
 git tag -l
 
-# Delete tag
+# 删除 tag
 git tag -d v1.2.0
 git push origin --delete v1.2.0
 ```
 
-### 变更日志生成
+### 生成 Changelog
 
 ```bash
-# Generate changelog from commits
+# 从 commit 生成 changelog
 git log v1.1.0..v1.2.0 --oneline --no-merges
 
-# Or use conventional-changelog
+# 或使用 conventional-changelog
 npx conventional-changelog -i CHANGELOG.md -s
 ```
 
 ## Git 配置
 
-### 基本配置
+### 基础配置
 
 ```bash
-# User identity
+# 用户身份
 git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 
-# Default branch name
+# 默认分支名
 git config --global init.defaultBranch main
 
-# Pull behavior (rebase instead of merge)
+# pull 行为（用 rebase 代替 merge）
 git config --global pull.rebase true
 
-# Push behavior (push current branch only)
+# push 行为（仅 push 当前分支）
 git config --global push.default current
 
-# Auto-correct typos
+# 自动纠正拼写错误
 git config --global help.autocorrect 1
 
-# Better diff algorithm
+# 更好的 diff 算法
 git config --global diff.algorithm histogram
 
-# Color output
+# 彩色输出
 git config --global color.ui auto
 ```
 
-### 实用别名
+### 实用 Alias
 
 ```bash
-# Add to ~/.gitconfig
+# 添加到 ~/.gitconfig
 [alias]
     co = checkout
     br = branch
@@ -509,20 +505,20 @@ git config --global color.ui auto
     contributors = shortlog -sn
 ```
 
-### Gitignore 模式
+### Gitignore 规则
 
 ```gitignore
-# Dependencies
+# 依赖
 node_modules/
 vendor/
 
-# Build outputs
+# 构建产物
 dist/
 build/
 *.o
 *.exe
 
-# Environment files
+# 环境变量文件
 .env
 .env.local
 .env.*.local
@@ -533,127 +529,127 @@ build/
 *.swp
 *.swo
 
-# OS files
+# 操作系统文件
 .DS_Store
 Thumbs.db
 
-# Logs
+# 日志
 *.log
 logs/
 
-# Test coverage
+# 测试覆盖率
 coverage/
 
-# Cache
+# 缓存
 .cache/
 *.tsbuildinfo
 ```
 
-## 常见工作流
+## 常用工作流
 
-### 开始新功能
+### 开发新功能
 
 ```bash
-# 1. Update main branch
+# 1. 更新 main 分支
 git checkout main
 git pull origin main
 
-# 2. Create feature branch
+# 2. 创建 feature 分支
 git checkout -b feature/user-auth
 
-# 3. Make changes and commit
+# 3. 修改并 commit
 git add .
 git commit -m "feat(auth): implement OAuth2 login"
 
-# 4. Push to remote
+# 4. push 到远程
 git push -u origin feature/user-auth
 
-# 5. Create Pull Request on GitHub/GitLab
+# 5. 在 GitHub/GitLab 上创建 Pull Request
 ```
 
-### 用新变更更新 PR
+### 用新的改动更新 PR
 
 ```bash
-# 1. Make additional changes
+# 1. 做额外的修改
 git add .
 git commit -m "feat(auth): add error handling"
 
-# 2. Push updates
+# 2. push 更新
 git push origin feature/user-auth
 ```
 
-### 同步 Fork 与上游
+### 同步 Fork 与 Upstream
 
 ```bash
-# 1. Add upstream remote (once)
+# 1. 添加 upstream remote（只需一次）
 git remote add upstream https://github.com/original/repo.git
 
-# 2. Fetch upstream
+# 2. 拉取 upstream
 git fetch upstream
 
-# 3. Merge upstream/main into your main
+# 3. 将 upstream/main merge 到你的 main
 git checkout main
 git merge upstream/main
 
-# 4. Push to your fork
+# 4. push 到你的 fork
 git push origin main
 ```
 
 ### 撤销错误操作
 
 ```bash
-# Undo last commit (keep changes)
+# 撤销最后一次 commit（保留改动）
 git reset --soft HEAD~1
 
-# Undo last commit (discard changes)
+# 撤销最后一次 commit（丢弃改动）
 git reset --hard HEAD~1
 
-# Undo last commit pushed to remote
+# 撤销已 push 到远程的最后一次 commit
 git revert HEAD
 git push origin main
 
-# Undo specific file changes
+# 撤销特定文件的改动
 git checkout HEAD -- path/to/file
 
-# Fix last commit message
+# 修改最后一次的 commit message
 git commit --amend -m "New message"
 
-# Add forgotten file to last commit
+# 将遗漏的文件追加到最后一次 commit
 git add forgotten-file
 git commit --amend --no-edit
 ```
 
-## Git 钩子
+## Git Hook
 
-### 预提交钩子
+### Pre-Commit Hook
 
 ```bash
 #!/bin/bash
 # .git/hooks/pre-commit
 
-# Run linting
+# 运行 lint
 npm run lint || exit 1
 
-# Run tests
+# 运行测试
 npm test || exit 1
 
-# Check for secrets
+# 检查是否包含密钥
 if git diff --cached | grep -E '(password|api_key|secret)'; then
     echo "Possible secret detected. Commit aborted."
     exit 1
 fi
 ```
 
-### 预推送钩子
+### Pre-Push Hook
 
 ```bash
 #!/bin/bash
 # .git/hooks/pre-push
 
-# Run full test suite
+# 运行完整测试套件
 npm run test:all || exit 1
 
-# Check for console.log statements
+# 检查 console.log 语句
 if git diff origin/main | grep -E 'console\.log'; then
     echo "Remove console.log statements before pushing."
     exit 1
@@ -663,58 +659,58 @@ fi
 ## 反模式
 
 ```
-# 错误：直接提交到主分支
+# 坏：直接 commit 到 main
 git checkout main
-git commit -m "修复bug"
+git commit -m "fix bug"
 
-# 正确：使用功能分支和拉取请求
+# 好：使用 feature 分支和 PR
 
-# 错误：提交机密信息
-git add .env  # 包含API密钥
+# 坏：commit 密钥
+git add .env  # 包含 API key
 
-# 正确：添加到.gitignore，使用环境变量
+# 好：加入 .gitignore，使用环境变量
 
-# 错误：巨大的拉取请求（超过1000行）
-# 正确：拆分为更小、更聚焦的拉取请求
+# 坏：超大的 PR（1000+ 行）
+# 好：拆分成更小、聚焦的 PR
 
-# 错误："更新"类提交信息
-git commit -m "更新"
-git commit -m "修复"
+# 坏："update" 这样的 commit message
+git commit -m "update"
+git commit -m "fix"
 
-# 正确：描述性信息
-git commit -m "fix(auth): 解决登录后的重定向循环问题"
+# 好：描述性的 message
+git commit -m "fix(auth): resolve redirect loop after login"
 
-# 错误：重写公共历史
+# 坏：重写公开历史
 git push --force origin main
 
-# 正确：对公共分支使用回退
+# 好：对公开分支使用 revert
 git revert HEAD
 
-# 错误：长期存在的功能分支（数周/数月）
-# 正确：保持分支短期（数天），频繁变基
+# 坏：长生命周期的 feature 分支（数周/数月）
+# 好：保持分支短小（数天），频繁 rebase
 
-# 错误：提交生成的文件
+# 坏：commit 生成产物
 git add dist/
 git add node_modules/
 
-# 正确：添加到.gitignore
+# 好：加入 .gitignore
 ```
 
-## 快速参考
+## 速查表
 
-| 任务 | 命令 |
+| 操作 | 命令 |
 |------|---------|
 | 创建分支 | `git checkout -b feature/name` |
 | 切换分支 | `git checkout branch-name` |
 | 删除分支 | `git branch -d branch-name` |
-| 合并分支 | `git merge branch-name` |
-| 变基分支 | `git rebase main` |
+| merge 分支 | `git merge branch-name` |
+| rebase 分支 | `git rebase main` |
 | 查看历史 | `git log --oneline --graph` |
-| 查看变更 | `git diff` |
-| 暂存变更 | `git add .` 或 `git add -p` |
-| 提交 | `git commit -m "message"` |
-| 推送 | `git push origin branch-name` |
-| 拉取 | `git pull origin branch-name` |
-| 暂存 | `git stash push -m "message"` |
-| 撤销上次提交 | `git reset --soft HEAD~1` |
-| 回滚提交 | `git revert HEAD` |
+| 查看改动 | `git diff` |
+| stage 改动 | `git add .` 或 `git add -p` |
+| commit | `git commit -m "message"` |
+| push | `git push origin branch-name` |
+| pull | `git pull origin branch-name` |
+| stash | `git stash push -m "message"` |
+| 撤销最后一次 commit | `git reset --soft HEAD~1` |
+| revert commit | `git revert HEAD` |

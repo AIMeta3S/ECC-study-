@@ -1,28 +1,29 @@
 ---
 name: golang-patterns
-description: 用于构建健壮、高效且可维护的Go应用程序的惯用Go模式、最佳实践和约定。
-origin: ECC
+description: 地道的 Go 模式、最佳实践与约定，用于构建健壮、高效且可维护的 Go 应用程序。
+metadata:
+  origin: ECC
 ---
 
 # Go 开发模式
 
-用于构建健壮、高效和可维护应用程序的惯用 Go 模式与最佳实践。
+地道的 Go 模式与最佳实践，用于构建健壮、高效且可维护的应用程序。
 
-## 何时激活
+## 何时启用
 
-* 编写新的 Go 代码时
-* 审查 Go 代码时
-* 重构现有 Go 代码时
-* 设计 Go 包/模块时
+- 编写新的 Go 代码
+- 审查 Go 代码
+- 重构现有 Go 代码
+- 设计 Go package/module
 
 ## 核心原则
 
 ### 1. 简洁与清晰
 
-Go 推崇简洁而非精巧。代码应该显而易见且易于阅读。
+Go 崇尚简洁而非取巧。代码应当直观且易于阅读。
 
 ```go
-// Good: Clear and direct
+// 良好：清晰直接
 func GetUser(id string) (*User, error) {
     user, err := db.FindUser(id)
     if err != nil {
@@ -31,7 +32,7 @@ func GetUser(id string) (*User, error) {
     return user, nil
 }
 
-// Bad: Overly clever
+// 糟糕：过度取巧
 func GetUser(id string) (*User, error) {
     return func() (*User, error) {
         if u, e := db.FindUser(id); e == nil {
@@ -43,15 +44,15 @@ func GetUser(id string) (*User, error) {
 }
 ```
 
-### 2. 让零值变得有用
+### 2. 让 Zero Value 有用
 
-设计类型时，应使其零值无需初始化即可立即使用。
+设计类型时，让其 zero value 无需初始化即可直接使用。
 
 ```go
-// Good: Zero value is useful
+// 良好：zero value 有用
 type Counter struct {
     mu    sync.Mutex
-    count int // zero value is 0, ready to use
+    count int // zero value 为 0，可直接使用
 }
 
 func (c *Counter) Inc() {
@@ -60,22 +61,22 @@ func (c *Counter) Inc() {
     c.mu.Unlock()
 }
 
-// Good: bytes.Buffer works with zero value
+// 良好：bytes.Buffer 在 zero value 下可用
 var buf bytes.Buffer
 buf.WriteString("hello")
 
-// Bad: Requires initialization
+// 糟糕：需要初始化
 type BadCounter struct {
-    counts map[string]int // nil map will panic
+    counts map[string]int // nil map 会 panic
 }
 ```
 
-### 3. 接受接口，返回结构体
+### 3. 接收 Interface，返回 Struct
 
-函数应该接受接口参数并返回具体类型。
+函数应当接收 interface 参数并返回具体类型。
 
 ```go
-// Good: Accepts interface, returns concrete type
+// 良好：接收 interface，返回具体类型
 func ProcessData(r io.Reader) (*Result, error) {
     data, err := io.ReadAll(r)
     if err != nil {
@@ -84,18 +85,18 @@ func ProcessData(r io.Reader) (*Result, error) {
     return &Result{Data: data}, nil
 }
 
-// Bad: Returns interface (hides implementation details unnecessarily)
+// 糟糕：返回 interface（不必要地隐藏了实现细节）
 func ProcessData(r io.Reader) (io.Reader, error) {
     // ...
 }
 ```
 
-## 错误处理模式
+## Error 处理模式
 
-### 带上下文的错误包装
+### 带上下文的 Error 包装
 
 ```go
-// Good: Wrap errors with context
+// 良好：用上下文包装 error
 func LoadConfig(path string) (*Config, error) {
     data, err := os.ReadFile(path)
     if err != nil {
@@ -111,10 +112,10 @@ func LoadConfig(path string) (*Config, error) {
 }
 ```
 
-### 自定义错误类型
+### 自定义 Error 类型
 
 ```go
-// Define domain-specific errors
+// 定义领域相关的 error
 type ValidationError struct {
     Field   string
     Message string
@@ -124,7 +125,7 @@ func (e *ValidationError) Error() string {
     return fmt.Sprintf("validation failed on %s: %s", e.Field, e.Message)
 }
 
-// Sentinel errors for common cases
+// 常见场景的 sentinel error
 var (
     ErrNotFound     = errors.New("resource not found")
     ErrUnauthorized = errors.New("unauthorized")
@@ -132,17 +133,17 @@ var (
 )
 ```
 
-### 使用 errors.Is 和 errors.As 检查错误
+### 使用 errors.Is 和 errors.As 检查 Error
 
 ```go
 func HandleError(err error) {
-    // Check for specific error
+    // 检查特定 error
     if errors.Is(err, sql.ErrNoRows) {
         log.Println("No records found")
         return
     }
 
-    // Check for error type
+    // 检查 error 类型
     var validationErr *ValidationError
     if errors.As(err, &validationErr) {
         log.Printf("Validation error on field %s: %s",
@@ -150,30 +151,30 @@ func HandleError(err error) {
         return
     }
 
-    // Unknown error
+    // 未知 error
     log.Printf("Unexpected error: %v", err)
 }
 ```
 
-### 永不忽略错误
+### 永远不要忽略 Error
 
 ```go
-// Bad: Ignoring error with blank identifier
+// 糟糕：用 blank identifier 忽略 error
 result, _ := doSomething()
 
-// Good: Handle or explicitly document why it's safe to ignore
+// 良好：处理 error，或明确文档说明为何可安全忽略
 result, err := doSomething()
 if err != nil {
     return err
 }
 
-// Acceptable: When error truly doesn't matter (rare)
-_ = writer.Close() // Best-effort cleanup, error logged elsewhere
+// 可接受：当 error 确实无关紧要时（罕见）
+_ = writer.Close() // 尽力清理，error 在别处记录
 ```
 
 ## 并发模式
 
-### 工作池
+### Worker Pool
 
 ```go
 func WorkerPool(jobs <-chan Job, results chan<- Result, numWorkers int) {
@@ -216,7 +217,7 @@ func FetchWithTimeout(ctx context.Context, url string) ([]byte, error) {
 }
 ```
 
-### 优雅关闭
+### Graceful Shutdown
 
 ```go
 func GracefulShutdown(server *http.Server) {
@@ -247,7 +248,7 @@ func FetchAll(ctx context.Context, urls []string) ([][]byte, error) {
     results := make([][]byte, len(urls))
 
     for i, url := range urls {
-        i, url := i, url // Capture loop variables
+        i, url := i, url // 捕获循环变量
         g.Go(func() error {
             data, err := FetchWithTimeout(ctx, url)
             if err != nil {
@@ -268,19 +269,19 @@ func FetchAll(ctx context.Context, urls []string) ([][]byte, error) {
 ### 避免 Goroutine 泄漏
 
 ```go
-// Bad: Goroutine leak if context is cancelled
+// 糟糕：context 取消时会发生 goroutine 泄漏
 func leakyFetch(ctx context.Context, url string) <-chan []byte {
     ch := make(chan []byte)
     go func() {
         data, _ := fetch(url)
-        ch <- data // Blocks forever if no receiver
+        ch <- data // 若无接收者将永久阻塞
     }()
     return ch
 }
 
-// Good: Properly handles cancellation
+// 良好：正确处理取消
 func safeFetch(ctx context.Context, url string) <-chan []byte {
-    ch := make(chan []byte, 1) // Buffered channel
+    ch := make(chan []byte, 1) // 带缓冲的 channel
     go func() {
         data, err := fetch(url)
         if err != nil {
@@ -295,12 +296,12 @@ func safeFetch(ctx context.Context, url string) <-chan []byte {
 }
 ```
 
-## 接口设计
+## Interface 设计
 
-### 小而专注的接口
+### 小而聚焦的 Interface
 
 ```go
-// Good: Single-method interfaces
+// 良好：单方法 interface
 type Reader interface {
     Read(p []byte) (n int, err error)
 }
@@ -313,7 +314,7 @@ type Closer interface {
     Close() error
 }
 
-// Compose interfaces as needed
+// 按需组合 interface
 type ReadWriteCloser interface {
     Reader
     Writer
@@ -321,13 +322,13 @@ type ReadWriteCloser interface {
 }
 ```
 
-### 在接口使用处定义接口
+### 在使用处定义 Interface
 
 ```go
-// In the consumer package, not the provider
+// 在消费方 package 中，而非提供方
 package service
 
-// UserStore defines what this service needs
+// UserStore 定义了此 service 所需
 type UserStore interface {
     GetUser(id string) (*User, error)
     SaveUser(user *User) error
@@ -337,11 +338,11 @@ type Service struct {
     store UserStore
 }
 
-// Concrete implementation can be in another package
-// It doesn't need to know about this interface
+// 具体实现可以在另一个 package 中
+// 它不需要知道此 interface 的存在
 ```
 
-### 使用类型断言实现可选行为
+### 通过 Type Assertion 实现可选行为
 
 ```go
 type Flusher interface {
@@ -353,7 +354,7 @@ func WriteAndFlush(w io.Writer, data []byte) error {
         return err
     }
 
-    // Flush if supported
+    // 若支持则 Flush
     if f, ok := w.(Flusher); ok {
         return f.Flush()
     }
@@ -361,7 +362,7 @@ func WriteAndFlush(w io.Writer, data []byte) error {
 }
 ```
 
-## 包组织
+## Package 组织
 
 ### 标准项目布局
 
@@ -369,47 +370,47 @@ func WriteAndFlush(w io.Writer, data []byte) error {
 myproject/
 ├── cmd/
 │   └── myapp/
-│       └── main.go           # 入口点
+│       └── main.go           # 入口
 ├── internal/
-│   ├── handler/              # HTTP 处理器
+│   ├── handler/              # HTTP handler
 │   ├── service/              # 业务逻辑
 │   ├── repository/           # 数据访问
 │   └── config/               # 配置
 ├── pkg/
-│   └── client/               # 公共 API 客户端
+│   └── client/               # 公共 API client
 ├── api/
-│   └── v1/                   # API 定义（proto, OpenAPI）
-├── testdata/                 # 测试夹具
+│   └── v1/                   # API 定义（proto、OpenAPI）
+├── testdata/                 # 测试 fixture
 ├── go.mod
 ├── go.sum
 └── Makefile
 ```
 
-### 包命名
+### Package 命名
 
 ```go
-// Good: Short, lowercase, no underscores
+// 良好：简短、小写、无下划线
 package http
 package json
 package user
 
-// Bad: Verbose, mixed case, or redundant
+// 糟糕：冗长、大小写混用或冗余
 package httpHandler
 package json_parser
-package userService // Redundant 'Service' suffix
+package userService // 冗余的 'Service' 后缀
 ```
 
-### 避免包级状态
+### 避免 Package 级状态
 
 ```go
-// Bad: Global mutable state
+// 糟糕：全局可变状态
 var db *sql.DB
 
 func init() {
     db, _ = sql.Open("postgres", os.Getenv("DATABASE_URL"))
 }
 
-// Good: Dependency injection
+// 良好：Dependency Injection
 type Server struct {
     db *sql.DB
 }
@@ -419,9 +420,9 @@ func NewServer(db *sql.DB) *Server {
 }
 ```
 
-## 结构体设计
+## Struct 设计
 
-### 函数式选项模式
+### Functional Options 模式
 
 ```go
 type Server struct {
@@ -447,8 +448,8 @@ func WithLogger(l *log.Logger) Option {
 func NewServer(addr string, opts ...Option) *Server {
     s := &Server{
         addr:    addr,
-        timeout: 30 * time.Second, // default
-        logger:  log.Default(),    // default
+        timeout: 30 * time.Second, // 默认值
+        logger:  log.Default(),    // 默认值
     }
     for _, opt := range opts {
         opt(s)
@@ -456,14 +457,14 @@ func NewServer(addr string, opts ...Option) *Server {
     return s
 }
 
-// Usage
+// 用法
 server := NewServer(":8080",
     WithTimeout(60*time.Second),
     WithLogger(customLogger),
 )
 ```
 
-### 使用嵌入实现组合
+### 通过 Embedding 实现组合
 
 ```go
 type Logger struct {
@@ -475,7 +476,7 @@ func (l *Logger) Log(msg string) {
 }
 
 type Server struct {
-    *Logger // Embedding - Server gets Log method
+    *Logger // Embedding —— Server 获得 Log 方法
     addr    string
 }
 
@@ -486,17 +487,17 @@ func NewServer(addr string) *Server {
     }
 }
 
-// Usage
+// 用法
 s := NewServer(":8080")
-s.Log("Starting...") // Calls embedded Logger.Log
+s.Log("Starting...") // 调用内嵌的 Logger.Log
 ```
 
 ## 内存与性能
 
-### 当大小已知时预分配切片
+### 已知大小时预分配 Slice
 
 ```go
-// Bad: Grows slice multiple times
+// 糟糕：slice 多次扩容
 func processItems(items []Item) []Result {
     var results []Result
     for _, item := range items {
@@ -505,7 +506,7 @@ func processItems(items []Item) []Result {
     return results
 }
 
-// Good: Single allocation
+// 良好：单次分配
 func processItems(items []Item) []Result {
     results := make([]Result, 0, len(items))
     for _, item := range items {
@@ -515,7 +516,7 @@ func processItems(items []Item) []Result {
 }
 ```
 
-### 为频繁分配使用 sync.Pool
+### 对频繁分配使用 sync.Pool
 
 ```go
 var bufferPool = sync.Pool{
@@ -532,15 +533,15 @@ func ProcessRequest(data []byte) []byte {
     }()
 
     buf.Write(data)
-    // Process...
+    // 处理...
     return buf.Bytes()
 }
 ```
 
-### 避免在循环中进行字符串拼接
+### 避免在循环中拼接字符串
 
 ```go
-// Bad: Creates many string allocations
+// 糟糕：产生多次字符串分配
 func join(parts []string) string {
     var result string
     for _, p := range parts {
@@ -549,7 +550,7 @@ func join(parts []string) string {
     return result
 }
 
-// Good: Single allocation with strings.Builder
+// 良好：用 strings.Builder 单次分配
 func join(parts []string) string {
     var sb strings.Builder
     for i, p := range parts {
@@ -561,41 +562,41 @@ func join(parts []string) string {
     return sb.String()
 }
 
-// Best: Use standard library
+// 最佳：使用标准库
 func join(parts []string) string {
     return strings.Join(parts, ",")
 }
 ```
 
-## Go 工具集成
+## Go 工具链集成
 
-### 基本命令
+### 常用命令
 
 ```bash
-# Build and run
+# 构建并运行
 go build ./...
 go run ./cmd/myapp
 
-# Testing
+# 测试
 go test ./...
 go test -race ./...
 go test -cover ./...
 
-# Static analysis
+# 静态分析
 go vet ./...
 staticcheck ./...
 golangci-lint run
 
-# Module management
+# Module 管理
 go mod tidy
 go mod verify
 
-# Formatting
+# 格式化
 gofmt -w .
 goimports -w .
 ```
 
-### 推荐的 Linter 配置 (.golangci.yml)
+### 推荐的 Linter 配置（.golangci.yml）
 
 ```yaml
 linters:
@@ -626,49 +627,49 @@ issues:
 
 | 惯用法 | 描述 |
 |-------|-------------|
-| 接受接口，返回结构体 | 函数接受接口参数，返回具体类型 |
-| 错误即值 | 将错误视为一等值，而非异常 |
-| 不要通过共享内存来通信 | 使用通道在 goroutine 之间进行协调 |
-| 让零值变得有用 | 类型应无需显式初始化即可工作 |
-| 少量复制优于少量依赖 | 避免不必要的外部依赖 |
-| 清晰优于精巧 | 优先考虑可读性而非精巧性 |
-| gofmt 虽非最爱，但却是每个人的朋友 | 始终使用 gofmt/goimports 格式化代码 |
-| 提前返回 | 先处理错误，保持主逻辑路径无缩进 |
+| Accept interfaces, return structs | 函数接收 interface 参数，返回具体类型 |
+| Errors are values | 把 error 当作一等值对待，而非异常 |
+| Don't communicate by sharing memory | 用 channel 在 goroutine 之间协调 |
+| Make the zero value useful | 类型无需显式初始化即可工作 |
+| A little copying is better than a little dependency | 避免不必要的外部依赖 |
+| Clear is better than clever | 优先考虑可读性而非取巧 |
+| gofmt is no one's favorite but everyone's friend | 始终用 gofmt/goimports 格式化 |
+| Return early | 先处理 error，保持 happy path 不缩进 |
 
-## 应避免的反模式
+## 要避免的 Anti-Pattern
 
 ```go
-// Bad: Naked returns in long functions
+// 糟糕：在长函数中使用 naked return
 func process() (result int, err error) {
-    // ... 50 lines ...
-    return // What is being returned?
+    // ... 50 行 ...
+    return // 返回的是什么？
 }
 
-// Bad: Using panic for control flow
+// 糟糕：用 panic 做控制流
 func GetUser(id string) *User {
     user, err := db.Find(id)
     if err != nil {
-        panic(err) // Don't do this
+        panic(err) // 不要这样做
     }
     return user
 }
 
-// Bad: Passing context in struct
+// 糟糕：在 struct 中传递 context
 type Request struct {
-    ctx context.Context // Context should be first param
+    ctx context.Context // context 应当作为首个参数
     ID  string
 }
 
-// Good: Context as first parameter
+// 良好：context 作为首个参数
 func ProcessRequest(ctx context.Context, id string) error {
     // ...
 }
 
-// Bad: Mixing value and pointer receivers
+// 糟糕：混用 value receiver 和 pointer receiver
 type Counter struct{ n int }
-func (c Counter) Value() int { return c.n }    // Value receiver
-func (c *Counter) Increment() { c.n++ }        // Pointer receiver
-// Pick one style and be consistent
+func (c Counter) Value() int { return c.n }    // value receiver
+func (c *Counter) Increment() { c.n++ }        // pointer receiver
+// 选择一种风格并保持一致
 ```
 
-**记住**：Go 代码应该以最好的方式显得“乏味”——可预测、一致且易于理解。如有疑问，保持简单。
+**记住**：Go 代码应当以最好的方式显得乏味——可预测、一致且易于理解。拿不准时，保持简单。

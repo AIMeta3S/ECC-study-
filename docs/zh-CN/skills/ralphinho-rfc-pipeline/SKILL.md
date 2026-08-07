@@ -1,69 +1,68 @@
 ---
 name: ralphinho-rfc-pipeline
-description: 基于RFC驱动的多智能体DAG执行模式，包含质量门、合并队列和工作单元编排。
-origin: ECC
+description: RFC 驱动的多 agent DAG 执行模式，配备 quality gates、merge queues 和 work unit orchestration。
+metadata:
+  origin: ECC
 ---
 
-# Ralphinho RFC 管道
+# Ralphinho RFC Pipeline
 
-灵感来源于 [humanplane](https://github.com/humanplane) 风格的 RFC 分解模式和多单元编排工作流。
+受 [humanplane](https://github.com/humanplane) 风格的 RFC 分解模式与 multi-unit orchestration 工作流启发。
 
-当一个功能对于单次代理处理来说过于庞大，必须拆分为独立可验证的工作单元时，请使用此技能。
+当一个特性过大、无法在一次 agent 处理中完成，且必须拆分为可独立验证的 work unit 时，请使用此 skill。
 
-## 管道阶段
+## Pipeline 阶段
 
-1. RFC 接收
+1. RFC 接入
 2. DAG 分解
-3. 单元分配
-4. 单元实现
-5. 单元验证
-6. 合并队列与集成
+3. Unit 分配
+4. Unit 实现
+5. Unit 验证
+6. Merge queue 与集成
 7. 最终系统验证
 
-## 单元规范模板
+## Unit Spec 模板
 
-每个工作单元应包含：
+每个 work unit 应包含：
+- `id`
+- `depends_on`
+- `scope`
+- `acceptance_tests`
+- `risk_level`
+- `rollback_plan`
 
-* `id`
-* `depends_on`
-* `scope`
-* `acceptance_tests`
-* `risk_level`
-* `rollback_plan`
+## 复杂度分级
 
-## 复杂度层级
+- Tier 1：独立的文件编辑，deterministic 测试
+- Tier 2：多文件行为变更，中等集成风险
+- Tier 3：schema/auth/perf/security 变更
 
-* 层级 1：独立文件编辑，确定性测试
-* 层级 2：多文件行为变更，中等集成风险
-* 层级 3：架构/认证/性能/安全性变更
+## 每个 Unit 的 Quality Pipeline
 
-## 每个单元的质量管道
-
-1. 研究
+1. 调研
 2. 实现计划
 3. 实现
 4. 测试
-5. 审查
-6. 合并就绪报告
+5. 评审
+6. merge 就绪报告
 
-## 合并队列规则
+## Merge Queue 规则
 
-* 永不合并存在未解决依赖项失败的单元。
-* 始终将单元分支变基到最新的集成分支上。
-* 每次队列合并后重新运行集成测试。
+- 绝不 merge 带有未解决依赖失败的 unit。
+- 始终将 unit 分支 rebase 到最新的集成分支上。
+- 每次排队 merge 后，重新运行 integration test。
 
 ## 恢复
 
-如果一个单元停滞：
-
-* 从活动队列中移除
-* 快照发现结果
-* 重新生成范围缩小的单元
-* 使用更新的约束条件重试
+如果某个 unit 停滞：
+- 从 active 队列中移出
+- snapshot 发现
+- 重新生成收窄后的 unit scope
+- 使用更新后的约束重试
 
 ## 输出
 
-* RFC 执行日志
-* 单元记分卡
-* 依赖关系图快照
-* 集成风险摘要
+- RFC 执行 log
+- unit 评分卡
+- 依赖图 snapshot
+- 集成风险摘要

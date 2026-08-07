@@ -1,52 +1,51 @@
 ---
 name: enterprise-agent-ops
-description: 通过可观测性、安全边界和生命周期管理来操作长期运行的代理工作负载。
-origin: ECC
+description: 运维长期运行的 agent 工作负载，提供 observability、安全边界与生命周期管理。
+metadata:
+  origin: ECC
 ---
 
-# 企业级智能体运维
+# Enterprise Agent Ops
 
-使用此技能用于需要超越单次 CLI 会话操作控制的云托管或持续运行的智能体系统。
+当 agent 系统为云托管或持续运行，且需要超出单次 CLI session 的运维控制时，使用本 skill。
 
 ## 运维领域
 
-1. 运行时生命周期（启动、暂停、停止、重启）
-2. 可观测性（日志、指标、追踪）
-3. 安全控制（作用域、权限、紧急停止开关）
-4. 变更管理（发布、回滚、审计）
+1. runtime 生命周期（启动、暂停、停止、重启）
+2. observability（logs、metrics、traces）
+3. 安全控制（scopes、permissions、kill switches）
+4. 变更管理（rollout、rollback、audit）
 
 ## 基线控制
 
-* 不可变的部署工件
-* 最小权限凭证
-* 环境级别的密钥注入
-* 硬性超时和重试预算
-* 高风险操作的审计日志
+- 不可变 deployment artifacts
+- 最小权限 credentials
+- 环境级 secret injection
+- 硬性超时与 retry 预算
+- 针对高风险操作的 audit log
 
-## 需跟踪的指标
+## 需跟踪的 metrics
 
-* 成功率
-* 每项任务的平均重试次数
-* 恢复时间
-* 每项成功任务的成本
-* 故障类别分布
+- 成功率
+- 每个任务的平均 retries
+- 恢复时间
+- 每个成功任务的成本
+- failure class 分布
 
-## 事故处理模式
+## incident 模式
 
-当故障激增时：
-
-1. 冻结新发布
-2. 捕获代表性追踪数据
-3. 隔离故障路径
-4. 应用最小的安全变更进行修补
+当失败激增时：
+1. 冻结新 rollout
+2. 采集代表性 traces
+3. 隔离失败的 route
+4. 以最小安全变更进行 patch
 5. 运行回归测试 + 安全检查
 6. 逐步恢复
 
 ## 部署集成
 
-此技能可与以下工具配合使用：
-
-* PM2 工作流
-* systemd 服务
-* 容器编排器
-* CI/CD 门控
+本 skill 与以下工具搭配使用：
+- PM2 workflows
+- systemd services
+- container orchestrators
+- CI/CD gates

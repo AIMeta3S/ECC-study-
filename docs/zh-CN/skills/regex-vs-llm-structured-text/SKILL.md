@@ -1,49 +1,53 @@
 ---
 name: regex-vs-llm-structured-text
-description: 选择在解析结构化文本时使用正则表达式还是大型语言模型的决策框架——从正则表达式开始，仅在低置信度的边缘情况下添加大型语言模型。
-origin: ECC
+description: 用于在解析结构化文本时在 regex 和 LLM 之间做出选择的决策框架 —— 从 regex 开始，仅对低置信度的边缘情况使用 LLM。
+metadata:
+  origin: ECC
 ---
 
-# 正则表达式 vs LLM 用于结构化文本解析
+# 结构化文本解析中的 Regex 与 LLM
 
-一个用于解析结构化文本（测验、表单、发票、文档）的实用决策框架。核心见解是：正则表达式能以低成本、确定性的方式处理 95-98% 的情况。将昂贵的 LLM 调用留给剩余的边缘情况。
+一个用于解析结构化文本（测验、表单、发票、文档）的实用决策框架。核心洞察：regex 能以低廉的成本、确定性地处理 95-98% 的情况。将昂贵的 LLM 调用保留给剩余的边缘情况。
 
-## 何时使用
+## 何时启用
 
-* 解析具有重复模式的结构化文本（问题、表单、表格）
-* 决定在文本提取时使用正则表达式还是 LLM
-* 构建结合两种方法的混合管道
-* 在文本处理中优化成本/准确性权衡
+- 解析具有重复模式的结构化文本（问题、表单、表格）
+- 在 regex 和 LLM 之间抉择用于文本提取
+- 构建结合两种方法的混合 pipeline
+- 优化文本处理中的成本/准确率权衡
 
 ## 决策框架
 
 ```
-文本格式是否一致且重复？
-├── 是 (>90% 遵循某种模式) → 从正则表达式开始
-│   ├── 正则表达式处理 95%+ → 完成，无需 LLM
-│   └── 正则表达式处理 <95% → 仅为边缘情况添加 LLM
-└── 否 (自由格式，高度可变) → 直接使用 LLM
+Is the text format consistent and repeating?
+├── Yes (>90% follows a pattern) → Start with Regex
+│   ├── Regex handles 95%+ → Done, no LLM needed
+│   └── Regex handles <95% → Add LLM for edge cases only
+└── No (free-form, highly variable) → Use LLM directly
 ```
 
 ## 架构模式
 
 ```
-[正则表达式解析器] ─── 提取结构（95-98% 准确率）
+Source Text
     │
     ▼
-[文本清理器] ─── 去除噪声（标记、页码、伪影）
+[Regex Parser] ─── Extracts structure (95-98% accuracy)
     │
     ▼
-[置信度评分器] ─── 标记低置信度提取项
+[Text Cleaner] ─── Removes noise (markers, page numbers, artifacts)
     │
-    ├── 高置信度（≥0.95）→ 直接输出
+    ▼
+[Confidence Scorer] ─── Flags low-confidence extractions
     │
-    └── 低置信度（<0.95）→ [LLM 验证器] → 输出
+    ├── High confidence (≥0.95) → Direct output
+    │
+    └── Low confidence (<0.95) → [LLM Validator] → Output
 ```
 
 ## 实现
 
-### 1. 正则表达式解析器（处理大多数情况）
+### 1. Regex Parser（处理大多数情况）
 
 ```python
 import re
@@ -58,7 +62,7 @@ class ParsedItem:
     confidence: float = 1.0
 
 def parse_structured_text(content: str) -> list[ParsedItem]:
-    """Parse structured text using regex patterns."""
+    """使用 regex 模式解析结构化文本。"""
     pattern = re.compile(
         r"(?P<id>\d+)\.\s*(?P<text>.+?)\n"
         r"(?P<choices>(?:[A-D]\..+?\n)+)"
@@ -81,7 +85,7 @@ def parse_structured_text(content: str) -> list[ParsedItem]:
 
 ### 2. 置信度评分
 
-标记可能需要 LLM 审核的项：
+标记可能需要 LLM 审查的条目：
 
 ```python
 @dataclass(frozen=True)
@@ -91,7 +95,7 @@ class ConfidenceFlag:
     reasons: tuple[str, ...]
 
 def score_confidence(item: ParsedItem) -> ConfidenceFlag:
-    """Score extraction confidence and flag issues."""
+    """评估提取置信度并标记问题。"""
     reasons = []
     score = 1.0
 
@@ -117,12 +121,12 @@ def identify_low_confidence(
     items: list[ParsedItem],
     threshold: float = 0.95,
 ) -> list[ConfidenceFlag]:
-    """Return items below confidence threshold."""
+    """返回低于置信度阈值的条目。"""
     flags = [score_confidence(item) for item in items]
     return [f for f in flags if f.score < threshold]
 ```
 
-### 3. LLM 验证器（仅用于边缘情况）
+### 3. LLM Validator（仅用于边缘情况）
 
 ```python
 def validate_with_llm(
@@ -130,9 +134,9 @@ def validate_with_llm(
     original_text: str,
     client,
 ) -> ParsedItem:
-    """Use LLM to fix low-confidence extractions."""
+    """使用 LLM 修复低置信度的提取结果。"""
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",  # Cheapest model for validation
+        model="claude-haiku-4-5-20251001",  # 用于验证的最便宜模型
         max_tokens=500,
         messages=[{
             "role": "user",
@@ -144,11 +148,11 @@ def validate_with_llm(
             ),
         }],
     )
-    # Parse LLM response and return corrected item...
+    # 解析 LLM 响应并返回修正后的条目...
     return corrected_item
 ```
 
-### 4. 混合管道
+### 4. 混合 Pipeline
 
 ```python
 def process_document(
@@ -157,17 +161,17 @@ def process_document(
     llm_client=None,
     confidence_threshold: float = 0.95,
 ) -> list[ParsedItem]:
-    """Full pipeline: regex -> confidence check -> LLM for edge cases."""
-    # Step 1: Regex extraction (handles 95-98%)
+    """完整 pipeline：regex -> 置信度检查 -> 边缘情况使用 LLM。"""
+    # 步骤 1：regex 提取（处理 95-98%）
     items = parse_structured_text(content)
 
-    # Step 2: Confidence scoring
+    # 步骤 2：置信度评分
     low_confidence = identify_low_confidence(items, confidence_threshold)
 
     if not low_confidence or llm_client is None:
         return items
 
-    # Step 3: LLM validation (only for flagged items)
+    # 步骤 3：LLM 验证（仅针对被标记的条目）
     low_conf_ids = {f.item_id for f in low_confidence}
     result = []
     for item in items:
@@ -181,37 +185,37 @@ def process_document(
 
 ## 实际指标
 
-来自一个生产中的测验解析管道（410 个项目）：
+来自一个生产环境的测验解析 pipeline（410 个条目）：
 
 | 指标 | 值 |
 |--------|-------|
-| 正则表达式成功率 | 98.0% |
-| 低置信度项目 | 8 (2.0%) |
-| 所需 LLM 调用次数 | ~5 |
-| 相比全 LLM 的成本节省 | ~95% |
+| Regex 成功率 | 98.0% |
+| 低置信度条目 | 8 (2.0%) |
+| 所需 LLM 调用 | ~5 |
+| 相比全 LLM 方案节省的成本 | ~95% |
 | 测试覆盖率 | 93% |
 
 ## 最佳实践
 
-* **从正则表达式开始** — 即使不完美的正则表达式也能提供一个改进的基线
-* **使用置信度评分** 来以编程方式识别需要 LLM 帮助的内容
-* **使用最便宜的 LLM** 进行验证（Haiku 类模型已足够）
-* **切勿修改** 已解析的项 — 从清理/验证步骤返回新实例
-* **TDD 效果很好** 用于解析器 — 首先为已知模式编写测试，然后是边缘情况
-* **记录指标**（正则表达式成功率、LLM 调用次数）以跟踪管道健康状况
+- **从 regex 开始** —— 即使不完美的 regex 也能给你一个可改进的基线
+- **使用置信度评分** 以程序化方式识别哪些内容需要 LLM 协助
+- **使用最便宜的 LLM** 进行验证（Haiku 级别的模型即足够）
+- **绝不修改**已解析的条目 —— 从清理/验证步骤中返回新的实例
+- **TDD 很适合**解析器 —— 先为已知模式编写测试，再处理边缘情况
+- **记录指标**（regex 成功率、LLM 调用次数）以追踪 pipeline 的健康状况
 
-## 应避免的反模式
+## 需要避免的反模式
 
-* 当正则表达式能处理 95% 以上的情况时，将所有文本发送给 LLM（昂贵且缓慢）
-* 对自由格式、高度可变的文本使用正则表达式（LLM 在此处更合适）
-* 跳过置信度评分，希望正则表达式“能正常工作”
-* 在清理/验证步骤中修改已解析的对象
-* 不测试边缘情况（格式错误的输入、缺失字段、编码问题）
+- 当 regex 能处理 95%+ 的情况时，把所有文本都发送给 LLM（昂贵且缓慢）
+- 对自由格式、高度可变的文本使用 regex（这种情况下 LLM 更好）
+- 跳过置信度评分，指望 regex "碰巧能用"
+- 在清理/验证步骤中修改已解析的对象
+- 不测试边缘情况（格式错误的输入、缺失字段、编码问题）
 
-## 适用场景
+## 何时使用
 
-* 测验/考试题目解析
-* 表单数据提取
-* 发票/收据处理
-* 文档结构解析（标题、章节、表格）
-* 任何具有重复模式且成本重要的结构化文本
+- 测验/考试题目解析
+- 表单数据提取
+- 发票/收据处理
+- 文档结构解析（标题、章节、表格）
+- 任何具有重复模式且成本敏感的结构化文本

@@ -3,14 +3,13 @@ paths:
   - "**/*.swift"
   - "**/Package.swift"
 ---
+# Swift Testing
 
-# Swift 测试
-
-> 本文档在 [common/testing.md](../common/testing.md) 的基础上扩展了 Swift 特定的内容。
+> 本文件用 Swift 特定内容扩展了 [common/testing.md](../common/testing.md)。
 
 ## 框架
 
-对于新测试，使用 **Swift Testing** (`import Testing`)。使用 `@Test` 和 `#expect`：
+对新测试使用 **Swift Testing**（`import Testing`）。使用 `@Test` 和 `#expect`：
 
 ```swift
 @Test("User creation validates email")
@@ -23,7 +22,7 @@ func userCreationValidatesEmail() throws {
 
 ## 测试隔离
 
-每个测试都会获得一个全新的实例 —— 在 `init` 中设置，在 `deinit` 中拆卸。测试之间没有共享的可变状态。
+每个测试都会获得一个全新的实例 —— 在 `init` 中初始化，在 `deinit` 中清理。测试之间不共享可变状态。
 
 ## 参数化测试
 
@@ -43,4 +42,4 @@ swift test --enable-code-coverage
 
 ## 参考
 
-关于基于协议的依赖注入和 Swift Testing 的模拟模式，请参阅技能：`swift-protocol-di-testing`。
+关于基于 protocol 的依赖注入以及与 Swift Testing 配合的 mock 模式，参见 skill：`swift-protocol-di-testing`。

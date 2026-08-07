@@ -1,111 +1,112 @@
 ---
 name: project-flow-ops
-description: 通过分类问题和拉取请求、关联活跃工作、保持GitHub对外可见而Linear作为内部执行层，来协调GitHub和Linear之间的执行流程。当用户需要待办事项控制、PR分类或GitHub与Linear协调时使用。
-origin: ECC
+description: 跨 GitHub 和 Linear 管理执行流程：通过对 issue 和 pull request 进行分流、关联进行中的工作，并让 GitHub 保持面向公众，而 Linear 作为内部执行层。当用户需要 backlog 控制、PR 分流或 GitHub 与 Linear 之间的协调时使用。
+metadata:
+  origin: ECC
 ---
 
-# 项目流程运营
+# Project Flow Ops
 
-此技能将分散的 GitHub Issue、PR 和 Linear 任务整合为一条执行流程。
+本 skill 将互不关联的 GitHub issue、PR 和 Linear 任务整合为一条执行流程。
 
-当问题在于协调而非编码时使用。
+当问题在于协调而非编码时，请使用本 skill。
 
-## 使用时机
+## 适用场景
 
-* 梳理开放的 PR 或 Issue 积压
-* 决定哪些应放入 Linear，哪些应保留在 GitHub 中
-* 将活跃的 GitHub 工作与内部执行通道关联
-* 将 PR 分类为：合并、移植/重建、关闭或搁置
-* 审查评论、CI 失败或过时 Issue 是否阻碍执行
+- 对开放的 PR 或 issue backlog 进行分流
+- 决定哪些事项应归入 Linear，哪些应仅保留在 GitHub
+- 将进行中的 GitHub 工作关联到内部执行通道
+- 将 PR 分类为 merge、port/rebuild、close 或 park
+- 审查 review 评论、CI 失败或 stale issue 是否正在阻塞执行
 
-## 运营模式
+## 运作模型
 
-* **GitHub** 是公开和社区的真实来源
-* **Linear** 是内部执行的真实来源，用于活跃的已排期工作
-* 并非每个 GitHub Issue 都需要创建 Linear Issue
-* 仅当工作满足以下条件时，才创建或更新 Linear：
-  * 活跃
-  * 已委派
-  * 已排期
-  * 跨职能
-  * 重要到需要内部跟踪
+- **GitHub** 是面向公众和社区的事实来源
+- **Linear** 是进行中已排期工作的内部执行事实来源
+- 并非每个 GitHub issue 都需要对应的 Linear issue
+- 仅当工作满足以下条件时才创建或更新 Linear：
+  - 进行中
+  - 已委派
+  - 已排期
+  - 跨职能
+  - 足够重要，需要在内部跟踪
 
-## 核心工作流
+## 核心工作流程
 
-### 1. 首先阅读公开信息
+### 1. 首先查看公开层面的信息
 
 收集：
 
-* GitHub Issue 或 PR 状态
-* 作者和分支状态
-* 审查评论
-* CI 状态
-* 关联的 Issue
+- GitHub issue 或 PR 的状态
+- 作者与分支状态
+- review 评论
+- CI 状态
+- 关联的 issue
 
 ### 2. 对工作进行分类
 
-每个项目应归入以下状态之一：
+每个事项最终都应归入以下状态之一：
 
 | 状态 | 含义 |
 |-------|---------|
-| 合并 | 独立完整、符合策略、准备就绪 |
-| 移植/重建 | 有用的想法，但应在 ECC 内部手动重新落地 |
-| 关闭 | 方向错误、过时、不安全或重复 |
-| 搁置 | 可能有用，但当前未排期 |
+| Merge | 自包含、符合策略、可就绪 |
+| Port/Rebuild | 想法有价值，但应在 ECC 内部手动重新落地 |
+| Close | 方向错误、陈旧、不安全或重复 |
+| Park | 可能有价值，但目前未排期 |
 
-### 3. 判断是否需要 Linear
+### 3. 决定是否有必要使用 Linear
 
-仅在以下情况下创建或更新 Linear：
+仅在以下情况下才创建或更新 Linear：
 
-* 执行正在积极规划中
-* 涉及多个仓库或工作流
-* 工作需要内部所有权或排序
-* 该 Issue 是更大项目通道的一部分
+- 执行已被主动规划
+- 涉及多个 repo 或工作流
+- 工作需要内部归属或排序
+- 该 issue 是更大型 program 通道的一部分
 
 不要机械地镜像所有内容。
 
 ### 4. 保持两个系统一致
 
-当工作活跃时：
+当工作处于进行中时：
 
-* GitHub Issue/PR 应说明公开进展
-* Linear 应在内部跟踪负责人、优先级和执行通道
+- GitHub issue/PR 应公开说明当前进展
+- Linear 应在内部跟踪负责人、优先级和执行通道
 
-当工作完成或被拒绝时：
+当工作发布或被拒绝时：
 
-* 将公开解决方案发布回 GitHub
-* 相应地标记 Linear 任务
+- 将公开的处理结果发布回 GitHub
+- 相应地标记 Linear 任务
 
 ## 审查规则
 
-* 切勿仅凭标题、摘要或信任进行合并；需使用完整差异
-* 当外部来源的功能有价值但不独立完整时，应在 ECC 内部重建
-* CI 红色表示需分类并修复或阻止；不要假装其已可合并
-* 如果真正的阻碍是产品方向，请直接说明，而非隐藏在工具背后
+- 绝不要仅凭标题、摘要或信任就 merge；应查看完整 diff
+- 来自外部源的功能在有价值但非自包含时，应在 ECC 内部重新构建
+- CI 亮红意味着需要分类并修复或阻塞；不要假装它已 merge 就绪
+- 如果真正的阻塞在于产品方向，应明确指出，而不是拿工具当挡箭牌
 
 ## 输出格式
 
 返回：
 
 ```text
-公开状态
-- 议题 / 拉取请求状态
-- 持续集成 / 审查状态
+PUBLIC STATUS
+- issue / PR state
+- CI / review state
 
-分类
-- 合并 / 移植重建 / 关闭 / 搁置
-- 一段理由说明
+CLASSIFICATION
+- merge / port-rebuild / close / park
+- one-paragraph rationale
 
-线性操作
-- 创建 / 更新 / 无需线性项
-- 项目 / 泳道（如适用）
+LINEAR ACTION
+- create / update / no Linear item needed
+- project / lane if applicable
 
-下一步操作者行动
-- 确切的下一个步骤
+NEXT OPERATOR ACTION
+- exact next move
 ```
 
-## 良好用例
+## 典型使用场景
 
-* "审查开放的 PR 积压，告诉我哪些应合并，哪些应重建"
-* "将 GitHub Issue 映射到我们的 ECC 1.x 和 ECC 2.0 项目通道"
-* "检查这是否需要创建 Linear Issue，还是应保留在 GitHub 中"
+- "审查开放的 PR backlog，告诉我要 merge 还是重新构建"
+- "将 GitHub issue 映射到我们的 ECC 1.x 和 ECC 2.0 program 通道"
+- "检查这个是否需要创建 Linear issue，还是应仅保留在 GitHub"

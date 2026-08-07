@@ -1,47 +1,48 @@
 ---
 name: swift-protocol-di-testing
-description: 基于协议的依赖注入，用于可测试的Swift代码——使用聚焦协议和Swift Testing模拟文件系统、网络和外部API。
-origin: ECC
+description: 基于 protocol 的 dependency injection，用于可测试的 Swift 代码——使用聚焦的 protocol 和 Swift Testing 对文件系统、网络和外部 API 进行 mock。
+metadata:
+  origin: ECC
 ---
 
-# 基于协议的 Swift 依赖注入测试
+# 用于测试的 Swift 基于 Protocol 的 Dependency Injection
 
-通过将外部依赖（文件系统、网络、iCloud）抽象为小型、专注的协议，使 Swift 代码可测试的模式。支持无需 I/O 的确定性测试。
+通过将外部依赖（文件系统、网络、iCloud）抽象到小型、聚焦的 protocol 背后，使 Swift 代码可测试的模式。能够实现无需 I/O 的确定性测试。
 
 ## 何时激活
 
-* 编写访问文件系统、网络或外部 API 的 Swift 代码时
-* 需要在未触发真实故障的情况下测试错误处理路径时
-* 构建需要在不同环境（应用、测试、SwiftUI 预览）中工作的模块时
-* 设计支持 Swift 并发（actor、Sendable）的可测试架构时
+- 编写访问文件系统、网络或外部 API 的 Swift 代码时
+- 需要在不触发真实失败的情况下测试错误处理路径
+- 构建可跨环境工作的模块（app、test、SwiftUI preview）
+- 设计与 Swift concurrency（actor、Sendable）配套的可测试架构
 
 ## 核心模式
 
-### 1. 定义小型、专注的协议
+### 1. 定义小型、聚焦的 Protocol
 
-每个协议仅处理一个外部关注点。
+每个 protocol 只负责一个外部关注点。
 
 ```swift
-// File system access
+// 文件系统访问
 public protocol FileSystemProviding: Sendable {
     func containerURL(for purpose: Purpose) -> URL?
 }
 
-// File read/write operations
+// 文件读写操作
 public protocol FileAccessorProviding: Sendable {
     func read(from url: URL) throws -> Data
     func write(_ data: Data, to url: URL) throws
     func fileExists(at url: URL) -> Bool
 }
 
-// Bookmark storage (e.g., for sandboxed apps)
+// Bookmark 存储（例如用于沙盒应用）
 public protocol BookmarkStorageProviding: Sendable {
     func saveBookmark(_ data: Data, for key: String) throws
     func loadBookmark(for key: String) throws -> Data?
 }
 ```
 
-### 2. 创建默认（生产）实现
+### 2. 创建默认（生产环境）实现
 
 ```swift
 public struct DefaultFileSystemProvider: FileSystemProviding {
@@ -69,7 +70,7 @@ public struct DefaultFileAccessor: FileAccessorProviding {
 }
 ```
 
-### 3. 创建用于测试的模拟实现
+### 3. 为测试创建 Mock 实现
 
 ```swift
 public final class MockFileAccessor: FileAccessorProviding, @unchecked Sendable {
@@ -98,9 +99,9 @@ public final class MockFileAccessor: FileAccessorProviding, @unchecked Sendable 
 }
 ```
 
-### 4. 使用默认参数注入依赖项
+### 4. 通过默认参数注入依赖
 
-生产代码使用默认值；测试注入模拟对象。
+生产代码使用默认实现；测试注入 mock。
 
 ```swift
 public actor SyncManager {
@@ -122,7 +123,7 @@ public actor SyncManager {
         let data = try fileAccessor.read(
             from: containerURL.appendingPathComponent("data.json")
         )
-        // Process data...
+        // 处理数据...
     }
 }
 ```
@@ -168,23 +169,23 @@ func testReadError() async {
 
 ## 最佳实践
 
-* **单一职责**：每个协议应处理一个关注点——不要创建包含许多方法的“上帝协议”
-* **Sendable 一致性**：当协议跨 actor 边界使用时需要
-* **默认参数**：让生产代码默认使用真实实现；只有测试需要指定模拟对象
-* **错误模拟**：设计具有可配置错误属性的模拟对象以测试故障路径
-* **仅模拟边界**：模拟外部依赖（文件系统、网络、API），而非内部类型
+- **单一职责**：每个 protocol 应只处理一个关注点——不要创建包含大量方法的"god protocol"
+- **Sendable 一致性**：当 protocol 跨越 actor 边界使用时必需
+- **默认参数**：让生产代码默认使用真实实现；只有测试需要指定 mock
+- **错误模拟**：为 mock 设计可配置的错误属性，用于测试失败路径
+- **只 mock 边界**：对外部依赖（文件系统、网络、API）进行 mock，不对内部类型 mock
 
-## 需要避免的反模式
+## 应避免的反模式
 
-* 创建覆盖所有外部访问的单个大型协议
-* 模拟没有外部依赖的内部类型
-* 使用 `#if DEBUG` 条件语句代替适当的依赖注入
-* 与 actor 一起使用时忘记 `Sendable` 一致性
-* 过度设计：如果一个类型没有外部依赖，则不需要协议
+- 创建一个覆盖所有外部访问的大型 protocol
+- 对没有外部依赖的内部类型进行 mock
+- 使用 `#if DEBUG` 条件编译，而非正确的 dependency injection
+- 在与 actor 配合使用时忘记 `Sendable` 一致性
+- 过度设计：如果一个类型没有外部依赖，就不需要 protocol
 
 ## 何时使用
 
-* 任何触及文件系统、网络或外部 API 的 Swift 代码
-* 测试在真实环境中难以触发的错误处理路径时
-* 构建需要在应用、测试和 SwiftUI 预览上下文中工作的模块时
-* 需要使用可测试架构的、采用 Swift 并发（actor、结构化并发）的应用
+- 任何涉及文件系统、网络或外部 API 的 Swift 代码
+- 测试在真实环境中难以触发的错误处理路径
+- 构建需要在 app、test 和 SwiftUI preview 上下文中工作的模块
+- 使用 Swift concurrency（actor、structured concurrency）且需要可测试架构的应用

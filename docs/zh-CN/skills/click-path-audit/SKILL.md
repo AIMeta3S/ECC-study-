@@ -1,234 +1,224 @@
 ---
 name: click-path-audit
-description: "追踪每个面向用户的按钮/触点的完整状态变化序列，以发现功能单独工作但相互抵消、产生错误最终状态或使UI处于不一致状态的错误。适用于：系统调试未发现错误但用户报告按钮失效，或在任何涉及共享状态存储的重大重构之后。"
-origin: community
+description: "追踪每个面向用户的按钮/触点，贯穿其完整的状态变更序列，以发现那些函数单独运行正常却相互抵消、产生错误的最终状态、或使 UI 处于不一致状态的 bug。适用场景：systematic debugging 未发现 bug 但用户报告按钮失效，或任何涉及共享状态 store 的重大 refactor 之后。"
+metadata:
+  origin: community
 ---
 
-# /click-path-audit — 行为流审计
+# /click-path-audit — 行为流程审计
 
-发现静态代码审查遗漏的缺陷：状态交互副作用、顺序调用间的竞态条件，以及相互静默撤销的处理程序。
+发现静态代码阅读会遗漏的 bug：状态交互的 side effect、顺序调用之间的 race condition，以及相互悄然撤销的 handler。
 
-## 解决的问题
+## 本 skill 解决的问题
 
-传统调试检查：
+传统 debug 会检查：
+- 函数是否存在？（缺少连接）
+- 是否崩溃？（运行时错误）
+- 返回类型是否正确？（数据流）
 
-* 函数是否存在？（缺少连接）
-* 是否崩溃？（运行时错误）
-* 是否返回正确类型？（数据流）
+但它不会检查：
+- **最终 UI 状态是否与按钮 label 所承诺的一致？**
+- **函数 B 是否悄然撤销了函数 A 刚做的事？**
+- **共享状态（Zustand/Redux/context）是否有抵消预期操作的 side effect？**
 
-但未检查：
+真实案例：一个 "New Email" 按钮先调用 `setComposeMode(true)` 再调用 `selectThread(null)`。两者单独运行都正常。但 `selectThread` 有一个重置 `composeMode: false` 的 side effect。按钮毫无作用。systematic debugging 发现了 54 个 bug——这一个被遗漏了。
 
-* **最终 UI 状态是否与按钮标签承诺一致？**
-* **函数 B 是否静默撤销了函数 A 刚刚执行的操作？**
-* **共享状态（Zustand/Redux/context）是否存在抵消预期操作的副作用？**
-
-真实案例：一个"新邮件"按钮依次调用了 `setComposeMode(true)` 和 `selectThread(null)`。两者单独工作正常。但 `selectThread` 有一个副作用重置了 `composeMode: false`。按钮毫无反应。系统化调试发现了 54 个缺陷——这个被遗漏了。
-
-***
+---
 
 ## 工作原理
 
-针对目标区域内的每个交互触点：
+对目标区域内的每一个交互式触点：
 
 ```
-1. 识别处理函数（onClick、onSubmit、onChange 等）
-2. 按顺序追踪处理函数中的每个函数调用
-3. 对于每个函数调用：
-   a. 它读取了哪些状态？
-   b. 它写入了哪些状态？
-   c. 它是否对共享状态产生了副作用？
-   d. 它是否作为副作用重置/清除了任何状态？
-4. 检查：后续调用是否会撤销前面调用的状态变更？
-5. 检查：最终状态是否符合用户对按钮标签的预期？
-6. 检查：是否存在竞态条件（异步调用以错误顺序解析）？
+1. IDENTIFY the handler (onClick, onSubmit, onChange, etc.)
+2. TRACE every function call in the handler, IN ORDER
+3. For EACH function call:
+   a. What state does it READ?
+   b. What state does it WRITE?
+   c. Does it have SIDE EFFECTS on shared state?
+   d. Does it reset/clear any state as a side effect?
+4. CHECK: Does any later call UNDO a state change from an earlier call?
+5. CHECK: Is the FINAL state what the user expects from the button label?
+6. CHECK: Are there race conditions (async calls that resolve in wrong order)?
 ```
 
-***
+---
 
 ## 执行步骤
 
-### 步骤 1：映射状态存储
+### Step 1：梳理状态 store
 
-在审计任何触点之前，构建每个状态存储操作的副作用映射：
+在审计任何触点之前，先为每个状态 store action 建立一份 side effect 映射图：
 
 ```
-对于作用域内的每个 Zustand 存储 / React 上下文：
-  对于每个操作/设置器：
-    - 它设置了哪些字段？
-    - 它是否作为副作用重置了其他字段？
-    - 文档：actionName → {sets: [...], resets: [...]}
+For each Zustand store / React context in scope:
+  For each action/setter:
+    - What fields does it set?
+    - Does it RESET other fields as a side effect?
+    - Document: actionName → {sets: [...], resets: [...]}
 ```
 
-这是关键参考。"新邮件"缺陷在不知道 `selectThread` 重置了 `composeMode` 的情况下是不可见的。
+这是关键参考资料。在不知道 `selectThread` 会重置 `composeMode` 的情况下，"New Email" bug 是无法发现的。
 
 **输出格式：**
-
 ```
 STORE: emailStore
-  setComposeMode(bool) → 设置: {composeMode}
-  selectThread(thread|null) → 设置: {selectedThread, selectedThreadId, messages, drafts, selectedDraft, summary} 重置: {composeMode: false, composeData: null, redraftOpen: false}
-  setDraftGenerating(bool) → 设置: {draftGenerating}
+  setComposeMode(bool) → sets: {composeMode}
+  selectThread(thread|null) → sets: {selectedThread, selectedThreadId, messages, drafts, selectedDraft, summary} RESETS: {composeMode: false, composeData: null, redraftOpen: false}
+  setDraftGenerating(bool) → sets: {draftGenerating}
   ...
 
-危险的重置（清除不属于自身状态的操作）：
-  selectThread → 重置 composeMode（由 setComposeMode 拥有）
-  reset → 重置所有内容
+DANGEROUS RESETS (actions that clear state they don't own):
+  selectThread → resets composeMode (owned by setComposeMode)
+  reset → resets everything
 ```
 
-### 步骤 2：审计每个触点
+### Step 2：审计每个触点
 
-针对目标区域内的每个按钮/开关/表单提交：
+对目标区域内的每个按钮/toggle/表单提交：
 
 ```
-TOUCHPOINT: [按钮标签] 在 [组件:行]
+TOUCHPOINT: [Button label] in [Component:line]
   HANDLER: onClick → {
-    调用 1: functionA() → 设置 {X: true}
-    调用 2: functionB() → 设置 {Y: null} 重置 {X: false}  ← 冲突
+    call 1: functionA() → sets {X: true}
+    call 2: functionB() → sets {Y: null} RESETS {X: false}  ← CONFLICT
   }
-  EXPECTED: 用户看到 [按钮标签所承诺的描述]
-  ACTUAL: X 为 false，因为 functionB 重置了它
-  VERDICT: BUG — [描述]
+  EXPECTED: User sees [description of what button label promises]
+  ACTUAL: X is false because functionB reset it
+  VERDICT: BUG — [description]
 ```
 
-**检查以下每种缺陷模式：**
+**逐一检查以下 bug 模式：**
 
-#### 模式 1：顺序撤销
-
+#### Pattern 1: Sequential Undo
 ```
 handler() {
   setState_A(true)     // 设置 X = true
-  setState_B(null)     // 副作用：重置 X = false
+  setState_B(null)     // side effect: 重置 X = false
 }
 // 结果：X 为 false。第一次调用毫无意义。
 ```
 
-#### 模式 2：异步竞态
-
+#### Pattern 2: Async Race
 ```
 handler() {
   fetchA().then(() => setState({ loading: false }))
   fetchB().then(() => setState({ loading: true }))
 }
-// 结果：最终的 loading 状态取决于哪个先完成
+// 结果：最终 loading 状态取决于哪个先 resolve
 ```
 
-#### 模式 3：过期闭包
-
+#### Pattern 3: Stale Closure
 ```
 const [count, setCount] = useState(0)
 const handler = useCallback(() => {
-  setCount(count + 1)  // 捕获了过时的 count
-  setCount(count + 1)  // 同样的过时 count — 只增加 1，而不是 2
+  setCount(count + 1)  // 捕获了 stale count
+  setCount(count + 1)  // 同样的 stale count —— 只增加 1，而非 2
 }, [count])
 ```
 
-#### 模式 4：缺失状态转换
-
+#### Pattern 4: Missing State Transition
 ```
-// 按钮显示"保存"，但处理程序仅验证，从未实际保存
-// 按钮显示"删除"，但处理程序设置了一个标志而未调用API
-// 按钮显示"发送"，但API端点已被移除/损坏
+// 按钮写着 "Save"，但 handler 只做校验，从不真正保存
+// 按钮写着 "Delete"，但 handler 只设置 flag，未调用 API
+// 按钮写着 "Send"，但 API endpoint 已被移除/损坏
 ```
 
-#### 模式 5：条件死路径
-
+#### Pattern 5: Conditional Dead Path
 ```
 handler() {
-  if (someState) {        // 此时 someState 始终为 false
-    doTheActualThing()    // 永远不会执行到
+  if (someState) {        // someState 在此处始终为 false
+    doTheActualThing()    // 永远不会执行到这里
   }
 }
 ```
 
-#### 模式 6：useEffect 干扰
-
+#### Pattern 6: useEffect Interference
 ```
-// Button 设置 stateX = true
-// useEffect 监听 stateX 并将其重置为 false
-// 用户看不到任何变化
-```
-
-### 步骤 3：报告
-
-针对发现的每个缺陷：
-
-```
-CLICK-PATH-NNN: [严重性: 严重/高/中/低]
-  触点: [按钮标签] 位于 [文件:行号]
-  模式: [顺序撤销 / 异步竞态 / 过期闭包 / 缺失过渡 / 死路径 / useEffect 干扰]
-  处理函数: [函数名或内联]
-  追踪:
-    1. [调用] → 设置 {字段: 值}
-    2. [调用] → 重置 {字段: 值}  ← 冲突
-  预期: [用户期望的结果]
-  实际: [实际发生的结果]
-  修复: [具体修复方案]
+// 按钮设置 stateX = true
+// 一个 useEffect 监听 stateX 并将其重置为 false
+// 用户看到什么都没发生
 ```
 
-***
+### Step 3：报告
+
+对发现的每个 bug：
+
+```
+CLICK-PATH-NNN: [severity: CRITICAL/HIGH/MEDIUM/LOW]
+  Touchpoint: [Button label] in [file:line]
+  Pattern: [Sequential Undo / Async Race / Stale Closure / Missing Transition / Dead Path / useEffect Interference]
+  Handler: [function name or inline]
+  Trace:
+    1. [call] → sets {field: value}
+    2. [call] → RESETS {field: value}  ← CONFLICT
+  Expected: [what user expects]
+  Actual: [what actually happens]
+  Fix: [specific fix]
+```
+
+---
 
 ## 范围控制
 
-此审计成本较高。请适当限定范围：
+本审计开销较大。需合理界定范围：
 
-* **全应用审计：** 在发布或重大重构后使用。按页面启动并行代理。
-* **单页面审计：** 在构建新页面或用户报告按钮失效后使用。
-* **存储聚焦审计：** 在修改 Zustand 存储后使用——审计所有使用已更改操作的消费者。
+- **全应用审计：** 在发布或重大 refactor 之后使用。按页面并行启动多个 agent。
+- **单页面审计：** 在构建新页面或用户报告按钮失效之后使用。
+- **Store 专项审计：** 在修改某个 Zustand store 之后使用——审计所修改 action 的所有 consumer。
 
-### 全应用推荐的代理拆分：
+### 全应用审计推荐的 agent 切分：
 
 ```
-Agent 1：映射所有状态存储（步骤 1）——这是所有其他代理的共享上下文
-Agent 2：仪表盘（任务、笔记、日志、想法）
-Agent 3：聊天（DanteChatColumn、JustChatPage）
-Agent 4：邮件（ThreadList、DraftArea、EmailsPage）
-Agent 5：项目（ProjectsPage、ProjectOverviewTab、NewProjectWizard）
-Agent 6：CRM（所有子标签页）
-Agent 7：个人资料、设置、保险库、通知
-Agent 8：管理套件（所有页面）
+Agent 1: Map ALL state stores (Step 1) — this is shared context for all other agents
+Agent 2: Dashboard (Tasks, Notes, Journal, Ideas)
+Agent 3: Chat (DanteChatColumn, JustChatPage)
+Agent 4: Emails (ThreadList, DraftArea, EmailsPage)
+Agent 5: Projects (ProjectsPage, ProjectOverviewTab, NewProjectWizard)
+Agent 6: CRM (all sub-tabs)
+Agent 7: Profile, Settings, Vault, Notifications
+Agent 8: Management Suite (all pages)
 ```
 
-代理 1 必须首先完成。其输出是所有其他代理的输入。
+Agent 1 必须最先完成。它的输出是所有其他 agent 的输入。
 
-***
+---
 
 ## 何时使用
 
-* 系统化调试发现"无缺陷"但用户报告 UI 失效后
-* 修改任何 Zustand 存储操作后（检查所有调用者）
-* 任何涉及共享状态的重构后
-* 发布前，针对关键用户流程
-* 当按钮"无反应"时——这是解决该问题的工具
+- 在 systematic debugging 发现"没有 bug"但用户报告 UI 失效之后
+- 在修改任何 Zustand store action 之后（检查所有 caller）
+- 在任何涉及共享状态的 refactor 之后
+- 发布前，针对关键用户流程
+- 当某个按钮"毫无反应"时——本 skill 正是为此而生
 
-## 何时不使用
+## 何时不应使用
 
-* 针对 API 级别缺陷（错误的响应结构、缺失端点）——使用系统化调试
-* 针对样式/布局问题——视觉检查
-* 针对性能问题——性能分析工具
+- API 层面的 bug（响应结构错误、缺少 endpoint）——使用 systematic-debugging
+- 样式/布局问题——视觉检查
+- 性能问题——profiling 工具
 
-***
+---
 
-## 与其他技能的集成
+## 与其他 skill 的集成
 
-* 在 `/superpowers:systematic-debugging`（发现其他 54 种缺陷类型）之后运行
-* 在 `/superpowers:verification-before-completion`（验证修复是否有效）之前运行
-* 反馈至 `/superpowers:test-driven-development`——此处发现的每个缺陷都应添加测试
+- 在 `/superpowers:systematic-debugging` 之后运行（后者负责发现其余 54 类 bug）
+- 在 `/superpowers:verification-before-completion` 之前运行（后者负责验证修复是否生效）
+- 结果馈入 `/superpowers:test-driven-development`——此处发现的每个 bug 都应配对一个测试
 
-***
+---
 
-## 示例：启发此技能的缺陷
+## 示例：启发本 skill 的那个 bug
 
-**ThreadList.tsx "新邮件"按钮：**
-
+**ThreadList.tsx 的 "New Email" 按钮：**
 ```
 onClick={() => {
   useEmailStore.getState().setComposeMode(true)   // ✓ 设置 composeMode = true
-  useEmailStore.getState().selectThread(null)      // ✗ 重置 composeMode = false
+  useEmailStore.getState().selectThread(null)      // ✗ RESETS composeMode = false
 }}
 ```
 
-存储定义：
-
+Store 定义：
 ```
 selectThread: (thread) => set({
   selectedThread: thread,
@@ -237,21 +227,19 @@ selectThread: (thread) => set({
   drafts: [],
   selectedDraft: null,
   summary: null,
-  composeMode: false,     // ← 这个静默重置导致按钮失效
+  composeMode: false,     // ← 正是这个 silent reset 让按钮失效
   composeData: null,
   redraftOpen: false,
 })
 ```
 
-**系统化调试遗漏了它**，因为：
+**systematic debugging 之所以遗漏它**，是因为：
+- 按钮有 onClick handler（未失活）
+- 两个函数都存在（没有缺少连接）
+- 两个函数都不崩溃（没有运行时错误）
+- 数据类型都正确（没有类型不匹配）
 
-* 按钮有 onClick 处理程序（未失效）
-* 两个函数都存在（无缺失连接）
-* 两个函数均未崩溃（无运行时错误）
-* 数据类型正确（无类型不匹配）
-
-**点击路径审计捕获了它**，因为：
-
-* 步骤 1 映射出 `selectThread` 重置了 `composeMode`
-* 步骤 2 追踪处理程序：调用 1 设置为 true，调用 2 重置为 false
-* 判定：顺序撤销——最终状态与按钮意图矛盾
+**click-path audit 之所以能发现它**，是因为：
+- Step 1 梳理出 `selectThread` 会重置 `composeMode`
+- Step 2 追踪 handler：调用 1 设为 true，调用 2 重置为 false
+- 结论：Sequential Undo——最终状态与按钮意图相矛盾

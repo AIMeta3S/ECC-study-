@@ -8,14 +8,13 @@ paths:
   - "**/*.h"
   - "**/CMakeLists.txt"
 ---
-
 # C++ 测试
 
-> 本文档扩展了 [common/testing.md](../common/testing.md) 中关于 C++ 的特定内容。
+> 本文件在 [common/testing.md](../common/testing.md) 基础上扩展了 C++ 特定内容。
 
 ## 框架
 
-使用 **GoogleTest** (gtest/gmock) 配合 **CMake/CTest**。
+使用 **GoogleTest**（gtest/gmock）与 **CMake/CTest**。
 
 ## 运行测试
 
@@ -32,9 +31,9 @@ ctest --output-on-failure
 lcov --capture --directory . --output-file coverage.info
 ```
 
-## 内存消毒工具
+## Sanitizers
 
-在 CI 中应始终使用内存消毒工具运行测试：
+始终在 CI 中带 sanitizers 运行测试：
 
 ```bash
 cmake -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" ..
@@ -42,4 +41,4 @@ cmake -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" ..
 
 ## 参考
 
-查看技能：`cpp-testing` 以获取详细的 C++ 测试模式、TDD 工作流以及 GoogleTest/GMock 使用指南。
+参见 skill：`cpp-testing`，了解详细的 C++ 测试模式、TDD 工作流以及 GoogleTest/GMock 用法。

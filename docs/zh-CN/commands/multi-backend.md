@@ -1,10 +1,14 @@
-# 后端 - 后端导向开发
+---
+description: 运行聚焦后端的多模型工作流，涵盖 API、算法、数据和业务逻辑。
+---
 
-后端导向的工作流程（研究 → 构思 → 规划 → 执行 → 优化 → 评审），由 Codex 主导。
+# Backend - 聚焦后端的开发
 
-> **前提条件：** 此命令需要外部的 `ccg-workflow` 运行时，它**不**包含在基础 ECC 安装中。请运行 `npx ccg-workflow` 进行初始化，以配置此命令所依赖的 `~/.claude/bin/codeagent-wrapper` 和 `~/.claude/.ccg/prompts/*` 角色文件。没有该运行时，此命令将无法正常运行。
+聚焦后端的工作流（研究 → 构思 → 计划 → 执行 → 优化 → 审查），由 Codex 主导。
 
-## 使用方法
+> **前提条件：** 需要外部 `ccg-workflow` 运行时，该运行时**不**属于 ECC 基础安装的一部分。使用 `npx ccg-workflow` 初始化，以配置本命令依赖的 `~/.claude/bin/codeagent-wrapper` 和 `~/.claude/.ccg/prompts/*` 角色文件。缺少该运行时，本命令将无法正常运行。
+
+## 用法
 
 ```bash
 /backend <backend task description>
@@ -12,55 +16,54 @@
 
 ## 上下文
 
-* 后端任务：$ARGUMENTS
-* Codex 主导，Gemini 作为辅助参考
-* 适用场景：API 设计、算法实现、数据库优化、业务逻辑
+- 后端任务：$ARGUMENTS
+- 由 Codex 主导，Gemini 作为辅助参考
+- 适用场景：API 设计、算法实现、数据库优化、业务逻辑
 
 ## 你的角色
 
-你是 **后端协调者**，为服务器端任务协调多模型协作（研究 → 构思 → 规划 → 执行 → 优化 → 评审）。
+你是 **后端 Orchestrator**，负责协调面向服务端任务的多模型协作（研究 → 构思 → 计划 → 执行 → 优化 → 审查）。
 
 **协作模型**：
+- **Codex** – 后端逻辑、算法（**后端权威，值得信赖**）
+- **Gemini** – 前端视角（**后端意见仅供参考**）
+- **Claude（自身）** – 编排、计划、执行、交付
 
-* **Codex** – 后端逻辑、算法（**后端权威，可信赖**）
-* **Gemini** – 前端视角（**后端意见仅供参考**）
-* **Claude (自身)** – 协调、规划、执行、交付
-
-***
+---
 
 ## 多模型调用规范
 
 **调用语法**：
 
 ```
-# 新会话调用
+# 新建会话调用
 Bash({
   command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend codex - \"$PWD\" <<'EOF'
-ROLE_FILE: <角色提示路径>
+ROLE_FILE: <role prompt path>
 <TASK>
-需求: <增强后的需求（若未增强则为 $ARGUMENTS）>
-上下文: <来自先前阶段的项目上下文与分析>
+Requirement: <enhanced requirement (or $ARGUMENTS if not enhanced)>
+Context: <project context and analysis from previous phases>
 </TASK>
-OUTPUT: 期望的输出格式
+OUTPUT: Expected output format
 EOF",
   run_in_background: false,
   timeout: 3600000,
-  description: "简要描述"
+  description: "Brief description"
 })
 
 # 恢复会话调用
 Bash({
   command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend codex resume <SESSION_ID> - \"$PWD\" <<'EOF'
-ROLE_FILE: <角色提示路径>
+ROLE_FILE: <role prompt path>
 <TASK>
-需求: <增强后的需求（若未增强则为 $ARGUMENTS）>
-上下文: <来自先前阶段的项目上下文与分析>
+Requirement: <enhanced requirement (or $ARGUMENTS if not enhanced)>
+Context: <project context and analysis from previous phases>
 </TASK>
-OUTPUT: 期望的输出格式
+OUTPUT: Expected output format
 EOF",
   run_in_background: false,
   timeout: 3600000,
-  description: "简要描述"
+  description: "Brief description"
 })
 ```
 
@@ -69,96 +72,93 @@ EOF",
 | 阶段 | Codex |
 |-------|-------|
 | 分析 | `~/.claude/.ccg/prompts/codex/analyzer.md` |
-| 规划 | `~/.claude/.ccg/prompts/codex/architect.md` |
-| 评审 | `~/.claude/.ccg/prompts/codex/reviewer.md` |
+| 计划 | `~/.claude/.ccg/prompts/codex/architect.md` |
+| 审查 | `~/.claude/.ccg/prompts/codex/reviewer.md` |
 
-**会话复用**：每次调用返回 `SESSION_ID: xxx`，在后续阶段使用 `resume xxx`。在第 2 阶段保存 `CODEX_SESSION`，在第 3 和第 5 阶段使用 `resume`。
+**会话复用**：每次调用返回 `SESSION_ID: xxx`，在后续阶段使用 `resume xxx`。在阶段 2 保存 `CODEX_SESSION`，在阶段 3 和 5 中使用 `resume`。
 
-***
+---
 
-## 沟通准则
+## 通信准则
 
-1. 在回复开头使用模式标签 `[Mode: X]`，初始值为 `[Mode: Research]`
-2. 遵循严格序列：`Research → Ideation → Plan → Execute → Optimize → Review`
-3. 需要时（例如确认/选择/批准）使用 `AskUserQuestion` 工具进行用户交互
+1. 回复以模式标签 `[Mode: X]` 开头，初始为 `[Mode: 研究]`
+2. 严格遵循顺序：研究 → 构思 → 计划 → 执行 → 优化 → 审查
+3. 需要时使用 `AskUserQuestion` 工具与用户交互（例如：确认/选择/批准）
 
-***
+---
 
-## 核心工作流程
+## 核心工作流
 
 ### 阶段 0：提示词增强（可选）
 
-`[Mode: Prepare]` - 如果 ace-tool MCP 可用，调用 `mcp__ace-tool__enhance_prompt`，**将原始的 $ARGUMENTS 替换为增强后的结果，用于后续的 Codex 调用**。如果不可用，则按原样使用 `$ARGUMENTS`。
+`[Mode: 准备]` - 如果 ace-tool MCP 可用，调用 `mcp__ace-tool__enhance_prompt`，**用增强后的结果替换原始 $ARGUMENTS，用于后续 Codex 调用**。如果不可用，直接使用 `$ARGUMENTS`。
 
 ### 阶段 1：研究
 
-`[Mode: Research]` - 理解需求并收集上下文
+`[Mode: 研究]` - 理解需求并收集上下文
 
-1. **代码检索**（如果 ace-tool MCP 可用）：调用 `mcp__ace-tool__search_context` 来检索现有的 API、数据模型、服务架构。如果不可用，则使用内置工具：`Glob` 用于文件发现，`Grep` 用于符号/API 搜索，`Read` 用于上下文收集，`Task`（探索代理）用于更深入的探索。
-2. 需求完整性评分（0-10）：>=7 继续，<7 停止并补充
+1. **代码检索**（如果 ace-tool MCP 可用）：调用 `mcp__ace-tool__search_context` 检索现有的 API、数据模型、服务架构。如果不可用，使用内置工具：用 `Glob` 发现文件，用 `Grep` 搜索符号/API，用 `Read` 收集上下文，用 `Task`（Explore agent）进行更深入的探索。
+2. 需求完整度评分（0-10）：>=7 继续，<7 暂停并补充
 
 ### 阶段 2：构思
 
-`[Mode: Ideation]` - Codex 主导的分析
+`[Mode: 构思]` - 由 Codex 主导分析
 
 **必须调用 Codex**（遵循上述调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/analyzer.md`
+- Requirement: 增强后的需求（如果未增强则为 $ARGUMENTS）
+- Context: 来自阶段 1 的项目上下文
+- OUTPUT: 技术可行性分析、推荐方案（至少 2 个）、风险评估
 
-* ROLE\_FILE：`~/.claude/.ccg/prompts/codex/analyzer.md`
-* 需求：增强后的需求（或未增强时的 $ARGUMENTS）
-* 上下文：来自阶段 1 的项目上下文
-* 输出：技术可行性分析、推荐解决方案（至少 2 个）、风险评估
+**保存 SESSION_ID**（`CODEX_SESSION`）供后续阶段复用。
 
-**保存 SESSION\_ID**（`CODEX_SESSION`）以供后续阶段复用。
+输出方案（至少 2 个），等待用户选择。
 
-输出解决方案（至少 2 个），等待用户选择。
+### 阶段 3：计划
 
-### 阶段 3：规划
+`[Mode: 计划]` - 由 Codex 主导计划
 
-`[Mode: Plan]` - Codex 主导的规划
+**必须调用 Codex**（使用 `resume <CODEX_SESSION>` 复用会话）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/architect.md`
+- Requirement: 用户选择的方案
+- Context: 来自阶段 2 的分析结果
+- OUTPUT: 文件结构、函数/类设计、依赖关系
 
-**必须调用 Codex**（使用 `resume <CODEX_SESSION>` 以复用会话）：
+Claude 综合计划，经用户批准后保存到 `.claude/plan/task-name.md`。
 
-* ROLE\_FILE：`~/.claude/.ccg/prompts/codex/architect.md`
-* 需求：用户选择的解决方案
-* 上下文：阶段 2 的分析结果
-* 输出：文件结构、函数/类设计、依赖关系
+### 阶段 4：实现
 
-Claude 综合规划，在用户批准后保存到 `.claude/plan/task-name.md`。
+`[Mode: 执行]` - 代码开发
 
-### 阶段 4：实施
-
-`[Mode: Execute]` - 代码开发
-
-* 严格遵循已批准的规划
-* 遵循现有项目的代码规范
-* 确保错误处理、安全性、性能优化
+- 严格遵循已批准的计划
+- 遵循现有的项目代码规范
+- 确保错误处理、安全性、性能优化
 
 ### 阶段 5：优化
 
-`[Mode: Optimize]` - Codex 主导的评审
+`[Mode: 优化]` - 由 Codex 主导审查
 
 **必须调用 Codex**（遵循上述调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/reviewer.md`
+- Requirement: 审查以下后端代码变更
+- Context: git diff 或代码内容
+- OUTPUT: 安全性、性能、错误处理、API 合规性问题清单
 
-* ROLE\_FILE：`~/.claude/.ccg/prompts/codex/reviewer.md`
-* 需求：评审以下后端代码变更
-* 上下文：git diff 或代码内容
-* 输出：安全性、性能、错误处理、API 合规性问题列表
+整合审查反馈，经用户确认后执行优化。
 
-整合评审反馈，在用户确认后执行优化。
+### 阶段 6：质量审查
 
-### 阶段 6：质量评审
+`[Mode: 审查]` - 最终评估
 
-`[Mode: Review]` - 最终评估
+- 对照计划检查完成度
+- 运行测试以验证功能
+- 报告问题与建议
 
-* 对照规划检查完成情况
-* 运行测试以验证功能
-* 报告问题和建议
-
-***
+---
 
 ## 关键规则
 
-1. **Codex 的后端意见是可信赖的**
+1. **Codex 的后端意见值得信赖**
 2. **Gemini 的后端意见仅供参考**
-3. 外部模型**对文件系统零写入权限**
-4. Claude 处理所有代码写入和文件操作
+3. 外部模型对文件系统**零写入权限**
+4. Claude 负责所有代码写入和文件操作

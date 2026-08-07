@@ -6,12 +6,11 @@ paths:
   - "**/*.psgi"
   - "**/*.cgi"
 ---
-
 # Perl 模式
 
-> 本文档在 [common/patterns.md](../common/patterns.md) 的基础上扩展了 Perl 特定的内容。
+> 本文件扩展了 [common/patterns.md](../common/patterns.md)，增加了 Perl 特定的内容。
 
-## 仓储模式
+## Repository Pattern
 
 在接口背后使用 **DBI** 或 **DBIx::Class**：
 
@@ -28,9 +27,9 @@ sub find_by_id ($self, $id) {
 }
 ```
 
-## DTOs / 值对象
+## DTOs / Value Objects
 
-使用带有 **Types::Standard** 的 **Moo** 类（相当于 Python 的 dataclasses）：
+使用 **Moo** 类配合 **Types::Standard**（等价于 Python dataclasses）：
 
 ```perl
 package MyApp::DTO::User;
@@ -44,8 +43,8 @@ has age   => (is => 'ro', isa => Int);
 
 ## 资源管理
 
-* 始终使用 **三参数 open** 配合 `autodie`
-* 使用 **Path::Tiny** 进行文件操作
+- 始终将 **three-arg open** 与 `autodie` 配合使用
+- 使用 **Path::Tiny** 进行文件操作
 
 ```perl
 use autodie;
@@ -56,7 +55,7 @@ my $content = path('config.json')->slurp_utf8;
 
 ## 模块接口
 
-使用 `Exporter 'import'` 配合 `@EXPORT_OK` — 绝不使用 `@EXPORT`：
+将 `Exporter 'import'` 与 `@EXPORT_OK` 配合使用 —— 永远不要使用 `@EXPORT`：
 
 ```perl
 use Exporter 'import';
@@ -65,7 +64,7 @@ our @EXPORT_OK = qw(parse_config validate_input);
 
 ## 依赖管理
 
-使用 **cpanfile** + **carton** 以实现可复现的安装：
+使用 **cpanfile** + **carton** 实现可复现的安装：
 
 ```bash
 carton install
@@ -74,4 +73,4 @@ carton exec prove -lr t/
 
 ## 参考
 
-查看技能：`perl-patterns` 以获取全面的现代 Perl 模式和惯用法。
+关于全面的现代 Perl 模式与惯用法，参见 skill：`perl-patterns`。

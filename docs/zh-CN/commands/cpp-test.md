@@ -1,37 +1,36 @@
 ---
-description: 为 C++ 强制执行 TDD 工作流程。先编写 GoogleTest 测试，然后实现。使用 gcov/lcov 验证覆盖率。
+description: 强制执行 C++ 的 TDD 工作流。先编写 GoogleTest 测试，再实现代码。使用 gcov/lcov 验证覆盖率。
 ---
 
 # C++ TDD 命令
 
-此命令使用 GoogleTest/GoogleMock 与 CMake/CTest，为 C++ 代码强制执行测试驱动开发方法。
+本命令使用 GoogleTest/GoogleMock 与 CMake/CTest，对 C++ 代码强制执行测试驱动开发方法论。
 
-## 此命令的作用
+## 本命令的作用
 
-1. **定义接口**：首先搭建类/函数签名
-2. **编写测试**：创建全面的 GoogleTest 测试用例（RED 阶段）
+1. **定义接口**：先搭建类/函数签名
+2. **编写测试**：创建全面的 GoogleTest 测试用例（RED）
 3. **运行测试**：验证测试因正确原因失败
-4. **实现代码**：编写最少代码以通过测试（GREEN 阶段）
-5. **重构**：在保持测试通过的同时改进代码
-6. **检查覆盖率**：确保覆盖率在 80% 以上
+4. **实现代码**：编写最少代码使测试通过（GREEN）
+5. **Refactor**：在保持测试为 green 的同时改进代码
+6. **检查覆盖率**：确保 80%+ 覆盖率
 
 ## 何时使用
 
 在以下情况使用 `/cpp-test`：
-
-* 实现新的 C++ 函数或类时
-* 为现有代码增加测试覆盖率时
-* 修复错误时（先编写失败的测试）
-* 构建关键业务逻辑时
-* 学习 C++ 中的 TDD 工作流时
+- 实现新的 C++ 函数或类
+- 为现有代码添加测试覆盖率
+- 修复 bug（先编写失败的测试）
+- 构建关键业务逻辑
+- 学习 C++ 的 TDD 工作流
 
 ## TDD 循环
 
 ```
-RED     → 编写失败的 GoogleTest 测试
-GREEN   → 实现最小化代码以通过测试
-REFACTOR → 改进代码，测试保持通过
-REPEAT  → 下一个测试用例
+RED     → Write failing GoogleTest test
+GREEN   → Implement minimal code to pass
+REFACTOR → Improve code, tests stay green
+REPEAT  → Next test case
 ```
 
 ## 示例会话
@@ -160,7 +159,6 @@ validator/email.cpp     | 100%
 ## 测试模式
 
 ### 基础测试
-
 ```cpp
 TEST(SuiteName, TestName) {
     EXPECT_EQ(add(2, 3), 5);
@@ -170,8 +168,7 @@ TEST(SuiteName, TestName) {
 }
 ```
 
-### 测试夹具
-
+### Fixtures
 ```cpp
 class DatabaseTest : public ::testing::Test {
 protected:
@@ -186,8 +183,7 @@ TEST_F(DatabaseTest, InsertsRecord) {
 }
 ```
 
-### 参数化测试
-
+### Parameterized Tests
 ```cpp
 class PrimeTest : public ::testing::TestWithParam<std::pair<int, bool>> {};
 
@@ -206,13 +202,13 @@ INSTANTIATE_TEST_SUITE_P(Primes, PrimeTest, ::testing::Values(
 ## 覆盖率命令
 
 ```bash
-# Build with coverage
+# 构建并启用覆盖率
 cmake -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" -B build
 
-# Run tests
+# 运行测试
 cmake --build build && ctest --test-dir build
 
-# Generate coverage report
+# 生成覆盖率报告
 lcov --capture --directory build --output-file coverage.info
 lcov --remove coverage.info '/usr/*' --output-file coverage.info
 genhtml coverage.info --output-directory coverage_html
@@ -223,35 +219,33 @@ genhtml coverage.info --output-directory coverage_html
 | 代码类型 | 目标 |
 |-----------|--------|
 | 关键业务逻辑 | 100% |
-| 公共 API | 90%+ |
+| Public APIs | 90%+ |
 | 通用代码 | 80%+ |
-| 生成的代码 | 排除 |
+| 生成代码 | 排除 |
 
 ## TDD 最佳实践
 
-**应做：**
+**应该：**
+- 在任何实现之前先编写测试
+- 每次修改后运行测试
+- 适当时优先使用 `EXPECT_*`（继续执行）而非 `ASSERT_*`（停止执行）
+- 测试行为，而非实现细节
+- 包含 edge case（空、null、最大值、边界条件）
 
-* 先编写测试，再进行任何实现
-* 每次更改后运行测试
-* 在适当时使用 `EXPECT_*`（继续）而非 `ASSERT_*`（停止）
-* 测试行为，而非实现细节
-* 包含边界情况（空值、null、最大值、边界条件）
-
-**不应做：**
-
-* 在编写测试之前实现代码
-* 跳过 RED 阶段
-* 直接测试私有方法（通过公共 API 进行测试）
-* 在测试中使用 `sleep`
-* 忽略不稳定的测试
+**不应该：**
+- 在测试之前编写实现
+- 跳过 RED 阶段
+- 直接测试 private 方法（应通过 public API 测试）
+- 在测试中使用 `sleep`
+- 忽略 flaky 测试
 
 ## 相关命令
 
-* `/cpp-build` - 修复构建错误
-* `/cpp-review` - 在实现后审查代码
-* `/verify` - 运行完整的验证循环
+- `/cpp-build` - 修复 build 错误
+- `/cpp-review` - 实现后审查代码
+- `verification-loop` skill - 运行完整验证循环
 
 ## 相关
 
-* 技能：`skills/cpp-testing/`
-* 技能：`skills/tdd-workflow/`
+- Skill：`skills/cpp-testing/`
+- Skill：`skills/tdd-workflow/`

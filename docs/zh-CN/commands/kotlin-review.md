@@ -1,144 +1,140 @@
 ---
-description: 全面的Kotlin代码审查，涵盖惯用模式、空安全、协程安全和安全性。调用kotlin-reviewer代理。
+description: 全面的 Kotlin 代码审查，覆盖惯用模式、null 安全、coroutine 安全与安全性。调用 kotlin-reviewer agent。
 ---
 
 # Kotlin 代码审查
 
-此命令调用 **kotlin-reviewer** 代理进行全面的 Kotlin 专项代码审查。
+该命令调用 **kotlin-reviewer** agent，进行全面的 Kotlin 专属代码审查。
 
-## 此命令的功能
+## 该命令的功能
 
-1. **识别 Kotlin 变更**：通过 `git diff` 查找修改过的 `.kt` 和 `.kts` 文件
-2. **运行构建与静态分析**：执行 `./gradlew build`、`detekt`、`ktlintCheck`
-3. **安全扫描**：检查 SQL 注入、命令注入、硬编码的密钥
-4. **空安全审查**：分析 `!!` 的使用、平台类型处理、不安全的转换
-5. **协程审查**：检查结构化并发、调度器使用、取消操作
-6. **生成报告**：按严重性对问题分类
+1. **识别 Kotlin 变更**：通过 `git diff` 查找已修改的 `.kt` 与 `.kts` 文件
+2. **运行 build 与静态分析**：执行 `./gradlew build`、`detekt`、`ktlintCheck`
+3. **安全扫描**：检查 SQL injection、command injection、硬编码 secrets
+4. **null 安全审查**：分析 `!!` 用法、platform type 处理、不安全的类型转换
+5. **coroutine 审查**：检查 structured concurrency、dispatcher 用法、cancellation
+6. **生成报告**：按 severity 归类 issue
 
-## 使用时机
+## 何时使用
 
 在以下情况使用 `/kotlin-review`：
-
-* 编写或修改 Kotlin 代码后
-* 提交 Kotlin 变更前
-* 审查包含 Kotlin 代码的拉取请求时
-* 接手新的 Kotlin 代码库时
-* 学习 Kotlin 惯用模式时
+- 编写或修改 Kotlin 代码之后
+- 提交 Kotlin 变更之前
+- 审查包含 Kotlin 代码的 pull request
+- 上手新的 Kotlin 代码库
+- 学习惯用的 Kotlin 模式
 
 ## 审查类别
 
-### 严重（必须修复）
+### CRITICAL（必须修复）
+- SQL/Command injection 漏洞
+- 无正当理由使用 force-unwrap `!!`
+- platform type 的 null safety 违规
+- 使用 GlobalScope（违反 structured concurrency）
+- 硬编码 credentials
+- 不安全的反序列化
 
-* SQL/命令注入漏洞
-* 无正当理由强制解包 `!!`
-* 平台类型空安全违规
-* 使用 GlobalScope（违反结构化并发）
-* 硬编码的凭证
-* 不安全的反序列化
+### HIGH（应当修复）
+- 能用 immutable 却使用了 mutable state
+- 在 coroutine context 中执行阻塞调用
+- 长循环中缺少 cancellation 检查
+- 对 sealed type 的 `when` 未做到 exhaustive
+- 过大的函数（>50 行）
+- 过深的嵌套（>4 层）
 
-### 高（应该修复）
+### MEDIUM（可考虑）
+- 非惯用的 Kotlin（Java 风格的模式）
+- 缺少 trailing comma
+- scope function 误用或嵌套
+- 大型 collection chain 缺少 sequence
+- 冗余的显式类型标注
 
-* 可变状态，而不可变状态即可满足
-* 在协程上下文中进行阻塞调用
-* 长循环中缺少取消检查
-* 对密封类型使用非穷举的 `when`
-* 函数过大（>50 行）
-* 嵌套过深（>4 层）
-
-### 中（考虑修复）
-
-* 非 Kotlin 惯用写法（Java 风格模式）
-* 缺少尾随逗号
-* 误用或嵌套作用域函数
-* 大型集合链中缺少序列化
-* 冗余的显式类型声明
-
-## 运行的自动化检查
+## 自动执行的检查
 
 ```bash
-# Build check
+# Build 检查
 ./gradlew build
 
-# Static analysis
+# 静态分析
 ./gradlew detekt
 
-# Formatting check
+# 格式检查
 ./gradlew ktlintCheck
 
-# Tests
+# 测试
 ./gradlew test
 ```
 
-## 使用示例
+## 示例用法
 
 ````text
 User: /kotlin-review
 
 Agent:
-# Kotlin Code Review Report
+# Kotlin 代码审查报告
 
-## Files Reviewed
-- src/main/kotlin/com/example/service/UserService.kt (modified)
-- src/main/kotlin/com/example/routes/UserRoutes.kt (modified)
+## 已审查的文件
+- src/main/kotlin/com/example/service/UserService.kt（已修改）
+- src/main/kotlin/com/example/routes/UserRoutes.kt（已修改）
 
-## Static Analysis Results
-✓ Build: Successful
-✓ detekt: No issues
-WARNING: ktlint: 2 formatting warnings
+## 静态分析结果
+✓ Build：成功
+✓ detekt：无 issue
+WARNING: ktlint：2 个格式警告
 
-## Issues Found
+## 发现的 issue
 
-[CRITICAL] Force-Unwrap Null Safety
+[CRITICAL] Force-Unwrap null 安全
 File: src/main/kotlin/com/example/service/UserService.kt:28
-Issue: Using !! on nullable repository result
+Issue: 对可空的 repository 结果使用 !!
 ```kotlin
-val user = repository.findById(id)!!  // NPE risk
+val user = repository.findById(id)!!  // NPE 风险
 ```
-Fix: Use safe call with error handling
+Fix: 使用 safe call 配合错误处理
 ```kotlin
 val user = repository.findById(id)
     ?: throw UserNotFoundException("User $id not found")
 ```
 
-[HIGH] GlobalScope Usage
+[HIGH] GlobalScope 使用
 File: src/main/kotlin/com/example/routes/UserRoutes.kt:45
-Issue: Using GlobalScope breaks structured concurrency
+Issue: 使用 GlobalScope 会破坏 structured concurrency
 ```kotlin
 GlobalScope.launch {
     notificationService.sendWelcome(user)
 }
 ```
-Fix: Use the call's coroutine scope
+Fix: 使用调用方的 coroutine scope
 ```kotlin
 launch {
     notificationService.sendWelcome(user)
 }
 ```
 
-## Summary
-- CRITICAL: 1
-- HIGH: 1
-- MEDIUM: 0
+## 总结
+- CRITICAL：1
+- HIGH：1
+- MEDIUM：0
 
-Recommendation: FAIL: Block merge until CRITICAL issue is fixed
+建议：FAIL：在 CRITICAL issue 修复前阻止合并
 ````
 
-## 批准标准
+## 审批标准
 
 | 状态 | 条件 |
 |--------|-----------|
-| PASS: 批准 | 无严重或高优先级问题 |
-| WARNING: 警告 | 仅存在中优先级问题（谨慎合并） |
-| FAIL: 阻止 | 发现严重或高优先级问题 |
+| PASS：通过 | 无 CRITICAL 或 HIGH issue |
+| WARNING：警告 | 仅有 MEDIUM issue（谨慎合并） |
+| FAIL：阻止 | 发现 CRITICAL 或 HIGH issue |
 
-## 与其他命令的集成
+## 与其他命令的配合使用
 
-* 首先使用 `/kotlin-test` 确保测试通过
-* 如果构建出错，使用 `/kotlin-build`
-* 提交前使用 `/kotlin-review`
-* 对于非 Kotlin 专项问题，使用 `/code-review`
+- 先使用 `/kotlin-test` 确保测试通过
+- 出现 build 错误时使用 `/kotlin-build`
+- 提交前使用 `/kotlin-review`
+- 针对非 Kotlin 专属的问题使用 `/code-review`
 
-## 相关
+## 相关资源
 
-* 代理：`agents/kotlin-reviewer.md`
-* 技能：`skills/kotlin-patterns/`、`skills/kotlin-testing/`
+- Agent：`agents/kotlin-reviewer.md`
+- Skills：`skills/kotlin-patterns/`、`skills/kotlin-testing/`

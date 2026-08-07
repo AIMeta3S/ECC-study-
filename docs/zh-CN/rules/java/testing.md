@@ -2,29 +2,28 @@
 paths:
   - "**/*.java"
 ---
-
 # Java 测试
 
-> 本文档扩展了 [common/testing.md](../common/testing.md) 中与 Java 相关的内容。
+> 本文件扩展了 [common/testing.md](../common/testing.md)，补充 Java 特定内容。
 
 ## 测试框架
 
-* **JUnit 5** (`@Test`, `@ParameterizedTest`, `@Nested`, `@DisplayName`)
-* **AssertJ** 用于流式断言 (`assertThat(result).isEqualTo(expected)`)
-* **Mockito** 用于模拟依赖
-* **Testcontainers** 用于需要数据库或服务的集成测试
+- **JUnit 5** (`@Test`, `@ParameterizedTest`, `@Nested`, `@DisplayName`)
+- **AssertJ** 用于 fluent assertion（`assertThat(result).isEqualTo(expected)`）
+- **Mockito** 用于 mock 依赖项
+- **Testcontainers** 用于需要数据库或服务的集成测试
 
 ## 测试组织
 
 ```
 src/test/java/com/example/app/
-  service/           # 服务层单元测试
-  controller/        # Web 层/API 测试
+  service/           # service 层的单元测试
+  controller/        # Web 层 / API 测试
   repository/        # 数据访问测试
   integration/       # 跨层集成测试
 ```
 
-在 `src/test/java` 中镜像 `src/main/java` 的包结构。
+在 `src/test/java` 中镜像对应 `src/main/java` 的 package 结构。
 
 ## 单元测试模式
 
@@ -112,24 +111,23 @@ class OrderRepositoryIT {
 }
 ```
 
-关于 Spring Boot 集成测试，请参阅技能：`springboot-tdd`。
-关于 Quarkus 集成测试，请参阅技能：`quarkus-tdd`。
+对于 Spring Boot 集成测试，参见 skill：`springboot-tdd`。
+对于 Quarkus 集成测试，参见 skill：`quarkus-tdd`。
 
 ## 测试命名
 
-使用带有 `@DisplayName` 的描述性名称：
-
-* `methodName_scenario_expectedBehavior()` 用于方法名
-* `@DisplayName("human-readable description")` 用于报告
+配合 `@DisplayName` 使用描述性名称：
+- 方法名采用 `methodName_scenario_expectedBehavior()`
+- 报告采用 `@DisplayName("human-readable description")`
 
 ## 覆盖率
 
-* 目标为 80%+ 的行覆盖率
-* 使用 JaCoCo 生成覆盖率报告
-* 重点关注服务和领域逻辑 — 跳过简单的 getter/配置类
+- 目标行覆盖率达到 80% 以上
+- 使用 JaCoCo 生成覆盖率报告
+- 关注 service 与 domain 逻辑——跳过简单的 getter / config 类
 
 ## 参考
 
-关于使用 MockMvc 和 Testcontainers 的 Spring Boot TDD 模式，请参阅技能：`springboot-tdd`。
-关于使用 REST Assured 和 Camel 测试的 Quarkus TDD 模式，请参阅技能：`quarkus-tdd`。
-关于测试期望，请参阅技能：`java-coding-standards`。
+参见 skill：`springboot-tdd`，了解使用 MockMvc 和 Testcontainers 的 Spring Boot TDD 模式。
+参见 skill：`quarkus-tdd`，了解使用 REST Assured 和 Dev Services 的 Quarkus TDD 模式。
+参见 skill：`java-coding-standards`，了解测试相关要求。

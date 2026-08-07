@@ -1,28 +1,29 @@
 ---
 name: llm-trading-agent-security
-description: 具有钱包或交易权限的自主交易代理的安全模式。涵盖提示注入、支出限制、发送前模拟、断路器、MEV保护和密钥处理。
-origin: ECC direct-port adaptation
+description: 面向拥有 wallet 或 transaction 权限的自主交易 agent 的安全模式。涵盖 prompt injection、支出限额、发送前 simulation、circuit breaker、MEV 防护与 key 处理。
+metadata:
+  origin: ECC 直接移植改编
 version: "1.0.0"
 ---
 
-# LLM 交易代理安全
+# LLM 交易 Agent 安全
 
-自主交易代理面临比普通 LLM 应用更严苛的威胁模型：一次注入或错误的工具路径可能直接导致资产损失。
+自主交易 agent 比普通 LLM 应用面临更严苛的威胁模型：一次 injection 或错误的 tool path 会直接转化为资产损失。
 
 ## 适用场景
 
-* 构建能够签署并发送交易的 AI 代理
-* 审计交易机器人或链上执行助手
-* 为代理设计钱包密钥管理方案
-* 授予 LLM 订单下达、代币兑换或资金操作权限
+- 构建会签名并发送 transactions 的 AI agent
+- 审计 trading bot 或链上执行助手
+- 为 agent 设计 wallet key 管理方案
+- 让 LLM 拥有下单、swaps 或 treasury 操作的权限
 
 ## 工作原理
 
-构建多层防御体系。单一检查不足以保障安全。应将提示词卫生、支出策略、模拟执行、执行限制和钱包隔离视为独立控制措施。
+采取分层防御。单一检查不够。将 prompt 卫生、支出策略、simulation、执行限制和 wallet 隔离视为相互独立的控制措施。
 
 ## 示例
 
-### 将提示注入视为金融攻击
+### 将 prompt injection 视为金融攻击
 
 ```python
 import re
@@ -43,7 +44,7 @@ def sanitize_onchain_data(text: str) -> str:
     return text
 ```
 
-切勿将代币名称、交易对标签、网络钩子或社交信息流盲目注入具备执行能力的提示词中。
+不要盲目地将 token 名称、交易对标签、webhook 或社交信息流注入到具备执行能力的 prompt 中。
 
 ### 硬性支出限额
 
@@ -68,7 +69,7 @@ class SpendLimitGuard:
         self._record_spend(usd_amount)
 ```
 
-### 发送前模拟执行
+### 发送前先 simulate
 
 ```python
 class SlippageError(Exception):
@@ -88,7 +89,7 @@ async def safe_execute(self, tx: dict, expected_min_out: int | None = None) -> s
     return await self.w3.eth.send_raw_transaction(signed.raw_transaction)
 ```
 
-### 断路器机制
+### Circuit breaker
 
 ```python
 class TradingCircuitBreaker:
@@ -108,7 +109,7 @@ class TradingCircuitBreaker:
             self.halt(f"Hourly PnL {hourly_pnl:.1%} below threshold")
 ```
 
-### 钱包隔离
+### Wallet 隔离
 
 ```python
 import os
@@ -121,9 +122,9 @@ if not private_key:
 account = Account.from_key(private_key)
 ```
 
-使用仅包含所需会话资金的专用热钱包。切勿将代理指向主资金钱包。
+使用专用 hot wallet，只存放本次 session 所需资金。绝不要让 agent 直连主 treasury wallet。
 
-### MEV 与截止时间保护
+### MEV 与 deadline 保护
 
 ```python
 import time
@@ -135,12 +136,12 @@ deadline = int(time.time()) + 60
 
 ## 部署前检查清单
 
-* 外部数据在进入 LLM 上下文前已完成清理
-* 支出限额独立于模型输出强制执行
-* 交易在发送前经过模拟
-* `min_amount_out` 为强制要求
-* 断路器在出现回撤或无效状态时触发
-* 密钥来自环境变量或密钥管理器，绝不写入代码或日志
-* 在适当时使用私有内存池或受保护路由
-* 根据策略设置滑点和截止时间
-* 所有代理决策均记录审计日志，不仅限于成功发送的交易
+- 外部数据在进入 LLM context 前必须经过 sanitize
+- 支出限额独立于模型输出强制执行
+- transactions 在发送前先 simulate
+- `min_amount_out` 为必填项
+- Circuit breaker 在回撤或非法状态下触发停机
+- key 来自 env 或 secret manager，绝不来自代码或日志
+- 适当时使用 private mempool 或受保护的路由
+- slippage 与 deadline 按策略分别设置
+- 所有 agent 决策都记入 audit log，而不仅仅是成功的发送

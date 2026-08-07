@@ -3,49 +3,47 @@ paths:
   - "**/*.kt"
   - "**/*.kts"
 ---
-
 # Kotlin 编码风格
 
-> 本文档在 [common/coding-style.md](../common/coding-style.md) 的基础上扩展了 Kotlin 相关内容。
+> 本文件在 [common/coding-style.md](../common/coding-style.md) 基础上扩展 Kotlin 专属内容。
 
 ## 格式化
 
-* 使用 **ktlint** 或 **Detekt** 进行风格检查
-* 遵循官方 Kotlin 代码风格 (`kotlin.code.style=official` 在 `gradle.properties` 中)
+- 使用 **ktlint** 或 **Detekt** 强制风格
+- 采用官方 Kotlin 代码风格（在 `gradle.properties` 中设置 `kotlin.code.style=official`）
 
 ## 不可变性
 
-* 优先使用 `val` 而非 `var` — 默认使用 `val`，仅在需要可变性时使用 `var`
-* 对值类型使用 `data class`；在公共 API 中使用不可变集合 (`List`, `Map`, `Set`)
-* 状态更新使用写时复制：`state.copy(field = newValue)`
+- 优先使用 `val` 而非 `var` —— 默认使用 `val`，仅在需要修改时才使用 `var`
+- 值类型使用 `data class`；在 public API 中使用不可变集合（`List`、`Map`、`Set`）
+- 状态更新采用 copy-on-write：`state.copy(field = newValue)`
 
 ## 命名
 
 遵循 Kotlin 约定：
+- 函数与属性使用 `camelCase`
+- 类、接口、object 与 type alias 使用 `PascalCase`
+- 常量使用 `SCREAMING_SNAKE_CASE`（`const val` 或 `@JvmStatic`）
+- 接口以行为命名，不加 `I` 前缀：使用 `Clickable` 而非 `IClickable`
 
-* 函数和属性使用 `camelCase`
-* 类、接口、对象和类型别名使用 `PascalCase`
-* 常量 (`const val` 或 `@JvmStatic`) 使用 `SCREAMING_SNAKE_CASE`
-* 接口以行为而非 `I` 为前缀：使用 `Clickable` 而非 `IClickable`
+## Null Safety
 
-## 空安全
-
-* 绝不使用 `!!` — 优先使用 `?.`, `?:`, `requireNotNull()` 或 `checkNotNull()`
-* 使用 `?.let {}` 进行作用域内的空安全操作
-* 对于确实可能没有结果的函数，返回可为空的类型
+- 永远不要使用 `!!` —— 优先使用 `?.`、`?:`、`requireNotNull()` 或 `checkNotNull()`
+- 使用 `?.let {}` 执行带作用域的 null 安全操作
+- 对于合法情况下可能没有结果的函数，返回 nullable 类型
 
 ```kotlin
-// BAD
+// 反例
 val name = user!!.name
 
-// GOOD
+// 正例
 val name = user?.name ?: "Unknown"
 val name = requireNotNull(user) { "User must be set before accessing name" }.name
 ```
 
-## 密封类型
+## Sealed Types
 
-使用密封类/接口来建模封闭的状态层次结构：
+使用 sealed class/interface 建模封闭的状态层次结构：
 
 ```kotlin
 sealed interface UiState<out T> {
@@ -55,36 +53,34 @@ sealed interface UiState<out T> {
 }
 ```
 
-对密封类型始终使用详尽的 `when` — 不要使用 `else` 分支。
+对 sealed type 始终使用穷尽的 `when` —— 不要使用 `else` 分支。
 
-## 扩展函数
+## Extension Functions
 
-使用扩展函数实现工具操作，但要确保其可发现性：
+使用 extension function 实现工具操作，但需保持其可发现性：
+- 放置在以接收者类型命名的文件中（`StringExt.kt`、`FlowExt.kt`）
+- 限制作用范围 —— 不要为 `Any` 或过于泛化的类型添加 extension
 
-* 放在以接收者类型命名的文件中 (`StringExt.kt`, `FlowExt.kt`)
-* 限制作用域 — 不要向 `Any` 或过于泛化的类型添加扩展
+## Scope Functions
 
-## 作用域函数
-
-使用合适的作用域函数：
-
-* `let` — 空检查并转换：`user?.let { greet(it) }`
-* `run` — 使用接收者计算结果：`service.run { fetch(config) }`
-* `apply` — 配置对象：`builder.apply { timeout = 30 }`
-* `also` — 副作用：`result.also { log(it) }`
-* 避免深度嵌套作用域函数（最多 2 层）
+选择正确的 scope function：
+- `let` —— null 检查 + 转换：`user?.let { greet(it) }`
+- `run` —— 基于接收者计算结果：`service.run { fetch(config) }`
+- `apply` —— 配置对象：`builder.apply { timeout = 30 }`
+- `also` —— side effect：`result.also { log(it) }`
+- 避免 scope function 的深层嵌套（最多 2 层）
 
 ## 错误处理
 
-* 使用 `Result<T>` 或自定义密封类型
-* 使用 `runCatching {}` 包装可能抛出异常的代码
-* 绝不捕获 `CancellationException` — 始终重新抛出它
-* 避免使用 `try-catch` 进行控制流
+- 使用 `Result<T>` 或自定义 sealed type
+- 使用 `runCatching {}` 包装可能抛出异常的代码
+- 永远不要捕获 `CancellationException` —— 必须重新抛出
+- 避免使用 `try-catch` 进行控制流
 
 ```kotlin
-// BAD — using exceptions for control flow
+// 反例 —— 用异常作为控制流
 val user = try { repository.getUser(id) } catch (e: NotFoundException) { null }
 
-// GOOD — nullable return
+// 正例 —— 返回 nullable
 val user: User? = repository.findUser(id)
 ```

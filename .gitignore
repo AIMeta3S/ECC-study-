@@ -102,3 +102,6 @@ ecc2/target/
 assets/images/security/badrudi-exploit.mp4
 
 .aider*
+
+# 临时文件
+myStudy/cn-review/

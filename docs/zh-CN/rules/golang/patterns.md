@@ -4,12 +4,11 @@ paths:
   - "**/go.mod"
   - "**/go.sum"
 ---
-
 # Go 模式
 
-> 本文档在 [common/patterns.md](../common/patterns.md) 的基础上扩展了 Go 语言特定的内容。
+> 本文件在 [common/patterns.md](../common/patterns.md) 的基础上扩展了 Go 特定内容。
 
-## 函数式选项
+## Functional Options
 
 ```go
 type Option func(*Server)
@@ -27,13 +26,13 @@ func NewServer(opts ...Option) *Server {
 }
 ```
 
-## 小接口
+## Small Interfaces
 
-在接口被使用的地方定义它们，而不是在它们被实现的地方。
+在接口使用处定义接口，而非在实现处定义。
 
-## 依赖注入
+## Dependency Injection
 
-使用构造函数来注入依赖：
+使用构造函数注入依赖：
 
 ```go
 func NewUserService(repo UserRepository, logger Logger) *UserService {
@@ -43,4 +42,4 @@ func NewUserService(repo UserRepository, logger Logger) *UserService {
 
 ## 参考
 
-有关全面的 Go 模式（包括并发、错误处理和包组织），请参阅技能：`golang-patterns`。
+参见 skill：`golang-patterns`，了解涵盖并发、错误处理和包组织的完整 Go 模式。

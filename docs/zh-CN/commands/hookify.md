@@ -1,36 +1,36 @@
 ---
-description: 创建钩子以防止对话分析或明确指令产生的不当行为
+description: 创建 hook，通过分析对话或根据明确指令来阻止不希望出现的行为
 ---
 
-创建钩子规则，通过分析对话模式或明确的用户指令，防止 Claude Code 出现不期望的行为。
+通过分析对话模式或用户的明确指令，创建 hook 规则以阻止不希望出现的 Claude Code 行为。
 
 ## 用法
 
-`/hookify [description of behavior to prevent]`
+`/hookify [要阻止的行为的描述]`
 
-如果不提供参数，则分析当前对话以找出值得阻止的行为。
+如果未提供参数，则分析当前对话，找出值得阻止的行为。
 
-## 工作流程
+## 工作流
 
-### 第一步：收集行为信息
+### 第 1 步：收集行为信息
 
-* 带参数：解析用户对不期望行为的描述
-* 不带参数：使用 `conversation-analyzer` 智能体查找：
-  * 明确的纠正
-  * 对重复错误的沮丧反应
-  * 被撤销的更改
-  * 反复出现的类似问题
+- 有参数时：解析用户对不希望出现的行为的描述
+- 无参数时：使用 `conversation-analyzer` agent 来查找：
+  - 明确的纠正
+  - 对重复错误的挫败反应
+  - 被回退的更改
+  - 重复出现的类似问题
 
-### 第二步：展示发现
+### 第 2 步：呈现发现
 
 向用户展示：
 
-* 行为描述
-* 建议的事件类型
-* 建议的模式或匹配器
-* 建议的操作
+- 行为描述
+- 建议的事件类型
+- 建议的 pattern 或 matcher
+- 建议的 action
 
-### 第三步：生成规则文件
+### 第 3 步：生成规则文件
 
 为每个批准的规则，在 `.claude/hookify.{name}.local.md` 创建文件：
 
@@ -45,6 +45,6 @@ pattern: "regex pattern"
 Message shown when rule triggers.
 ```
 
-### 第四步：确认
+### 第 4 步：确认
 
-报告已创建的规则，以及如何使用 `/hookify-list` 和 `/hookify-configure` 管理这些规则。
+报告已创建的规则，以及如何用 `/hookify-list` 和 `/hookify-configure` 管理它们。

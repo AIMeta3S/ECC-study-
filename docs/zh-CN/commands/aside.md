@@ -1,173 +1,164 @@
 ---
-description: 在不打断或丢失当前任务上下文的情况下，快速回答一个附带问题。回答后自动恢复工作。
+description: 快速回答一个旁支问题，不打断也不丢失当前任务的上下文。回答后自动恢复工作。
 ---
 
-# 旁述指令
+# Aside 命令
 
-在任务进行中提问，获得即时、聚焦的回答——然后立即从暂停处继续。当前任务、文件和上下文绝不会被修改。
+在任务进行中提问，获得即时、聚焦的回答——然后从你停下的地方继续。当前的任务、文件和上下文永远不会被修改。
 
 ## 何时使用
 
-* 你在 Claude 工作时对某事感到好奇，但又不想打断工作节奏
-* 你需要快速解释 Claude 当前正在编辑的代码
-* 你想就某个决定征求第二意见或进行澄清，而不会使任务偏离方向
-* 在 Claude 继续之前，你需要理解一个错误、概念或模式
-* 你想询问与当前任务无关的事情，而无需开启新会话
+- 当 Claude 正在工作时你对某事感到好奇，且不想打断节奏
+- 需要对 Claude 当前正在编辑的代码获得快速解释
+- 想就某个决策获得第二意见或澄清，而不使当前任务偏离轨道
+- 在 Claude 继续之前，你需要理解某个错误、概念或模式
+- 想问与当前任务无关的问题，而不开启新的 session
 
-## 使用方法
+## 用法
 
 ```
-/aside <your question>
-/aside what does this function actually return?
-/aside is this pattern thread-safe?
-/aside why are we using X instead of Y here?
-/aside what's the difference between foo() and bar()?
-/aside should we be worried about the N+1 query we just added?
+/aside <你的问题>
+/aside 这个函数实际返回什么？
+/aside 这种模式是 thread-safe 的吗？
+/aside 为什么这里用 X 而不是 Y？
+/aside foo() 和 bar() 有什么区别？
+/aside 我们需要担心刚加的 N+1 query 吗？
 ```
 
 ## 流程
 
 ### 步骤 1：冻结当前任务状态
 
-在回答任何问题之前，先在心里记下：
+在回答任何内容之前，先在心中记下：
+- 当前活跃的任务是什么？（正在处理什么文件、功能或问题）
+- 在调用 `/aside` 的那一刻，正在进行的步骤是什么？
+- 接下来将要发生什么？
 
-* 当前活动任务是什么？（正在处理哪个文件、功能或问题）
-* 在调用 `/aside` 时，进行到哪一步了？
-* 接下来原本要发生什么？
-
-在旁述期间，**不要**触碰、编辑、创建或删除任何文件。
+在 aside 期间，不要触碰、编辑、创建或删除任何文件。
 
 ### 步骤 2：直接回答问题
 
-以最简洁但仍完整有用的形式回答问题。
+以仍然完整且有用的最简洁形式回答问题。
 
-* 先说答案，再说推理过程
-* 保持简短——如果需要完整解释，请在任务结束后再提供
-* 如果问题涉及当前正在处理的文件或代码，请精确引用（相关时包括文件路径和行号）
-* 如果回答问题需要读取文件，就读它——但只读不写
+- 先给出答案，而不是推理过程
+- 保持简短——如果需要完整解释，提议在任务结束后深入讲解
+- 如果问题涉及正在处理的当前文件或代码，精确引用（如相关，给出文件路径和行号）
+- 如果回答需要读取文件，就读取——但只读不写
 
-将响应格式化为：
+按以下格式组织响应：
 
 ```
-ASIDE: [restate the question briefly]
+ASIDE: [简要重述问题]
 
-[Your answer here]
+[你的回答]
 
-— Back to task: [one-line description of what was being done]
+— 回到任务：[对正在做的事情的一行描述]
 ```
 
 ### 步骤 3：恢复主任务
 
-在给出答案后，立即从暂停的确切点继续执行活动任务。除非旁述回答揭示了阻碍或需要重新考虑当前方法的理由（见边缘情况），否则不要请求恢复许可。
+给出回答后，立即从暂停的确切位置继续活跃任务。不要请求恢复许可，除非 aside 的回答揭示了阻塞项或重新考虑当前方法的理由（参见边界情况）。
 
-***
+---
 
-## 边缘情况
+## 边界情况
 
-**未提供问题（`/aside` 后面没有内容）：**
-回复：
-
+**没有提供问题（`/aside` 后面没有任何内容）：**
+回应：
 ```
-ASIDE: no question provided
+ASIDE: 未提供问题
 
-What would you like to know? (ask your question and I'll answer without losing the current task context)
+你想了解什么？（提出你的问题，我会在不丢失当前任务上下文的情况下回答）
 
-— Back to task: [one-line description of what was being done]
+— 回到任务：[对正在做的事情的一行描述]
 ```
 
 **问题揭示了当前任务的潜在问题：**
-在恢复之前清楚地标记出来：
-
+在恢复之前清晰地标记出来：
 ```
-ASIDE: [answer]
+ASIDE: [回答]
 
-WARNING: Note: This answer suggests [issue] with the current approach. Want to address this before continuing, or proceed as planned?
+WARNING: 注意：此回答暗示当前方法存在 [问题]。是想在继续之前处理，还是按计划继续？
 ```
+在恢复之前等待用户的决定。
 
-等待用户的决定后再恢复。
-
-**问题实际上是任务重定向（而非旁述问题）：**
-如果问题暗示要改变正在构建的内容（例如，`/aside actually, let's use Redis instead`），请澄清：
-
+**问题实际上是任务重定向（而非旁支问题）：**
+如果该问题暗示要更改正在构建的内容（例如 `/aside 其实，我们改用 Redis 吧`），澄清：
 ```
-ASIDE: That sounds like a direction change, not just a side question.
-Do you want to:
-  (a) Answer this as information only and keep the current plan
-  (b) Pause the current task and change approach
+ASIDE: 这听起来像是方向变更，而不只是一个旁支问题。
+你想：
+  (a) 仅作为信息回答，并保留当前计划
+  (b) 暂停当前任务并更改方法
 ```
+等待用户的回答——不要做假设。
 
-等待用户的回答——不要自行假设。
+**问题关于当前打开的文件或代码：**
+从实时上下文回答。如果该文件在 session 中已读取过，直接引用它。如果没有，现在读取（只读）并用 file:line 引用回答。
 
-**问题涉及当前打开的文件或代码：**
-根据实时上下文回答。如果该文件在会话早期已被读取，直接引用它。如果尚未读取，现在读取它（只读）并在回答时附带文件:行号引用。
-
-**无活动任务（调用 `/aside` 时没有进行中的任务）：**
-仍然使用标准包装器，以保持响应格式一致：
-
+**没有活跃任务（调用 `/aside` 时没有任何正在进行的任务）：**
+仍然使用标准包装格式，使响应结构保持一致：
 ```
-ASIDE: [restate the question briefly]
+ASIDE: [简要重述问题]
 
-[Your answer here]
+[你的回答]
 
-— Back to task: no active task to resume
+— 回到任务：没有可恢复的活跃任务
 ```
 
-**问题需要长篇回答：**
-简洁地给出核心答案，然后提供：
-
+**问题需要较长回答：**
+简明地给出核心回答，然后提议：
 ```
-That's the short version. Want a deeper explanation after we finish [current task]?
+这是简短版本。想在我们完成 [当前任务] 后获得更深入的解释吗？
 ```
 
 **连续多个 `/aside` 问题：**
-依次回答每个问题。在回答完最后一个问题后，恢复主任务。不要在一连串旁述中丢失任务状态。
+依次回答每个问题。在最后一个回答之后，恢复主任务。不要在一连串 aside 中丢失任务状态。
 
-**旁述回答暗示需要进行代码更改：**
-记下所需的更改，但不要在旁述期间进行更改：
-
+**Aside 的回答暗示需要进行代码更改：**
+记下所需的更改，但不要在 aside 期间进行：
 ```
-ASIDE: [answer]
+ASIDE: [回答]
 
- Worth fixing: [what should be changed]. I'll flag this after the current task unless you want to address it now.
+ 值得修复：[应该更改什么]。除非你现在想处理，否则我会在当前任务之后标记出来。
 ```
 
-**问题含糊不清或过于笼统：**
-提出一个澄清性问题——一个能获取回答所需信息的最简短问题。不要提出多个问题。
+**问题含糊或过于模糊：**
+提出一个澄清问题——能获得回答所需信息的最短问题。不要提出多个问题。
 
-***
+---
 
 ## 示例输出
 
 ```
-User: /aside what does fetchWithRetry() actually do?
+用户：/aside fetchWithRetry() 实际做什么？
 
-ASIDE: what does fetchWithRetry() do?
+ASIDE: fetchWithRetry() 做什么？
 
-fetchWithRetry() (src/api/retry.ts:12) attempts the request up to 3 times with
-exponential backoff (250ms → 500ms → 1s). It only retries on 5xx responses and
-network errors — 4xx errors are treated as final and not retried.
+fetchWithRetry() (src/api/retry.ts:12) 最多尝试请求 3 次，采用指数退避
+（250ms → 500ms → 1s）。它仅对 5xx 响应和网络错误进行重试——4xx 错误
+被视为最终结果，不进行重试。
 
-— Back to task: refactoring the auth middleware in src/middleware/auth.ts
+— 回到任务：重构 src/middleware/auth.ts 中的 auth 中间件
 ```
 
 ```
-User: /aside is the approach we're taking thread-safe?
+用户：/aside 我们采用的方法是 thread-safe 的吗？
 
-ASIDE: is the current approach thread-safe?
+ASIDE: 当前方法是 thread-safe 的吗？
 
-No — the shared cache object in src/cache/store.ts:34 is mutated without locking.
-Under concurrent requests this is a race condition. It's low risk in a single-process
-Node.js server but would be a real problem with worker threads or clustering.
+不是——src/cache/store.ts:34 中的共享 cache 对象在没有加锁的情况下被修改。
+在并发请求下，这是一个竞态条件。在单进程 Node.js 服务器中风险较低，但在
+worker threads 或集群下会是个真正的问题。
 
-WARNING: Note: This could affect the feature we're building. Want to address this now or continue and fix it in a follow-up?
+WARNING: 注意：这可能影响我们正在构建的功能。是想现在处理，还是继续并在之后修复？
 ```
 
-***
+---
 
 ## 注意事项
 
-* 在旁述期间**绝不**修改文件——仅限只读访问
-* 旁述是对话暂停，不是新任务——必须始终恢复原始任务
-* 保持回答聚焦：目标是快速为用户扫清障碍，而不是进行长篇大论
-* 如果旁述引发了更广泛的讨论，请先完成当前任务，除非旁述揭示了阻碍
-* 除非明确与任务结果相关，否则旁述内容不会保存到会话文件中
+- 在 aside 期间永远不要修改文件——只读访问
+- aside 是对话暂停，不是新任务——原始任务必须总是恢复
+- 保持回答聚焦：目标是快速解除用户的阻塞，而不是讲课
+- 如果 aside 引发了更大的讨论，先完成当前任务，除非 aside 揭示了阻塞项
+- aside 不会被保存到 session 文件，除非与任务结果明确相关

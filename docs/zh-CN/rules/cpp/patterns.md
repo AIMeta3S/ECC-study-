@@ -8,14 +8,13 @@ paths:
   - "**/*.h"
   - "**/CMakeLists.txt"
 ---
-
 # C++ 模式
 
-> 本文档基于 [common/patterns.md](../common/patterns.md) 扩展了 C++ 特定内容。
+> 本文件扩展了 [common/patterns.md](../common/patterns.md)，增加了 C++ 特定内容。
 
-## RAII（资源获取即初始化）
+## RAII (Resource Acquisition Is Initialization)
 
-将资源生命周期与对象生命周期绑定：
+将资源的生命周期绑定到对象的生命周期：
 
 ```cpp
 class FileHandle {
@@ -29,24 +28,24 @@ private:
 };
 ```
 
-## 三五法则/零法则
+## Rule of Five/Zero
 
-* **零法则**：优先使用不需要自定义析构函数、拷贝/移动构造函数或赋值运算符的类。
-* **五法则**：如果你定义了析构函数、拷贝构造函数、拷贝赋值运算符、移动构造函数或移动赋值运算符中的任何一个，那么就需要定义全部五个。
+- **Rule of Zero**：优先使用不需要自定义析构函数、拷贝/移动构造函数或赋值运算符的类
+- **Rule of Five**：如果定义了析构函数/拷贝构造/拷贝赋值/移动构造/移动赋值中的任意一个，就要全部定义这五个
 
-## 值语义
+## Value Semantics
 
-* 按值传递小型/平凡类型。
-* 按 `const&` 传递大型类型。
-* 按值返回（依赖 RVO/NRVO）。
-* 对于接收后即被消耗的参数，使用移动语义。
+- 按值传递小型/简单类型
+- 通过 `const&` 传递大型类型
+- 按值返回（依赖 RVO/NRVO）
+- 对 sink parameter 使用 move semantics
 
-## 错误处理
+## Error Handling
 
-* 使用异常处理异常情况。
-* 对于可能不存在的值，使用 `std::optional`。
-* 对于预期的失败，使用 `std::expected`（C++23）或结果类型。
+- 在异常情况下使用 exception
+- 对可能不存在的值使用 `std::optional`
+- 对预期内的失败使用 `std::expected`（C++23）或 result type
 
-## 参考
+## Reference
 
-有关全面的 C++ 模式和反模式，请参阅技能：`cpp-coding-standards`。
+参见 skill：`cpp-coding-standards`，了解全面的 C++ 模式与 anti-pattern。

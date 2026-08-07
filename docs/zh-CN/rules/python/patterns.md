@@ -3,12 +3,11 @@ paths:
   - "**/*.py"
   - "**/*.pyi"
 ---
-
 # Python 模式
 
-> 本文档扩展了 [common/patterns.md](../common/patterns.md)，补充了 Python 特定的内容。
+> 本文件在 [common/patterns.md](../common/patterns.md) 基础上扩展了 Python 特定内容。
 
-## 协议（鸭子类型）
+## Protocol (Duck Typing)
 
 ```python
 from typing import Protocol
@@ -18,7 +17,7 @@ class Repository(Protocol):
     def save(self, entity: dict) -> dict: ...
 ```
 
-## 数据类作为 DTO
+## Dataclasses as DTOs
 
 ```python
 from dataclasses import dataclass
@@ -30,11 +29,11 @@ class CreateUserRequest:
     age: int | None = None
 ```
 
-## 上下文管理器与生成器
+## Context Managers & Generators
 
-* 使用上下文管理器（`with` 语句）进行资源管理
-* 使用生成器进行惰性求值和内存高效迭代
+- 使用 context manager（`with` 语句）进行资源管理
+- 使用 generators 实现 lazy evaluation 和内存高效的迭代
 
 ## 参考
 
-查看技能：`python-patterns`，了解包括装饰器、并发和包组织在内的综合模式。
+参见 skill：`python-patterns`，了解涵盖 decorators、并发和包组织的全面模式。

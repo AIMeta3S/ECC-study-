@@ -3,10 +3,9 @@ paths:
   - "**/*.py"
   - "**/*.pyi"
 ---
-
 # Python 测试
 
-> 本文件在 [通用/测试.md](../common/testing.md) 的基础上扩展了 Python 特定的内容。
+> 本文件扩展了 [common/testing.md](../common/testing.md)，补充 Python 专属内容。
 
 ## 框架
 
@@ -36,4 +35,4 @@ def test_database_connection():
 
 ## 参考
 
-查看技能：`python-testing` 以获取详细的 pytest 模式和夹具信息。
+参见 skill：`python-testing`，了解详细的 pytest 模式与 fixtures。

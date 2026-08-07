@@ -1,29 +1,30 @@
 ---
 name: evm-token-decimals
-description: 防止跨EVM链的静默小数不匹配错误。涵盖运行时小数查找、链感知缓存、桥接代币精度漂移以及面向机器人、仪表盘和DeFi工具的安全归一化。
-origin: ECC direct-port adaptation
+description: 防止跨 EVM 链出现悄无声息的 decimals 不一致 bug。涵盖运行时 decimals 查询、按链感知的 cache、bridged-token 精度漂移，以及面向 bot、dashboard 与 DeFi 工具的安全归一化处理。
+metadata:
+  origin: ECC 直接移植改编
 version: "1.0.0"
 ---
 
-# EVM 代币精度
+# EVM Token Decimals
 
-静默的精度不匹配是导致余额或美元价值出现数量级偏差且不抛出错误的最常见原因之一。
+悄无声息的 decimals 不一致是最容易导致余额或 USD 数值偏差若干个数量级却不抛出错误的隐患之一。
 
-## 适用场景
+## 使用场景
 
-* 在 Python、TypeScript 或 Solidity 中读取 ERC-20 余额
-* 根据链上余额计算法币价值
-* 跨多条 EVM 链比较代币数量
-* 处理跨链桥接资产
-* 构建投资组合追踪器、机器人或聚合器
+- 使用 Python、TypeScript 或 Solidity 读取 ERC-20 余额
+- 根据链上余额计算法币价值
+- 跨多条 EVM 链比较 token 数量
+- 处理 bridged 资产
+- 构建投资组合追踪器、bot 或聚合器
 
 ## 工作原理
 
-切勿假设稳定币在所有链上使用相同的精度。在运行时查询 `decimals()`，按 `(chain_id, token_address)` 进行缓存，并使用精度安全的数学运算进行价值计算。
+绝不要假设稳定币在所有地方都使用相同的 decimals。在运行时查询 `decimals()`，按 `(chain_id, token_address)` 进行 cache，并在数值计算中使用对 decimals 安全的数学运算。
 
 ## 示例
 
-### 运行时查询精度
+### 运行时查询 decimals
 
 ```python
 from decimal import Decimal
@@ -47,9 +48,9 @@ def get_token_balance(w3: Web3, token_address: str, wallet: str) -> Decimal:
     return Decimal(raw) / Decimal(10 ** decimals)
 ```
 
-不要硬编码 `1_000_000`，因为同名代币在其他链上通常有 6 位小数。
+不要硬编码 `1_000_000`，因为某个 symbol 通常会在其他地方使用 6 位 decimals。
 
-### 按链和代币缓存
+### 按 chain 和 token 进行 cache
 
 ```python
 from functools import lru_cache
@@ -64,7 +65,7 @@ def get_decimals(chain_id: int, token_address: str) -> int:
     return contract.functions.decimals().call()
 ```
 
-### 防御性处理异常代币
+### 防御性地处理异常 token
 
 ```python
 try:
@@ -78,9 +79,9 @@ except Exception:
     decimals = 18
 ```
 
-记录回退值并保持可见。旧版或非标准代币仍然存在。
+记录 fallback 日志并保持可见。老旧或非标准的 token 依然存在。
 
-### 在 Solidity 中归一化为 18 位 WAD 精度
+### 在 Solidity 中归一化为 18-decimal 的 WAD
 
 ```solidity
 interface IERC20Metadata {
@@ -95,7 +96,7 @@ function normalizeToWad(address token, uint256 amount) internal view returns (ui
 }
 ```
 
-### 使用 ethers 的 TypeScript 示例
+### 搭配 ethers 的 TypeScript
 
 ```typescript
 import { Contract, formatUnits } from 'ethers';
@@ -115,7 +116,7 @@ async function getBalance(provider: any, tokenAddress: string, wallet: string): 
 }
 ```
 
-### 快速链上检查
+### 链上快速检查
 
 ```bash
 cast call <token_address> "decimals()(uint8)" --rpc-url <rpc>
@@ -123,8 +124,8 @@ cast call <token_address> "decimals()(uint8)" --rpc-url <rpc>
 
 ## 规则
 
-* 始终在运行时查询 `decimals()`
-* 按链加代币地址进行缓存，而非按代币符号
-* 使用 `Decimal`、`BigInt` 或等效的精确数学运算，避免使用浮点数
-* 在跨链桥接或代币包装变更后重新查询精度
-* 在比较或定价前，始终将内部记账归一化为一致精度
+- 始终在运行时查询 `decimals()`
+- 按 chain 加 token 地址进行 cache，而非按 symbol
+- 使用 `Decimal`、`BigInt` 或等价的精确数学运算，而非浮点数
+- 在 bridging 或 wrapper 变更后重新查询 decimals
+- 在比较或定价之前，对内部记账进行一致的归一化

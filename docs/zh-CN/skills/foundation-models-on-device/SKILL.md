@@ -1,24 +1,24 @@
 ---
 name: foundation-models-on-device
-description: 苹果FoundationModels框架用于设备上的LLM——文本生成、使用@Generable进行引导生成、工具调用，以及在iOS 26+中的快照流。
+description: Apple FoundationModels 框架用于端侧 LLM —— 文本生成、使用 @Generable 的 guided generation、tool calling，以及 iOS 26+ 的 snapshot streaming。
 ---
 
-# FoundationModels：设备端 LLM（iOS 26）
+# FoundationModels：端侧 LLM（iOS 26）
 
-使用 FoundationModels 框架将苹果的设备端语言模型集成到应用中的模式。涵盖文本生成、使用 `@Generable` 的结构化输出、自定义工具调用以及快照流式传输——全部在设备端运行，以保护隐私并支持离线使用。
+使用 FoundationModels 框架将 Apple 的端侧语言模型集成到 App 中的各种模式。涵盖文本生成、使用 `@Generable` 的结构化输出、自定义 tool calling 以及 snapshot streaming —— 全部在端侧运行，以支持隐私保护和离线使用。
 
-## 何时启用
+## 何时激活
 
-* 使用 Apple Intelligence 在设备端构建 AI 功能
-* 无需依赖云端即可生成或总结文本
-* 从自然语言输入中提取结构化数据
-* 为特定领域的 AI 操作实现自定义工具调用
-* 流式传输结构化响应以实现实时 UI 更新
-* 需要保护隐私的 AI（数据不离开设备）
+- 使用 Apple Intelligence 端侧能力构建 AI 驱动的功能
+- 在不依赖云端的情况下生成或汇总文本
+- 从自然语言输入中提取结构化数据
+- 为特定领域的 AI 操作实现自定义 tool calling
+- 流式传输结构化响应以实时更新 UI
+- 需要保护隐私的 AI（数据不离开设备）
 
-## 核心模式 — 可用性检查
+## 核心模式 —— 可用性检查
 
-在创建会话之前，始终检查模型可用性：
+在创建 session 之前，始终检查模型可用性：
 
 ```swift
 struct GenerativeView: View {
@@ -41,15 +41,15 @@ struct GenerativeView: View {
 }
 ```
 
-## 核心模式 — 基础会话
+## 核心模式 —— 基础 Session
 
 ```swift
-// Single-turn: create a new session each time
+// 单轮：每次创建新的 session
 let session = LanguageModelSession()
 let response = try await session.respond(to: "What's a good month to visit Paris?")
 print(response.content)
 
-// Multi-turn: reuse session for conversation context
+// 多轮：复用 session 以保留对话上下文
 let session = LanguageModelSession(instructions: """
     You are a cooking assistant.
     Provide recipe suggestions based on ingredients.
@@ -60,18 +60,17 @@ let first = try await session.respond(to: "I have chicken and rice")
 let followUp = try await session.respond(to: "What about a vegetarian option?")
 ```
 
-指令的关键点：
+instructions 的要点：
+- 定义模型角色（"You are a mentor"）
+- 指定要做什么（"Help extract calendar events"）
+- 设置风格偏好（"Respond as briefly as possible"）
+- 添加安全措施（"Respond with 'I can't help with that' for dangerous requests"）
 
-* 定义模型的角色（"你是一位导师"）
-* 指定要做什么（"帮助提取日历事件"）
-* 设置风格偏好（"尽可能简短地回答"）
-* 添加安全措施（"对于危险请求，回复'我无法提供帮助'"）
+## 核心模式 —— 使用 `@Generable` 的 Guided Generation
 
-## 核心模式 — 使用 @Generable 进行引导式生成
+生成结构化的 Swift 类型，而非原始字符串：
 
-生成结构化的 Swift 类型，而不是原始字符串：
-
-### 1. 定义可生成类型
+### 1. 定义 Generable 类型
 
 ```swift
 @Generable(description: "Basic profile information about a cat")
@@ -94,23 +93,23 @@ let response = try await session.respond(
     generating: CatProfile.self
 )
 
-// Access structured fields directly
+// 直接访问结构化字段
 print("Name: \(response.content.name)")
 print("Age: \(response.content.age)")
 print("Profile: \(response.content.profile)")
 ```
 
-### 支持的 @Guide 约束
+### 支持的 `@Guide` 约束
 
-* `.range(0...20)` — 数值范围
-* `.count(3)` — 数组元素数量
-* `description:` — 生成的语义引导
+- `.range(0...20)` —— 数值范围
+- `.count(3)` —— 数组元素数量
+- `description:` —— 用于生成的语义指引
 
-## 核心模式 — 工具调用
+## 核心模式 —— Tool Calling
 
 让模型调用自定义代码以执行特定领域的任务：
 
-### 1. 定义工具
+### 1. 定义 Tool
 
 ```swift
 struct RecipeSearchTool: Tool {
@@ -133,14 +132,14 @@ struct RecipeSearchTool: Tool {
 }
 ```
 
-### 2. 创建带工具的会话
+### 2. 使用 Tools 创建 Session
 
 ```swift
 let session = LanguageModelSession(tools: [RecipeSearchTool()])
 let response = try await session.respond(to: "Find me some pasta recipes")
 ```
 
-### 3. 处理工具错误
+### 3. 处理 Tool 错误
 
 ```swift
 do {
@@ -148,14 +147,14 @@ do {
 } catch let error as LanguageModelSession.ToolCallError {
     print(error.tool.name)
     if case .databaseIsEmpty = error.underlyingError as? RecipeSearchToolError {
-        // Handle specific tool error
+        // 处理特定的 tool 错误
     }
 }
 ```
 
-## 核心模式 — 快照流式传输
+## 核心模式 —— Snapshot Streaming
 
-使用 `PartiallyGenerated` 类型为实时 UI 流式传输结构化响应：
+使用 `PartiallyGenerated` 类型流式传输结构化响应以实现实时 UI：
 
 ```swift
 @Generable
@@ -170,7 +169,7 @@ let stream = session.streamResponse(
 )
 
 for try await partial in stream {
-    // partial: TripIdeas.PartiallyGenerated (all properties Optional)
+    // partial: TripIdeas.PartiallyGenerated（所有属性均为 Optional）
     print(partial)
 }
 ```
@@ -205,40 +204,40 @@ var body: some View {
 
 ## 关键设计决策
 
-| 决策 | 理由 |
-|----------|-----------|
-| 设备端执行 | 隐私性——数据不离开设备；支持离线工作 |
-| 4,096 个令牌限制 | 设备端模型约束；跨会话分块处理大数据 |
-| 快照流式传输（非增量） | 对结构化输出友好；每个快照都是一个完整的部分状态 |
-| `@Generable` 宏 | 为结构化生成提供编译时安全性；自动生成 `PartiallyGenerated` 类型 |
-| 每个会话单次请求 | `isResponding` 防止并发请求；如有需要，创建多个会话 |
-| `response.content`（而非 `.output`） | 正确的 API——始终通过 `.content` 属性访问结果 |
+| 决策 | 原因 |
+|------|------|
+| 端侧执行 | 隐私保护 —— 数据不离开设备；可离线工作 |
+| 4,096 token 限制 | 端侧模型约束；跨 session 对大数据分块 |
+| Snapshot streaming（而非增量） | 对结构化输出友好；每个 snapshot 是一个完整的部分状态 |
+| `@Generable` macro | 为结构化生成提供编译期安全；自动生成 `PartiallyGenerated` 类型 |
+| 每个 session 单次请求 | `isResponding` 防止并发请求；如需要可创建多个 session |
+| `response.content`（而非 `.output`） | 正确的 API —— 始终通过 `.content` 属性访问结果 |
 
 ## 最佳实践
 
-* 在创建会话之前**始终检查 `model.availability`**——处理所有不可用的情况
-* **使用 `instructions`** 来引导模型行为——它们的优先级高于提示词
-* 在发送新请求之前**检查 `isResponding`**——会话一次处理一个请求
-* 通过 `response.content` **访问结果**——而不是 `.output`
-* **将大型输入分块处理**——4,096 个令牌的限制适用于指令、提示词和输出的总和
-* 对于结构化输出**使用 `@Generable`**——比解析原始字符串提供更强的保证
-* **使用 `GenerationOptions(temperature:)`** 来调整创造力（值越高越有创意）
-* **使用 Instruments 进行监控**——使用 Xcode Instruments 来分析请求性能
+- **始终检查 `model.availability`** —— 在创建 session 之前处理所有不可用情况
+- **使用 `instructions`** 引导模型行为 —— 其优先级高于 prompt
+- **在发送新请求之前检查 `isResponding`** —— session 一次只处理一个请求
+- **通过 `response.content`** 访问结果 —— 而非 `.output`
+- **将大输入拆分为分块** —— 4,096 token 限制适用于 instructions + prompt + output 的总和
+- **使用 `@Generable`** 进行结构化输出 —— 比解析原始字符串提供更强的保证
+- **使用 `GenerationOptions(temperature:)`** 调节创造性（数值越高越有创造性）
+- **使用 Instruments 监控** —— 用 Xcode Instruments 分析请求性能
 
 ## 应避免的反模式
 
-* 未先检查 `model.availability` 就创建会话
-* 发送超过 4,096 个令牌上下文窗口的输入
-* 尝试在单个会话上进行并发请求
-* 使用 `.output` 而不是 `.content` 来访问响应数据
-* 当 `@Generable` 结构化输出可行时，却去解析原始字符串响应
-* 在单个提示词中构建复杂的多步逻辑——将其拆分为多个聚焦的提示词
-* 假设模型始终可用——设备的资格和设置各不相同
+- 未先检查 `model.availability` 就创建 session
+- 发送超过 4,096 token context window 的输入
+- 在单个 session 上尝试并发请求
+- 使用 `.output` 而非 `.content` 访问响应数据
+- 当 `@Generable` 结构化输出可用时，仍解析原始字符串响应
+- 在单个 prompt 中构建复杂的多步骤逻辑 —— 应拆分为多个聚焦的 prompt
+- 假设模型始终可用 —— 设备资格和设置各不相同
 
-## 何时使用
+## 适用场景
 
-* 为注重隐私的应用进行设备端文本生成
-* 从用户输入（表单、自然语言命令）中提取结构化数据
-* 必须离线工作的 AI 辅助功能
-* 逐步显示生成内容的流式 UI
-* 通过工具调用（搜索、计算、查找）执行特定领域的 AI 操作
+- 为隐私敏感的 App 进行端侧文本生成
+- 从用户输入中提取结构化数据（表单、自然语言命令）
+- 必须离线工作的 AI 辅助功能
+- 逐步展示生成内容的流式 UI
+- 通过 tool calling 实现特定领域的 AI 操作（搜索、计算、查询）

@@ -2,12 +2,11 @@
 paths:
   - "**/*.rs"
 ---
+# Rust 模式
 
-# Rust 设计模式
+> 本文件在 [common/patterns.md](../common/patterns.md) 基础上扩展了 Rust 特定的内容。
 
-> 本文档在 [common/patterns.md](../common/patterns.md) 的基础上，补充了 Rust 特有的内容。
-
-## 基于 Trait 的 Repository 模式
+## 使用 Trait 的 Repository Pattern
 
 将数据访问封装在 trait 之后：
 
@@ -20,11 +19,11 @@ pub trait OrderRepository: Send + Sync {
 }
 ```
 
-具体的实现负责处理存储细节（如 Postgres、SQLite，或用于测试的内存存储）。
+具体实现负责处理存储细节（Postgres、SQLite、用于测试的内存实现）。
 
-## 服务层
+## Service Layer
 
-业务逻辑位于服务结构体中；通过构造函数注入依赖：
+将业务逻辑放在 service struct 中；通过 constructor 注入依赖：
 
 ```rust
 pub struct OrderService {
@@ -46,23 +45,23 @@ impl OrderService {
 }
 ```
 
-## 为类型安全使用 Newtype 模式
+## 用于类型安全的 Newtype Pattern
 
-使用不同的包装类型防止参数混淆：
+使用不同的 wrapper type 防止参数混淆：
 
 ```rust
 struct UserId(u64);
 struct OrderId(u64);
 
 fn get_order(user: UserId, order: OrderId) -> anyhow::Result<Order> {
-    // Can't accidentally swap user and order IDs at call sites
+    // 在调用处不会意外交换 user 和 order ID
     todo!()
 }
 ```
 
-## 枚举状态机
+## Enum 状态机
 
-将状态建模为枚举 —— 使非法状态无法表示：
+将状态建模为 enum——让非法状态无法表达：
 
 ```rust
 enum ConnectionState {
@@ -84,11 +83,11 @@ fn handle(state: &ConnectionState) {
 }
 ```
 
-始终进行穷尽匹配 —— 对于业务关键的枚举，不要使用通配符 `_`。
+始终进行 exhaustive match——业务关键的 enum 不要使用通配符 `_`。
 
-## 建造者模式
+## Builder Pattern
 
-适用于具有多个可选参数的结构体：
+适用于具有许多可选参数的 struct：
 
 ```rust
 pub struct ServerConfig {
@@ -129,9 +128,9 @@ impl ServerConfigBuilder {
 }
 ```
 
-## 密封 Trait 以控制扩展性
+## 用于控制可扩展性的 Sealed Trait
 
-使用私有模块来密封一个 trait，防止外部实现：
+使用私有 module 来 seal 一个 trait，防止外部实现：
 
 ```rust
 mod private {
@@ -149,9 +148,9 @@ impl Format for Json {
 }
 ```
 
-## API 响应包装器
+## API Response Envelope
 
-使用泛型枚举实现一致的 API 响应：
+使用泛型 enum 实现一致的 API 响应：
 
 ```rust
 #[derive(Debug, serde::Serialize)]
@@ -166,4 +165,4 @@ pub enum ApiResponse<T: serde::Serialize> {
 
 ## 参考资料
 
-参见技能：`rust-patterns`，其中包含全面的模式，涵盖所有权、trait、泛型、并发和异步。
+参见 skill：`rust-patterns`，其中提供了涵盖 ownership、trait、generics、concurrency 和 async 的全面模式。

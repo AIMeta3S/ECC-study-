@@ -9,7 +9,11 @@
 
 类型：feat, fix, refactor, docs, test, chore, perf, ci
 
+<<<<<<< HEAD
 注意：要禁用提交的共同作者署名，请在 `~/.claude/settings.json` 中设置 `"includeCoAuthoredBy": false` (Claude Code 默认会附加 `Co-Authored-By` )。
+=======
+注意：若要禁用共同作者归因，请在 `~/.claude/settings.json` 中设置 `"includeCoAuthoredBy": false`；Claude Code 默认会附加 `Co-Authored-By`，而 ECC 不会附带此设置。
+>>>>>>> upstream/main
 
 ## Pull Request 工作流
 

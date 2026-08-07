@@ -140,10 +140,16 @@ Validate and sanitize all user input before processing.
 
 ## Instinct 提升（项目 → 全局）
 
+<<<<<<< HEAD
 当满足以下条件时，instinct 应从项目级提升为全局：
 1. **相同模式**（按 id 或相似 trigger）存在于 **2+ 个不同项目**
 2. 每个实例的置信度 **>= 0.8**
 3. domain 属于全局友好列表（security、general-best-practices、workflow）
+=======
+1. **相同模式**（通过 id 或类似触发器）存在于 **2 个以上不同的项目**中
+2. 各实例的平均置信度 **>= 0.8**
+3. 其领域属于全局友好列表（安全、通用最佳实践、工作流）
+>>>>>>> upstream/main
 
 提升由 `instinct-cli.py promote` 命令或 `/evolve` 分析处理。
 

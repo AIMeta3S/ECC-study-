@@ -1,5 +1,6 @@
 ---
 name: token-budget-advisor
+<<<<<<< HEAD
 description: >-
   在回答之前，就响应深度消耗向用户提供知情选择。当用户明确想要控制响应长度、深度或 token budget 时，使用此 skill。
   TRIGGER when: "token budget", "token count", "token usage", "token limit",
@@ -10,6 +11,10 @@ description: >-
   DO NOT TRIGGER when: 用户已在当前 session 中指定了级别（维持该级别），请求显然只需一个词的回答，或"token"指的是 auth/session/payment token 而非响应大小。
 metadata:
   origin: community
+=======
+description: 在回答前，为用户提供关于消耗多少响应深度的知情选择。当用户明确希望控制响应长度、深度或令牌预算时使用此技能。触发条件："token budget", "token count", "token usage", "token limit", "response length", "answer depth", "short version", "brief answer", "detailed answer", "exhaustive answer", "respuesta corta vs larga", "cuántos tokens", "ahorrar tokens", "responde al 50%", "dame la versión corta", "quiero controlar cuánto usas"，或用户明确要求控制答案大小或深度的清晰变体。不触发条件：用户已在当前会话中指定了级别（保持该级别），请求明显是单字答案，或"token"指代认证/会话/支付令牌而非响应大小。
+origin: community
+>>>>>>> upstream/main
 ---
 
 # Token Budget Advisor (TBA)

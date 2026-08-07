@@ -6,6 +6,8 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { ensureAgentDataHomeEnv } = require('../lib/agent-data-home');
 
+const SHELL_PROBE_TIMEOUT_MS = 2000;
+
 function readStdinRaw() {
   try {
     return fs.readFileSync(0, 'utf8');
@@ -95,9 +97,12 @@ function findShellBinary() {
     const probe = spawnSync(candidate, isPowerShellBin(candidate) ? psProbeArgs : shProbeArgs, {
       stdio: 'ignore',
       windowsHide: true,
-      timeout: 30000,
+      timeout: SHELL_PROBE_TIMEOUT_MS,
     });
-    if (!probe.error) {
+    // A candidate is only usable if it both spawns AND exits cleanly. The
+    // Windows System32 bash.exe WSL launcher spawns without error but exits
+    // non-zero when no distro is installed, so !probe.error alone is not enough.
+    if (!probe.error && probe.status === 0) {
       _cachedShell = candidate;
       return _cachedShell;
     }
@@ -117,8 +122,14 @@ function findBashBinary() {
   candidates.push('bash.exe', 'bash');
 
   for (const candidate of candidates) {
-    const probe = spawnSync(candidate, ['-c', ':'], { stdio: 'ignore', windowsHide: true, timeout: 30000 });
-    if (!probe.error) {
+    const probe = spawnSync(candidate, ['-c', ':'], {
+      stdio: 'ignore',
+      windowsHide: true,
+      timeout: SHELL_PROBE_TIMEOUT_MS,
+    });
+    // Require a clean exit, not just a successful spawn: the Windows System32
+    // bash.exe WSL stub spawns fine but exits non-zero with no distro installed.
+    if (!probe.error && probe.status === 0) {
       _cachedBash = candidate;
       return _cachedBash;
     }

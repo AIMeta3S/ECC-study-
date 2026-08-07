@@ -1,9 +1,13 @@
 ---
 name: logistics-exception-management
+<<<<<<< HEAD
 description: >
   用于处理货运异常、发运延误、货损、丢失及承运人争议的成文专业知识。源自拥有 15 年以上运营经验的物流专业人士。
   包含升级协议、承运人专属行为特征、索赔流程和判断框架。
   在处理发运异常、货运索赔、交付问题或承运人争议时使用。
+=======
+description: 针对货运异常、货物延误、损坏、丢失和承运商纠纷的编码化专业知识，由拥有15年以上运营经验的物流专业人士提供。包括升级协议、承运商特定行为、索赔程序和判断框架。在处理运输异常、货运索赔、交付问题或承运商纠纷时使用。
+>>>>>>> upstream/main
 license: Apache-2.0
 version: 1.0.0
 homepage: https://github.com/affaan-m/everything-claude-code

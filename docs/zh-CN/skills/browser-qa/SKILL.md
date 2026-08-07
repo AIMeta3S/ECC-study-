@@ -1,9 +1,18 @@
 ---
 name: browser-qa
+<<<<<<< HEAD
 description: 部署功能后，使用本 skill 通过浏览器自动化进行视觉测试与 UI 交互验证。
 metadata:
   origin: ECC
 ---
+=======
+description: Automate visual testing and UI interaction verification using browser automation after deployment.
+metadata:
+  origin: ECC
+---
+
+# Browser QA — 自动化视觉测试与交互验证
+>>>>>>> upstream/main
 
 # 浏览器 QA — 自动化视觉测试与交互
 

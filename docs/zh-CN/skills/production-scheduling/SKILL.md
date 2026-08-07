@@ -1,10 +1,14 @@
 ---
 name: production-scheduling
+<<<<<<< HEAD
 description: >
   面向离散与批量制造中生产排程、作业排序、线平衡、换线优化与瓶颈消解的体系化专长。
   基于拥有 15 年以上经验的生产调度专家沉淀而成。涵盖 TOC/drum-buffer-rope、SMED、OEE
   分析、异常响应框架以及 ERP/MES 交互模式。当需要进行生产排程、消解瓶颈、优化换线、
   响应异常或平衡生产线时使用。
+=======
+description: 为离散和批量制造中的生产调度、作业排序、产线平衡、换模优化和瓶颈解决提供编码化专业知识。基于拥有15年以上经验的生产调度师的知识。包括约束理论/鼓-缓冲-绳、快速换模、设备综合效率分析、中断响应框架以及企业资源计划/制造执行系统交互模式。适用于调度生产、解决瓶颈、优化换模、应对中断或平衡制造产线时。
+>>>>>>> upstream/main
 license: Apache-2.0
 version: 1.0.0
 homepage: https://github.com/affaan-m/everything-claude-code

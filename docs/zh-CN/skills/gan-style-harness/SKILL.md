@@ -37,8 +37,13 @@ tools: Read, Write, Edit, Bash, Grep, Glob, Task
 
 ```
                     ┌─────────────┐
+<<<<<<< HEAD
                     │   PLANNER   │
                     │  (Opus 4.6) │
+=======
+                    │   规划器    │
+                    │  (Sonnet)   │
+>>>>>>> upstream/main
                     └──────┬──────┘
                            │ Product Spec
                            │ (features, sprints, design direction)
@@ -49,15 +54,25 @@ tools: Read, Write, Edit, Bash, Grep, Glob, Task
               │      FEEDBACK LOOP     │
               │                        │
               │  ┌──────────┐          │
+<<<<<<< HEAD
               │  │GENERATOR │--build-->│──┐
               │  │(Opus 4.6)│          │  │
+=======
+              │  │ 生成器   │--构建-->│──┐
+              │  │ (Sonnet) │          │  │
+>>>>>>> upstream/main
               │  └────▲─────┘          │  │
               │       │                │  │ live app
               │    feedback             │  │
               │       │                │  │
               │  ┌────┴─────┐          │  │
+<<<<<<< HEAD
               │  │EVALUATOR │<-test----│──┘
               │  │(Opus 4.6)│          │
+=======
+              │  │ 评估器   │<-测试---│──┘
+              │  │ (Sonnet) │          │
+>>>>>>> upstream/main
               │  │+Playwright│         │
               │  └──────────┘          │
               │                        │
@@ -79,7 +94,11 @@ tools: Read, Write, Edit, Bash, Grep, Glob, Task
 
 **Model：**Opus 4.6（规格扩展需要深度推理）
 
+<<<<<<< HEAD
 ### 2. Generator Agent
+=======
+**模型：** 默认 Sonnet；可通过 `GAN_PLANNER_MODEL=opus` 提升以获得更深入的规格扩展
+>>>>>>> upstream/main
 
 **角色：**开发者——根据规格说明实现 feature。
 
@@ -90,7 +109,17 @@ tools: Read, Write, Edit, Bash, Grep, Glob, Task
 - 管理 git 以在迭代之间进行版本控制
 - 阅读 Evaluator 反馈并在下一次迭代中纳入
 
+<<<<<<< HEAD
 **Model：**Opus 4.6（需要强大的编码能力）
+=======
+* 按结构化冲刺工作（或使用较新模型的连续模式）
+* 在编写代码前与评估器协商"冲刺合约"
+* 使用全栈工具：React、FastAPI/Express、数据库、CSS
+* 管理 git 进行迭代间的版本控制
+* 读取评估器反馈并在下一轮迭代中采纳
+
+**模型：** 默认 Sonnet；可通过 `GAN_GENERATOR_MODEL=opus` 提升以获得最强编码能力
+>>>>>>> upstream/main
 
 ### 3. Evaluator Agent
 
@@ -107,7 +136,21 @@ tools: Read, Write, Edit, Bash, Grep, Glob, Task
 - 返回包含分数和具体问题的结构化反馈
 - 经工程化设计为**严格无情**——从不称赞平庸的工作
 
+<<<<<<< HEAD
 **Model：**Opus 4.6（需要强大的判断力 + tool use）
+=======
+* 使用 **Playwright MCP** 与实时应用交互
+* 点击功能、填写表单、测试 API 端点
+* 根据四个标准评分（可配置）：
+  1. **设计质量**——是否感觉像一个连贯的整体？
+  2. **原创性**——自定义决策 vs. 模板/AI 模式？
+  3. **工艺**——排版、间距、动画、微交互？
+  4. **功能性**——所有功能是否真正工作？
+* 返回结构化反馈，包含分数和具体问题
+* 设计为**极度严格**——从不赞美平庸的工作
+
+**模型：** 默认 Sonnet；可通过 `GAN_EVALUATOR_MODEL=opus` 提升以获得更强的判断力 + 工具使用能力
+>>>>>>> upstream/main
 
 ## Evaluation Criteria
 
@@ -178,6 +221,7 @@ GAN_EVAL_CRITERIA="functionality,performance,security" \
 ### 通过 Claude Code（手动）
 
 ```bash
+<<<<<<< HEAD
 # 第 1 步：Plan
 claude -p --model opus "You are a Product Planner. Read PLANNER_PROMPT.md. Expand this brief into a full product spec: 'Build a Kanban board app'. Write spec to spec.md"
 
@@ -189,6 +233,19 @@ claude -p --model opus --allowedTools "Read,Bash,mcp__playwright__*" "You are an
 
 # 第 4 步：Generate（第 2 次迭代——读取反馈）
 claude -p --model opus "You are a Generator. Read spec.md and feedback-001.md. Address all issues. Improve the scores."
+=======
+# Step 1: Plan
+claude -p --model sonnet "You are a Product Planner. Read PLANNER_PROMPT.md. Expand this brief into a full product spec: 'Build a Kanban board app'. Write spec to spec.md"
+
+# Step 2: Generate (iteration 1)
+claude -p --model sonnet "You are a Generator. Read spec.md. Implement Sprint 1. Start the dev server on port 3000."
+
+# Step 3: Evaluate (iteration 1)
+claude -p --model sonnet --allowedTools "Read,Bash,mcp__playwright__*" "You are an Evaluator. Read EVALUATOR_PROMPT.md. Test the live app at http://localhost:3000. Score against the rubric. Write feedback to feedback-001.md"
+
+# Step 4: Generate (iteration 2 — reads feedback)
+claude -p --model sonnet "You are a Generator. Read spec.md and feedback-001.md. Address all issues. Improve the scores."
+>>>>>>> upstream/main
 
 # 重复第 3-4 步，直到满足 pass threshold
 ```
@@ -223,6 +280,7 @@ claude -p --model opus "You are a Generator. Read spec.md and feedback-001.md. A
 
 | 变量 | 默认值 | 描述 |
 |----------|---------|-------------|
+<<<<<<< HEAD
 | `GAN_MAX_ITERATIONS` | `15` | Generator-Evaluator 最大循环次数 |
 | `GAN_PASS_THRESHOLD` | `7.0` | 通过所需的 Weighted score（1-10） |
 | `GAN_PLANNER_MODEL` | `opus` | planner agent 使用的 model |
@@ -231,6 +289,16 @@ claude -p --model opus "You are a Generator. Read spec.md and feedback-001.md. A
 | `GAN_EVAL_CRITERIA` | `design,originality,craft,functionality` | 以逗号分隔的评估标准 |
 | `GAN_DEV_SERVER_PORT` | `3000` | 实际运行的应用程序所用端口 |
 | `GAN_DEV_SERVER_CMD` | `npm run dev` | 启动 dev server 的命令 |
+=======
+| `GAN_MAX_ITERATIONS` | `15` | 最大生成器-评估器循环次数 |
+| `GAN_PASS_THRESHOLD` | `7.0` | 通过所需的加权分数（1-10） |
+| `GAN_PLANNER_MODEL` | `sonnet` | 规划智能体的模型 |
+| `GAN_GENERATOR_MODEL` | `sonnet` | 生成器智能体的模型 |
+| `GAN_EVALUATOR_MODEL` | `sonnet` | 评估器智能体的模型 |
+| `GAN_EVAL_CRITERIA` | `design,originality,craft,functionality` | 逗号分隔的标准 |
+| `GAN_DEV_SERVER_PORT` | `3000` | 实时应用的端口 |
+| `GAN_DEV_SERVER_CMD` | `npm run dev` | 启动开发服务器的命令 |
+>>>>>>> upstream/main
 | `GAN_PROJECT_DIR` | `.` | 项目工作目录 |
 | `GAN_SKIP_PLANNER` | `false` | 跳过 planner，直接使用 spec |
 | `GAN_EVAL_MODE` | `playwright` | `playwright`、`screenshot` 或 `code-only` |

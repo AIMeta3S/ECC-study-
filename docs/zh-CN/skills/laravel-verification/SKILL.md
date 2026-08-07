@@ -1,8 +1,13 @@
 ---
 name: laravel-verification
+<<<<<<< HEAD
 description: "用于 Laravel 项目的验证循环：环境检查、linting、static analysis、带 coverage 的测试、安全扫描，以及 deploy 就绪。"
 metadata:
   origin: ECC
+=======
+description: "Verification loop for Laravel projects: env checks, linting, static analysis, tests with coverage, security scans, and deployment readiness."
+origin: ECC
+>>>>>>> upstream/main
 ---
 
 # Laravel 验证循环

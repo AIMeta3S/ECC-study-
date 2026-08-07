@@ -1,7 +1,11 @@
 ---
 name: quality-nonconformance
+<<<<<<< HEAD
 description: >
   面向受监管制造业中质量控制、不合格品调查、根因分析、纠正措施与供应商质量管理的体系化专业知识。源自在 FDA、IATF 16949 和 AS9100 环境下拥有 15 年以上经验的质量工程师。涵盖 NCR 生命周期管理、CAPA 系统、SPC 解读与审核方法论。在调查不合格品、执行根因分析、管理 CAPA、解读 SPC 数据或处理供应商质量问题时使用。
+=======
+description: 为受监管制造业中的质量控制、不合格调查、根本原因分析、纠正措施和供应商质量管理提供编码化专业知识。基于在FDA、IATF 16949和AS9100环境中拥有15年以上经验的质量工程师的见解。包括不合格报告生命周期管理、纠正与预防措施系统、统计过程控制解释和审核方法。适用于调查不合格、进行根本原因分析、管理纠正与预防措施、解释统计过程控制数据或处理供应商质量问题。
+>>>>>>> upstream/main
 license: Apache-2.0
 version: 1.0.0
 homepage: https://github.com/affaan-m/everything-claude-code

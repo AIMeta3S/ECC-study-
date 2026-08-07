@@ -1,9 +1,14 @@
 ---
 name: blueprint
+<<<<<<< HEAD
 description: >-
   将一行目标转化为多 session、多 agent 工程项目的分步建设计划。每个步骤都包含独立的 context brief，使新的 agent 能够零上下文执行。包含对抗性 review gate、依赖图、并行步骤检测、anti-pattern 目录和计划变更协议。触发条件：用户为复杂的多 PR 任务请求计划、blueprint 或 roadmap，或描述需要多个 session 的工作。不触发条件：任务可在单个 PR 内完成、tool 调用少于 3 次，或用户说"直接做"。
 metadata:
   origin: community
+=======
+description: 将单行目标转化为多会话、多代理工程项目的分步构建计划。每个步骤包含独立的上下文简介，以便新代理能直接执行。包括对抗性审查门、依赖图、并行步骤检测、反模式目录和计划突变协议。触发条件：当用户请求复杂多PR任务的计划、蓝图或路线图，或描述需要多个会话的工作时。不触发条件：任务可在单个PR或少于3个工具调用中完成，或用户说“直接执行”时。
+origin: community
+>>>>>>> upstream/main
 ---
 
 # Blueprint — 建设计划生成器

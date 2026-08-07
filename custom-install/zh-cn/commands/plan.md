@@ -112,8 +112,6 @@ AI 将会：
 
 写入 artifact 后，报告其路径并等待确认，然后才能编写代码。
 
-> **可视化审阅**：无需让用户输入确认，你可以在浏览器中打开 Plan Canvas（`/plan-canvas` 或 `plan-canvas` skill）来查看计划：用户可在其中直接对计划进行批注，然后点击 **批准计划（Approve plan）** 或 **请求更改（Request changes）**，这将作为您的确认信号。
-
 ## 示例用法
 
 ```markdown
@@ -184,7 +182,6 @@ AI：
 ## 与其他命令的衔接
 
 制定计划之后：
-- 使用 `/plan-canvas` 在浏览器中以可视化方式运行确认关卡（批注 + 批准）
 - 使用 `tdd-workflow` skill 以测试驱动开发方式进行实施
 - 如果出现构建错误，使用 `/build-fix`
 - 使用 `/code-review` 评审已完成的实现

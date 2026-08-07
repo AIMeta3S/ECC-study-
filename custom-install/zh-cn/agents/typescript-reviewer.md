@@ -37,7 +37,7 @@ model: sonnet
 
 ### CRITICAL —— 安全
 - **通过 `eval` / `new Function` 进行的注入**：将用户可控的输入传递给动态执行 —— 永远不要执行不可信的字符串
-- **XSS**：将未 sanitize 的用户输入赋给 `innerHTML`、`dangerouslySetInnerHTML` 或 `document.write`
+- **XSS**：将未 sanitize 的用户输入赋给 `innerHTML`、`v-html` 或 `document.write`
 - **SQL/NoSQL 注入**：在查询中使用字符串拼接 —— 使用参数化查询 或 ORM
 - **Path 遍历**：用户控制的输入用于 `fs.readFile`、`path.join` 而未使用 `path.resolve` + 前缀验证
 - **硬编码的 secrets**：源代码中存在 API keys、tokens、passwords —— 使用环境变量
@@ -59,7 +59,7 @@ model: sonnet
 - **被吞掉的错误**：空的 `catch` 块或 `catch (e) {}` 而没有任何操作
 - **没有 try/catch 的 `JSON.parse`**：在无效输入时会抛出异常 —— 始终用 try/catch 包裹
 - **抛出非 Error 对象**：`throw "message"` —— 始终使用 `throw new Error("message")`
-- **缺少错误边界**：在异步或数据获取子树的 React 组件树外缺少 `<ErrorBoundary>`
+- **缺少错误捕获**：在异步或数据获取的子组件树外缺少 `onErrorCaptured` / `errorCaptured` 处理或错误回退组件
 
 ### HIGH —— Idiomatic 模式
 - **可变共享状态**：模块级可变变量 —— 优先使用不可变数据和纯函数
@@ -74,20 +74,20 @@ model: sonnet
 - **未经验证的 `process.env` 访问**：无回退或启动验证的访问
 - **在 ESM 上下文中使用 `require()`**：混合使用模块系统而没有明确意图
 
-### MEDIUM —— React / Next.js（适用时）
+### MEDIUM —— Vue / Nuxt（适用时）
 
-> **对于 React 特定审查，优先使用 `react-reviewer`（通过 `/react-review`）。** 此部分仅作为回退 —— 当 diff 包含 `.tsx`/`.jsx` 文件时，应同时调用两个代理。完整的 React 特定 CRITICAL/HIGH 规则集（hooks 规则、`dangerouslySetInnerHTML`、RSC 边界、可访问性、渲染性能）参见 `agents/react-reviewer.md`。
+> **对于 Vue 特定审查，优先使用 `vue-reviewer`（通过 `/vue-review`）。** 此部分仅作为回退 —— 当 diff 包含 `.vue` 文件或含 Vue import 的 .ts/.js 文件时，应同时调用两个代理。完整的 Vue 特定 CRITICAL/HIGH 规则集（响应式正确性、`v-html`、composable、组件架构、Vue Router、Pinia、SSR/Nuxt、可访问性、渲染性能）参见 `agents/vue-reviewer.md`。
 
-- **缺失依赖数组**：`useEffect`/`useCallback`/`useMemo` 依赖不完整 —— 使用 exhaustive-deps lint 规则
-- **状态突变**：直接修改状态而非返回新对象
-- **使用索引作为 key prop**：动态列表中的 `key={index}` —— 使用稳定的唯一 ID
-- **派生状态使用 `useEffect`**：在渲染期间计算派生值，而非在 effect 中
-- **服务器/客户端边界泄漏**：在 Next.js 中将仅服务器模块导入客户端组件
+- **`v-for` 缺少稳定的 `:key` 或使用索引作为 key**：动态列表中的 `:key="index"` —— 使用稳定的唯一 ID
+- **响应式陷阱**：`reactive()` 用于基本类型、整体替换 `reactive()` 对象、或 `<script>` 内访问 `ref` 漏 `.value`
+- **直接修改 props**：修改 props（即使响应式）会触发 Vue 警告 —— 使用 `defineEmits` 或 `v-model`
+- **`v-html` 绑定未净化的外部输入**：XSS 风险 —— 使用 DOMPurify 等白名单净化器
+- **服务器/客户端边界泄漏**：在 Nuxt 中未加 `process.client`/`onMounted` 守卫就使用 `window`/`document`/`localStorage`，或将仅服务器模块导入客户端组件
 
 ### MEDIUM —— 性能
-- **渲染中创建对象/数组**：内联对象作为 props 会导致不必要的重渲染—— 可以使用 hoist 或 memoize 来优化
+- **computed/watch source 每次返回新引用**：getter 中创建新对象/数组会持续触发依赖失效与重算 —— 缓存或稳定化引用
 - **N+1 queries**：在循环内进行数据库或 API 调用 —— 批处理或使用 `Promise.all`
-- **缺失的 `React.memo` / `useMemo`**：每次渲染都会产生昂贵的计算或组件重新运行
+- **缺失的 `computed` / `shallowRef`**：本可缓存的昂贵计算直接写在模板或 watcher 中；整体替换的大型数组/对象应用 `shallowRef` 而非深度响应的 `ref`
 - **大型包导入**：`import _ from 'lodash'` —— 使用命名导入或 tree-shakeable 替代
 
 ### MEDIUM —— 最佳实践

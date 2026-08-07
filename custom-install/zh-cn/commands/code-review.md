@@ -109,7 +109,7 @@ gh pr diff <NUMBER>
 
 对于 PR 审查，获取 PR head revision 处的完整文件内容：
 ```bash
-gh pr diff <NUMBER> --name-only | while IFS= read -r file; do
+  gh pr diff <NUMBER> --name-only | while IFS= read -r file; do
   gh api "repos/{owner}/{repo}/contents/$file?ref=<head-branch>" --jq '.content' | base64 -d
 done
 ```

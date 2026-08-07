@@ -25,4 +25,4 @@ if (!apiKey) {
 
 ## Agent 支持
 
-- 使用 **security-reviewer** skill 进行全面的安全审计
+- 使用 **security-reviewer** agent 进行全面的安全审计

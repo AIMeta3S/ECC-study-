@@ -1,27 +1,26 @@
-# Git 工作流
+# Git 工作流程
 
-## Commit Message 格式
+## 提交信息格式
+
 ```
-<类型>: <描述>
+<type>: <description>
 
-<可选主体>
+<optional body>
 ```
 
 类型：feat, fix, refactor, docs, test, chore, perf, ci
 
-<<<<<<< HEAD
-注意：要禁用提交的共同作者署名，请在 `~/.claude/settings.json` 中设置 `"includeCoAuthoredBy": false` (Claude Code 默认会附加 `Co-Authored-By` )。
-=======
-注意：若要禁用共同作者归因，请在 `~/.claude/settings.json` 中设置 `"includeCoAuthoredBy": false`；Claude Code 默认会附加 `Co-Authored-By`，而 ECC 不会附带此设置。
->>>>>>> upstream/main
+注意：ECC 管理的安装会在 `~/.claude/settings.json` 中设置 `"includeCoAuthoredBy": false`，因此提交默认不带 `Co-Authored-By`。若要保留 Claude 的归因，请设置 `"includeCoAuthoredBy": true` 或配置 `attribution`；ECC 不会覆盖用户的显式选择。
 
-## Pull Request 工作流
+## 拉取请求工作流程
 
 创建 PR 时：
-1. 分析完整的 commit 历史（不仅仅是最近的提交）
-2. 使用 `git diff [base-branch]...HEAD` 查看所有变更
-3. 起草全面的 PR 摘要
-4. 包含带 TODO 的测试计划
-5. 如果是新 branch，使用 `-u` flag 推送
 
-> 有关 git 操作之前的完整开发流程（planning、TDD、code review），请参见 [development-workflow.md](./development-workflow.md)。
+1. 分析完整的提交历史（不仅仅是最近一次提交）
+2. 使用 `git diff [base-branch]...HEAD` 查看所有更改
+3. 起草全面的 PR 摘要
+4. 包含带有 TODO 的测试计划
+5. 如果是新分支，使用 `-u` 标志推送
+
+> 有关 git 操作之前的完整开发流程（规划、TDD、代码审查），
+> 请参阅 [development-workflow.md](development-workflow.md)。

@@ -23,7 +23,7 @@ metadata:
 自动为简单任务选择更便宜的 model，将昂贵的 model 留给复杂任务。
 
 ```python
-MODEL_SONNET = "claude-sonnet-4-6"
+MODEL_SONNET = "claude-sonnet-5"
 MODEL_HAIKU = "claude-haiku-4-5-20251001"
 
 _SONNET_TEXT_THRESHOLD = 10_000  # 字符数

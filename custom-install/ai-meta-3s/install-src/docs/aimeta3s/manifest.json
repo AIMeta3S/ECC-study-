@@ -1,0 +1,1114 @@
+{
+  "version": 1,
+  "generated": "2026-08-12",
+  "aimeta3sHome": "~/.claude",
+  "dirMappings": {
+    "agents": "agents",
+    "commands": "commands",
+    "skills": "skills",
+    "rules": "rules/ecc",
+    "scripts": "scripts",
+    "docs": "docs/aimeta3s"
+  },
+  "hooksConfig": "~/.claude/hooks/hooks.json",
+  "resources": [
+    {
+      "category": "agent",
+      "name": "architect",
+      "installPath": "~/.claude/agents/architect.md",
+      "sourcePath": "agents/architect.md"
+    },
+    {
+      "category": "agent",
+      "name": "build-error-resolver",
+      "installPath": "~/.claude/agents/build-error-resolver.md",
+      "sourcePath": "agents/build-error-resolver.md"
+    },
+    {
+      "category": "agent",
+      "name": "code-architect",
+      "installPath": "~/.claude/agents/code-architect.md",
+      "sourcePath": "agents/code-architect.md"
+    },
+    {
+      "category": "agent",
+      "name": "code-explorer",
+      "installPath": "~/.claude/agents/code-explorer.md",
+      "sourcePath": "agents/code-explorer.md"
+    },
+    {
+      "category": "agent",
+      "name": "code-reviewer",
+      "installPath": "~/.claude/agents/code-reviewer.md",
+      "sourcePath": "agents/code-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "database-reviewer",
+      "installPath": "~/.claude/agents/database-reviewer.md",
+      "sourcePath": "agents/database-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "doc-updater",
+      "installPath": "~/.claude/agents/doc-updater.md",
+      "sourcePath": "agents/doc-updater.md"
+    },
+    {
+      "category": "agent",
+      "name": "e2e-runner",
+      "installPath": "~/.claude/agents/e2e-runner.md",
+      "sourcePath": "agents/e2e-runner.md"
+    },
+    {
+      "category": "agent",
+      "name": "fastapi-reviewer",
+      "installPath": "~/.claude/agents/fastapi-reviewer.md",
+      "sourcePath": "agents/fastapi-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "gan-evaluator",
+      "installPath": "~/.claude/agents/gan-evaluator.md",
+      "sourcePath": "agents/gan-evaluator.md"
+    },
+    {
+      "category": "agent",
+      "name": "gan-generator",
+      "installPath": "~/.claude/agents/gan-generator.md",
+      "sourcePath": "agents/gan-generator.md"
+    },
+    {
+      "category": "agent",
+      "name": "gan-planner",
+      "installPath": "~/.claude/agents/gan-planner.md",
+      "sourcePath": "agents/gan-planner.md"
+    },
+    {
+      "category": "agent",
+      "name": "planner",
+      "installPath": "~/.claude/agents/planner.md",
+      "sourcePath": "agents/planner.md"
+    },
+    {
+      "category": "agent",
+      "name": "python-reviewer",
+      "installPath": "~/.claude/agents/python-reviewer.md",
+      "sourcePath": "agents/python-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "refactor-cleaner",
+      "installPath": "~/.claude/agents/refactor-cleaner.md",
+      "sourcePath": "agents/refactor-cleaner.md"
+    },
+    {
+      "category": "agent",
+      "name": "security-reviewer",
+      "installPath": "~/.claude/agents/security-reviewer.md",
+      "sourcePath": "agents/security-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "tdd-guide",
+      "installPath": "~/.claude/agents/tdd-guide.md",
+      "sourcePath": "agents/tdd-guide.md"
+    },
+    {
+      "category": "agent",
+      "name": "typescript-reviewer",
+      "installPath": "~/.claude/agents/typescript-reviewer.md",
+      "sourcePath": "agents/typescript-reviewer.md"
+    },
+    {
+      "category": "agent",
+      "name": "vue-reviewer",
+      "installPath": "~/.claude/agents/vue-reviewer.md",
+      "sourcePath": "agents/vue-reviewer.md"
+    },
+    {
+      "category": "command",
+      "name": "aimeta3s-help",
+      "installPath": "~/.claude/commands/aimeta3s-help.md",
+      "sourcePath": "commands/aimeta3s-help.md"
+    },
+    {
+      "category": "command",
+      "name": "build-fix",
+      "installPath": "~/.claude/commands/build-fix.md",
+      "sourcePath": "commands/build-fix.md"
+    },
+    {
+      "category": "command",
+      "name": "code-review",
+      "installPath": "~/.claude/commands/code-review.md",
+      "sourcePath": "commands/code-review.md"
+    },
+    {
+      "category": "command",
+      "name": "evolve",
+      "installPath": "~/.claude/commands/evolve.md",
+      "sourcePath": "commands/evolve.md"
+    },
+    {
+      "category": "command",
+      "name": "fastapi-review",
+      "installPath": "~/.claude/commands/fastapi-review.md",
+      "sourcePath": "commands/fastapi-review.md"
+    },
+    {
+      "category": "command",
+      "name": "feature-dev",
+      "installPath": "~/.claude/commands/feature-dev.md",
+      "sourcePath": "commands/feature-dev.md"
+    },
+    {
+      "category": "command",
+      "name": "gan-build",
+      "installPath": "~/.claude/commands/gan-build.md",
+      "sourcePath": "commands/gan-build.md"
+    },
+    {
+      "category": "command",
+      "name": "gan-design",
+      "installPath": "~/.claude/commands/gan-design.md",
+      "sourcePath": "commands/gan-design.md"
+    },
+    {
+      "category": "command",
+      "name": "instinct-export",
+      "installPath": "~/.claude/commands/instinct-export.md",
+      "sourcePath": "commands/instinct-export.md"
+    },
+    {
+      "category": "command",
+      "name": "instinct-import",
+      "installPath": "~/.claude/commands/instinct-import.md",
+      "sourcePath": "commands/instinct-import.md"
+    },
+    {
+      "category": "command",
+      "name": "instinct-status",
+      "installPath": "~/.claude/commands/instinct-status.md",
+      "sourcePath": "commands/instinct-status.md"
+    },
+    {
+      "category": "command",
+      "name": "learn",
+      "installPath": "~/.claude/commands/learn.md",
+      "sourcePath": "commands/learn.md"
+    },
+    {
+      "category": "command",
+      "name": "learn-eval",
+      "installPath": "~/.claude/commands/learn-eval.md",
+      "sourcePath": "commands/learn-eval.md"
+    },
+    {
+      "category": "command",
+      "name": "orch-add-feature",
+      "installPath": "~/.claude/commands/orch-add-feature.md",
+      "sourcePath": "commands/orch-add-feature.md"
+    },
+    {
+      "category": "command",
+      "name": "orch-build-mvp",
+      "installPath": "~/.claude/commands/orch-build-mvp.md",
+      "sourcePath": "commands/orch-build-mvp.md"
+    },
+    {
+      "category": "command",
+      "name": "orch-change-feature",
+      "installPath": "~/.claude/commands/orch-change-feature.md",
+      "sourcePath": "commands/orch-change-feature.md"
+    },
+    {
+      "category": "command",
+      "name": "orch-fix-defect",
+      "installPath": "~/.claude/commands/orch-fix-defect.md",
+      "sourcePath": "commands/orch-fix-defect.md"
+    },
+    {
+      "category": "command",
+      "name": "orch-refine-code",
+      "installPath": "~/.claude/commands/orch-refine-code.md",
+      "sourcePath": "commands/orch-refine-code.md"
+    },
+    {
+      "category": "command",
+      "name": "plan",
+      "installPath": "~/.claude/commands/plan.md",
+      "sourcePath": "commands/plan.md"
+    },
+    {
+      "category": "command",
+      "name": "plan-prd",
+      "installPath": "~/.claude/commands/plan-prd.md",
+      "sourcePath": "commands/plan-prd.md"
+    },
+    {
+      "category": "command",
+      "name": "pr",
+      "installPath": "~/.claude/commands/pr.md",
+      "sourcePath": "commands/pr.md"
+    },
+    {
+      "category": "command",
+      "name": "projects",
+      "installPath": "~/.claude/commands/projects.md",
+      "sourcePath": "commands/projects.md"
+    },
+    {
+      "category": "command",
+      "name": "promote",
+      "installPath": "~/.claude/commands/promote.md",
+      "sourcePath": "commands/promote.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-commit",
+      "installPath": "~/.claude/commands/prp-commit.md",
+      "sourcePath": "commands/prp-commit.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-implement",
+      "installPath": "~/.claude/commands/prp-implement.md",
+      "sourcePath": "commands/prp-implement.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-plan",
+      "installPath": "~/.claude/commands/prp-plan.md",
+      "sourcePath": "commands/prp-plan.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-pr",
+      "installPath": "~/.claude/commands/prp-pr.md",
+      "sourcePath": "commands/prp-pr.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-prd",
+      "installPath": "~/.claude/commands/prp-prd.md",
+      "sourcePath": "commands/prp-prd.md"
+    },
+    {
+      "category": "command",
+      "name": "python-review",
+      "installPath": "~/.claude/commands/python-review.md",
+      "sourcePath": "commands/python-review.md"
+    },
+    {
+      "category": "command",
+      "name": "refactor-clean",
+      "installPath": "~/.claude/commands/refactor-clean.md",
+      "sourcePath": "commands/refactor-clean.md"
+    },
+    {
+      "category": "command",
+      "name": "resume-session",
+      "installPath": "~/.claude/commands/resume-session.md",
+      "sourcePath": "commands/resume-session.md"
+    },
+    {
+      "category": "command",
+      "name": "save-session",
+      "installPath": "~/.claude/commands/save-session.md",
+      "sourcePath": "commands/save-session.md"
+    },
+    {
+      "category": "command",
+      "name": "security-scan",
+      "installPath": "~/.claude/commands/security-scan.md",
+      "sourcePath": "commands/security-scan.md"
+    },
+    {
+      "category": "command",
+      "name": "sessions",
+      "installPath": "~/.claude/commands/sessions.md",
+      "sourcePath": "commands/sessions.md"
+    },
+    {
+      "category": "command",
+      "name": "skill-create",
+      "installPath": "~/.claude/commands/skill-create.md",
+      "sourcePath": "commands/skill-create.md"
+    },
+    {
+      "category": "command",
+      "name": "skill-health",
+      "installPath": "~/.claude/commands/skill-health.md",
+      "sourcePath": "commands/skill-health.md"
+    },
+    {
+      "category": "command",
+      "name": "test-coverage",
+      "installPath": "~/.claude/commands/test-coverage.md",
+      "sourcePath": "commands/test-coverage.md"
+    },
+    {
+      "category": "command",
+      "name": "update-codemaps",
+      "installPath": "~/.claude/commands/update-codemaps.md",
+      "sourcePath": "commands/update-codemaps.md"
+    },
+    {
+      "category": "command",
+      "name": "update-docs",
+      "installPath": "~/.claude/commands/update-docs.md",
+      "sourcePath": "commands/update-docs.md"
+    },
+    {
+      "category": "command",
+      "name": "vue-review",
+      "installPath": "~/.claude/commands/vue-review.md",
+      "sourcePath": "commands/vue-review.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/agents",
+      "installPath": "~/.claude/rules/ecc/common/agents.md",
+      "sourcePath": "rules/common/agents.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/code-review",
+      "installPath": "~/.claude/rules/ecc/common/code-review.md",
+      "sourcePath": "rules/common/code-review.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/coding-style",
+      "installPath": "~/.claude/rules/ecc/common/coding-style.md",
+      "sourcePath": "rules/common/coding-style.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/development-workflow",
+      "installPath": "~/.claude/rules/ecc/common/development-workflow.md",
+      "sourcePath": "rules/common/development-workflow.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/git-workflow",
+      "installPath": "~/.claude/rules/ecc/common/git-workflow.md",
+      "sourcePath": "rules/common/git-workflow.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/hooks",
+      "installPath": "~/.claude/rules/ecc/common/hooks.md",
+      "sourcePath": "rules/common/hooks.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/patterns",
+      "installPath": "~/.claude/rules/ecc/common/patterns.md",
+      "sourcePath": "rules/common/patterns.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/performance",
+      "installPath": "~/.claude/rules/ecc/common/performance.md",
+      "sourcePath": "rules/common/performance.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/security",
+      "installPath": "~/.claude/rules/ecc/common/security.md",
+      "sourcePath": "rules/common/security.md"
+    },
+    {
+      "category": "rule",
+      "name": "common/testing",
+      "installPath": "~/.claude/rules/ecc/common/testing.md",
+      "sourcePath": "rules/common/testing.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/coding-style",
+      "installPath": "~/.claude/rules/ecc/python/coding-style.md",
+      "sourcePath": "rules/python/coding-style.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/fastapi",
+      "installPath": "~/.claude/rules/ecc/python/fastapi.md",
+      "sourcePath": "rules/python/fastapi.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/hooks",
+      "installPath": "~/.claude/rules/ecc/python/hooks.md",
+      "sourcePath": "rules/python/hooks.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/patterns",
+      "installPath": "~/.claude/rules/ecc/python/patterns.md",
+      "sourcePath": "rules/python/patterns.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/security",
+      "installPath": "~/.claude/rules/ecc/python/security.md",
+      "sourcePath": "rules/python/security.md"
+    },
+    {
+      "category": "rule",
+      "name": "python/testing",
+      "installPath": "~/.claude/rules/ecc/python/testing.md",
+      "sourcePath": "rules/python/testing.md"
+    },
+    {
+      "category": "rule",
+      "name": "typescript/coding-style",
+      "installPath": "~/.claude/rules/ecc/typescript/coding-style.md",
+      "sourcePath": "rules/typescript/coding-style.md"
+    },
+    {
+      "category": "rule",
+      "name": "typescript/hooks",
+      "installPath": "~/.claude/rules/ecc/typescript/hooks.md",
+      "sourcePath": "rules/typescript/hooks.md"
+    },
+    {
+      "category": "rule",
+      "name": "typescript/patterns",
+      "installPath": "~/.claude/rules/ecc/typescript/patterns.md",
+      "sourcePath": "rules/typescript/patterns.md"
+    },
+    {
+      "category": "rule",
+      "name": "typescript/security",
+      "installPath": "~/.claude/rules/ecc/typescript/security.md",
+      "sourcePath": "rules/typescript/security.md"
+    },
+    {
+      "category": "rule",
+      "name": "typescript/testing",
+      "installPath": "~/.claude/rules/ecc/typescript/testing.md",
+      "sourcePath": "rules/typescript/testing.md"
+    },
+    {
+      "category": "rule",
+      "name": "vue/coding-style",
+      "installPath": "~/.claude/rules/ecc/vue/coding-style.md",
+      "sourcePath": "rules/vue/coding-style.md"
+    },
+    {
+      "category": "rule",
+      "name": "vue/hooks",
+      "installPath": "~/.claude/rules/ecc/vue/hooks.md",
+      "sourcePath": "rules/vue/hooks.md"
+    },
+    {
+      "category": "rule",
+      "name": "vue/patterns",
+      "installPath": "~/.claude/rules/ecc/vue/patterns.md",
+      "sourcePath": "rules/vue/patterns.md"
+    },
+    {
+      "category": "rule",
+      "name": "vue/security",
+      "installPath": "~/.claude/rules/ecc/vue/security.md",
+      "sourcePath": "rules/vue/security.md"
+    },
+    {
+      "category": "rule",
+      "name": "vue/testing",
+      "installPath": "~/.claude/rules/ecc/vue/testing.md",
+      "sourcePath": "rules/vue/testing.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/coding-style",
+      "installPath": "~/.claude/rules/ecc/web/coding-style.md",
+      "sourcePath": "rules/web/coding-style.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/design-quality",
+      "installPath": "~/.claude/rules/ecc/web/design-quality.md",
+      "sourcePath": "rules/web/design-quality.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/hooks",
+      "installPath": "~/.claude/rules/ecc/web/hooks.md",
+      "sourcePath": "rules/web/hooks.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/patterns",
+      "installPath": "~/.claude/rules/ecc/web/patterns.md",
+      "sourcePath": "rules/web/patterns.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/performance",
+      "installPath": "~/.claude/rules/ecc/web/performance.md",
+      "sourcePath": "rules/web/performance.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/security",
+      "installPath": "~/.claude/rules/ecc/web/security.md",
+      "sourcePath": "rules/web/security.md"
+    },
+    {
+      "category": "rule",
+      "name": "web/testing",
+      "installPath": "~/.claude/rules/ecc/web/testing.md",
+      "sourcePath": "rules/web/testing.md"
+    },
+    {
+      "category": "script",
+      "name": "codemaps/generate",
+      "installPath": "~/.claude/scripts/codemaps/generate.ts",
+      "sourcePath": "scripts/codemaps/generate.ts"
+    },
+    {
+      "category": "script",
+      "name": "hooks/auto-tmux-dev",
+      "installPath": "~/.claude/scripts/hooks/auto-tmux-dev.js",
+      "sourcePath": "scripts/hooks/auto-tmux-dev.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/bash-hook-dispatcher",
+      "installPath": "~/.claude/scripts/hooks/bash-hook-dispatcher.js",
+      "sourcePath": "scripts/hooks/bash-hook-dispatcher.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/block-no-verify",
+      "installPath": "~/.claude/scripts/hooks/block-no-verify.js",
+      "sourcePath": "scripts/hooks/block-no-verify.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/check-console-log",
+      "installPath": "~/.claude/scripts/hooks/check-console-log.js",
+      "sourcePath": "scripts/hooks/check-console-log.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/config-protection",
+      "installPath": "~/.claude/scripts/hooks/config-protection.js",
+      "sourcePath": "scripts/hooks/config-protection.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/cost-tracker",
+      "installPath": "~/.claude/scripts/hooks/cost-tracker.js",
+      "sourcePath": "scripts/hooks/cost-tracker.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/design-quality-check",
+      "installPath": "~/.claude/scripts/hooks/design-quality-check.js",
+      "sourcePath": "scripts/hooks/design-quality-check.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/desktop-notify",
+      "installPath": "~/.claude/scripts/hooks/desktop-notify.js",
+      "sourcePath": "scripts/hooks/desktop-notify.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/doc-file-warning",
+      "installPath": "~/.claude/scripts/hooks/doc-file-warning.js",
+      "sourcePath": "scripts/hooks/doc-file-warning.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/ecc-context-monitor",
+      "installPath": "~/.claude/scripts/hooks/ecc-context-monitor.js",
+      "sourcePath": "scripts/hooks/ecc-context-monitor.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/ecc-metrics-bridge",
+      "installPath": "~/.claude/scripts/hooks/ecc-metrics-bridge.js",
+      "sourcePath": "scripts/hooks/ecc-metrics-bridge.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/evaluate-session",
+      "installPath": "~/.claude/scripts/hooks/evaluate-session.js",
+      "sourcePath": "scripts/hooks/evaluate-session.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/gateguard-fact-force",
+      "installPath": "~/.claude/scripts/hooks/gateguard-fact-force.js",
+      "sourcePath": "scripts/hooks/gateguard-fact-force.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/governance-capture",
+      "installPath": "~/.claude/scripts/hooks/governance-capture.js",
+      "sourcePath": "scripts/hooks/governance-capture.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/mcp-health-check",
+      "installPath": "~/.claude/scripts/hooks/mcp-health-check.js",
+      "sourcePath": "scripts/hooks/mcp-health-check.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/observe-runner",
+      "installPath": "~/.claude/scripts/hooks/observe-runner.js",
+      "sourcePath": "scripts/hooks/observe-runner.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/plugin-hook-bootstrap",
+      "installPath": "~/.claude/scripts/hooks/plugin-hook-bootstrap.js",
+      "sourcePath": "scripts/hooks/plugin-hook-bootstrap.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-bash-build-complete",
+      "installPath": "~/.claude/scripts/hooks/post-bash-build-complete.js",
+      "sourcePath": "scripts/hooks/post-bash-build-complete.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-bash-command-log",
+      "installPath": "~/.claude/scripts/hooks/post-bash-command-log.js",
+      "sourcePath": "scripts/hooks/post-bash-command-log.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-bash-dispatcher",
+      "installPath": "~/.claude/scripts/hooks/post-bash-dispatcher.js",
+      "sourcePath": "scripts/hooks/post-bash-dispatcher.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-bash-pr-created",
+      "installPath": "~/.claude/scripts/hooks/post-bash-pr-created.js",
+      "sourcePath": "scripts/hooks/post-bash-pr-created.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-edit-accumulator",
+      "installPath": "~/.claude/scripts/hooks/post-edit-accumulator.js",
+      "sourcePath": "scripts/hooks/post-edit-accumulator.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/post-edit-console-warn",
+      "installPath": "~/.claude/scripts/hooks/post-edit-console-warn.js",
+      "sourcePath": "scripts/hooks/post-edit-console-warn.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pre-bash-commit-quality",
+      "installPath": "~/.claude/scripts/hooks/pre-bash-commit-quality.js",
+      "sourcePath": "scripts/hooks/pre-bash-commit-quality.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pre-bash-dispatcher",
+      "installPath": "~/.claude/scripts/hooks/pre-bash-dispatcher.js",
+      "sourcePath": "scripts/hooks/pre-bash-dispatcher.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pre-bash-git-push-reminder",
+      "installPath": "~/.claude/scripts/hooks/pre-bash-git-push-reminder.js",
+      "sourcePath": "scripts/hooks/pre-bash-git-push-reminder.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pre-bash-tmux-reminder",
+      "installPath": "~/.claude/scripts/hooks/pre-bash-tmux-reminder.js",
+      "sourcePath": "scripts/hooks/pre-bash-tmux-reminder.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pre-compact",
+      "installPath": "~/.claude/scripts/hooks/pre-compact.js",
+      "sourcePath": "scripts/hooks/pre-compact.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/pretooluse-visible-output",
+      "installPath": "~/.claude/scripts/hooks/pretooluse-visible-output.js",
+      "sourcePath": "scripts/hooks/pretooluse-visible-output.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/quality-gate",
+      "installPath": "~/.claude/scripts/hooks/quality-gate.js",
+      "sourcePath": "scripts/hooks/quality-gate.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/run-with-flags",
+      "installPath": "~/.claude/scripts/hooks/run-with-flags.js",
+      "sourcePath": "scripts/hooks/run-with-flags.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/session-activity-tracker",
+      "installPath": "~/.claude/scripts/hooks/session-activity-tracker.js",
+      "sourcePath": "scripts/hooks/session-activity-tracker.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/session-end",
+      "installPath": "~/.claude/scripts/hooks/session-end.js",
+      "sourcePath": "scripts/hooks/session-end.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/session-end-marker",
+      "installPath": "~/.claude/scripts/hooks/session-end-marker.js",
+      "sourcePath": "scripts/hooks/session-end-marker.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/session-start-bootstrap",
+      "installPath": "~/.claude/scripts/hooks/session-start-bootstrap.js",
+      "sourcePath": "scripts/hooks/session-start-bootstrap.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/stop-format-typecheck",
+      "installPath": "~/.claude/scripts/hooks/stop-format-typecheck.js",
+      "sourcePath": "scripts/hooks/stop-format-typecheck.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/suggest-compact",
+      "installPath": "~/.claude/scripts/hooks/suggest-compact.js",
+      "sourcePath": "scripts/hooks/suggest-compact.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/agent-data-home",
+      "installPath": "~/.claude/scripts/lib/agent-data-home.js",
+      "sourcePath": "scripts/lib/agent-data-home.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/hook-flags",
+      "installPath": "~/.claude/scripts/lib/hook-flags.js",
+      "sourcePath": "scripts/lib/hook-flags.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/llm-summary",
+      "installPath": "~/.claude/scripts/lib/llm-summary.js",
+      "sourcePath": "scripts/lib/llm-summary.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/observer-sessions",
+      "installPath": "~/.claude/scripts/lib/observer-sessions.js",
+      "sourcePath": "scripts/lib/observer-sessions.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/package-manager",
+      "installPath": "~/.claude/scripts/lib/package-manager.js",
+      "sourcePath": "scripts/lib/package-manager.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/resolve-formatter",
+      "installPath": "~/.claude/scripts/lib/resolve-formatter.js",
+      "sourcePath": "scripts/lib/resolve-formatter.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/session-aliases",
+      "installPath": "~/.claude/scripts/lib/session-aliases.js",
+      "sourcePath": "scripts/lib/session-aliases.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/session-bridge",
+      "installPath": "~/.claude/scripts/lib/session-bridge.js",
+      "sourcePath": "scripts/lib/session-bridge.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/session-manager",
+      "installPath": "~/.claude/scripts/lib/session-manager.js",
+      "sourcePath": "scripts/lib/session-manager.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/shell-substitution",
+      "installPath": "~/.claude/scripts/lib/shell-substitution.js",
+      "sourcePath": "scripts/lib/shell-substitution.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/skill-evolution/dashboard",
+      "installPath": "~/.claude/scripts/lib/skill-evolution/dashboard.js",
+      "sourcePath": "scripts/lib/skill-evolution/dashboard.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/skill-evolution/health",
+      "installPath": "~/.claude/scripts/lib/skill-evolution/health.js",
+      "sourcePath": "scripts/lib/skill-evolution/health.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/skill-evolution/provenance",
+      "installPath": "~/.claude/scripts/lib/skill-evolution/provenance.js",
+      "sourcePath": "scripts/lib/skill-evolution/provenance.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/skill-evolution/tracker",
+      "installPath": "~/.claude/scripts/lib/skill-evolution/tracker.js",
+      "sourcePath": "scripts/lib/skill-evolution/tracker.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/skill-evolution/versioning",
+      "installPath": "~/.claude/scripts/lib/skill-evolution/versioning.js",
+      "sourcePath": "scripts/lib/skill-evolution/versioning.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/transcript-context",
+      "installPath": "~/.claude/scripts/lib/transcript-context.js",
+      "sourcePath": "scripts/lib/transcript-context.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/utils",
+      "installPath": "~/.claude/scripts/lib/utils.js",
+      "sourcePath": "scripts/lib/utils.js"
+    },
+    {
+      "category": "script",
+      "name": "setup-package-manager",
+      "installPath": "~/.claude/scripts/setup-package-manager.js",
+      "sourcePath": "scripts/setup-package-manager.js"
+    },
+    {
+      "category": "script",
+      "name": "skills-health",
+      "installPath": "~/.claude/scripts/skills-health.js",
+      "sourcePath": "scripts/skills-health.js"
+    },
+    {
+      "category": "skill",
+      "name": "accessibility",
+      "installPath": "~/.claude/skills/accessibility/SKILL.md",
+      "sourcePath": "skills/accessibility/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "api-design",
+      "installPath": "~/.claude/skills/api-design/SKILL.md",
+      "sourcePath": "skills/api-design/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "backend-patterns",
+      "installPath": "~/.claude/skills/backend-patterns/SKILL.md",
+      "sourcePath": "skills/backend-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "bun-runtime",
+      "installPath": "~/.claude/skills/bun-runtime/SKILL.md",
+      "sourcePath": "skills/bun-runtime/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "clickhouse-io",
+      "installPath": "~/.claude/skills/clickhouse-io/SKILL.md",
+      "sourcePath": "skills/clickhouse-io/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "coding-standards",
+      "installPath": "~/.claude/skills/coding-standards/SKILL.md",
+      "sourcePath": "skills/coding-standards/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "continuous-learning-v2",
+      "installPath": "~/.claude/skills/continuous-learning-v2/SKILL.md",
+      "sourcePath": "skills/continuous-learning-v2/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "database-migrations",
+      "installPath": "~/.claude/skills/database-migrations/SKILL.md",
+      "sourcePath": "skills/database-migrations/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "design-system",
+      "installPath": "~/.claude/skills/design-system/SKILL.md",
+      "sourcePath": "skills/design-system/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "django-security",
+      "installPath": "~/.claude/skills/django-security/SKILL.md",
+      "sourcePath": "skills/django-security/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "docker-patterns",
+      "installPath": "~/.claude/skills/docker-patterns/SKILL.md",
+      "sourcePath": "skills/docker-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "e2e-testing",
+      "installPath": "~/.claude/skills/e2e-testing/SKILL.md",
+      "sourcePath": "skills/e2e-testing/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "fastapi-patterns",
+      "installPath": "~/.claude/skills/fastapi-patterns/SKILL.md",
+      "sourcePath": "skills/fastapi-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "frontend-patterns",
+      "installPath": "~/.claude/skills/frontend-patterns/SKILL.md",
+      "sourcePath": "skills/frontend-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "liquid-glass-design",
+      "installPath": "~/.claude/skills/liquid-glass-design/SKILL.md",
+      "sourcePath": "skills/liquid-glass-design/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "nextjs-turbopack",
+      "installPath": "~/.claude/skills/nextjs-turbopack/SKILL.md",
+      "sourcePath": "skills/nextjs-turbopack/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-add-feature",
+      "installPath": "~/.claude/skills/orch-add-feature/SKILL.md",
+      "sourcePath": "skills/orch-add-feature/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-build-mvp",
+      "installPath": "~/.claude/skills/orch-build-mvp/SKILL.md",
+      "sourcePath": "skills/orch-build-mvp/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-change-feature",
+      "installPath": "~/.claude/skills/orch-change-feature/SKILL.md",
+      "sourcePath": "skills/orch-change-feature/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-fix-defect",
+      "installPath": "~/.claude/skills/orch-fix-defect/SKILL.md",
+      "sourcePath": "skills/orch-fix-defect/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-pipeline",
+      "installPath": "~/.claude/skills/orch-pipeline/SKILL.md",
+      "sourcePath": "skills/orch-pipeline/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "orch-refine-code",
+      "installPath": "~/.claude/skills/orch-refine-code/SKILL.md",
+      "sourcePath": "skills/orch-refine-code/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "postgres-patterns",
+      "installPath": "~/.claude/skills/postgres-patterns/SKILL.md",
+      "sourcePath": "skills/postgres-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "python-patterns",
+      "installPath": "~/.claude/skills/python-patterns/SKILL.md",
+      "sourcePath": "skills/python-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "python-testing",
+      "installPath": "~/.claude/skills/python-testing/SKILL.md",
+      "sourcePath": "skills/python-testing/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "pytorch-patterns",
+      "installPath": "~/.claude/skills/pytorch-patterns/SKILL.md",
+      "sourcePath": "skills/pytorch-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "security-review",
+      "installPath": "~/.claude/skills/security-review/SKILL.md",
+      "sourcePath": "skills/security-review/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "security-scan",
+      "installPath": "~/.claude/skills/security-scan/SKILL.md",
+      "sourcePath": "skills/security-scan/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "swift-actor-persistence",
+      "installPath": "~/.claude/skills/swift-actor-persistence/SKILL.md",
+      "sourcePath": "skills/swift-actor-persistence/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "swift-protocol-di-testing",
+      "installPath": "~/.claude/skills/swift-protocol-di-testing/SKILL.md",
+      "sourcePath": "skills/swift-protocol-di-testing/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "swiftui-patterns",
+      "installPath": "~/.claude/skills/swiftui-patterns/SKILL.md",
+      "sourcePath": "skills/swiftui-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "tdd-workflow",
+      "installPath": "~/.claude/skills/tdd-workflow/SKILL.md",
+      "sourcePath": "skills/tdd-workflow/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "vite-patterns",
+      "installPath": "~/.claude/skills/vite-patterns/SKILL.md",
+      "sourcePath": "skills/vite-patterns/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "vue-patterns",
+      "installPath": "~/.claude/skills/vue-patterns/SKILL.md",
+      "sourcePath": "skills/vue-patterns/SKILL.md"
+    }
+  ]
+}

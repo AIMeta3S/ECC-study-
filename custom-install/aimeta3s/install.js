@@ -274,23 +274,6 @@ function applyInstall(dryRun) {
   }
   operations.push({ sourceRelativePath: '<generated>/' + manifestDestRel, destinationPath: manifestDestAbs, contentSha256: sha256(manifestBuf) });
 
-  // 生成 hooks 片段（P0-1：hooks/hooks.json 装到 ~/.claude/hooks/ 不会被 Claude Code 加载，
-  // 需用户把此处生成的片段手动合并进 ~/.claude/settings.json）
-  const hooksSrcAbs = path.join(SOURCE_ROOT, 'hooks', 'hooks.json');
-  if (fs.existsSync(hooksSrcAbs)) {
-    const snippetDestRel = 'aimeta3s/hooks.snippet.json';
-    const snippetDestAbs = path.join(TARGET_ROOT, snippetDestRel);
-    const snippetBuf = fs.readFileSync(hooksSrcAbs);
-    assertSafeDest(snippetDestAbs, TARGET_ROOT);
-    if (dryRun) {
-      console.log(`  <生成> ${snippetDestRel}  →  ${toPosix(path.relative(TARGET_ROOT, snippetDestAbs))}  (hooks 片段，需手动合并进 settings.json)`);
-    } else {
-      fs.mkdirSync(path.dirname(snippetDestAbs), { recursive: true });
-      fs.writeFileSync(snippetDestAbs, snippetBuf);
-    }
-    operations.push({ sourceRelativePath: '<generated>/' + snippetDestRel, destinationPath: snippetDestAbs, contentSha256: sha256(snippetBuf) });
-  }
-
   return operations;
 }
 
@@ -431,10 +414,10 @@ function main() {
     console.log(`已安装 ${operations.length} 个文件；状态写入 ${STATE_PATH}`);
     console.log(`
 ⚠ hooks 不会自动生效（Claude Code 只从 settings.json 加载 hooks）。请手动合并：
-  1. 把 ${toPosix(path.join(TARGET_ROOT, 'aimeta3s', 'hooks.snippet.json'))} 里的 "hooks" 字段
+  1. 把 ${toPosix(path.join(TARGET_ROOT, 'hooks', 'hooks.json'))} 里的 "hooks" 字段
      按事件名追加进 ${toPosix(path.join(TARGET_ROOT, 'settings.json'))}（无则新建 {}；勿整体覆盖已有 hooks）。
   2. 重启 Claude Code 会话，或在 /hooks 菜单 review（hooks 在启动时快照）。
-  3. 卸载仅删除片段文件；已合并进 settings.json 的 hooks 需按 id（如 pre:bash:dispatcher）手动移除。`);
+  3. 卸载仅删除 hooks/hooks.json；已合并进 settings.json 的 hooks 需按 id（如 pre:bash:dispatcher）手动移除。`);
   }
 }
 

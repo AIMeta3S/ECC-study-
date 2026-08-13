@@ -198,7 +198,7 @@ File: path/to/file.vue:42
 ## 相关
 
 - Agent：`typescript-reviewer`（通用 TS/JS，在 `.vue`/`.ts` 上与之共同调用）、`security-reviewer`（项目级审计）
-- Rule：`rules/vue/coding-style.md`、`rules/vue/hooks.md`、`rules/vue/patterns.md`、`rules/vue/security.md`、`rules/vue/testing.md`
+- Rule：`rules/ecc/vue/coding-style.md`、`rules/ecc/vue/hooks.md`、`rules/ecc/vue/patterns.md`、`rules/ecc/vue/security.md`、`rules/ecc/vue/testing.md`
 - Skill：`skills/vue-patterns/`
 - Command：`/vue-review`
 

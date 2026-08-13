@@ -47,7 +47,7 @@ Phase 0（Intake）始终运行，因此未显示在上面的“执行的阶段�
 每个阶段都会委派任务 —— 它不会直接执行所有工作。
 
 - **0. Intake** — 复述请求。对于 `orch-build-mvp`，阅读 spec/design 文档并提取范围、已锁定的决策和功能列表。
-- **1. Research & Reuse** — 依据 `rules/common/development-workflow.md`：先 `gh search repos` / `gh search code`，然后 Context7 / vendor docs，然后 package registry，然后 Exa。优先采用已验证的实现方案，而非全新代码。
+- **1. Research & Reuse** — 依据 `rules/ecc/common/development-workflow.md`：先 `gh search repos` / `gh search code`，然后 Context7 / vendor docs，然后 package registry，然后 Exa。优先采用已验证的实现方案，而非全新代码。
 - **2. Plan** — 委托给 `planner` agent（或 `architect` / `code-architect` 处理结构性决策）。输出一个按 thin vertical slice 排序的 `task_list`。→ **GATE 1.**
 - **3. Scaffold** — 仅限 `orch-build-mvp`：搭建起第一个 end-to-end slice。
 - **4. Implement (TDD)** — 通过 `tdd-guide` agent（或 `tdd-workflow` skill）驱动每个 task：red → green → refactor。遵守操作的 first-move 规则。
@@ -78,14 +78,14 @@ Phase 0（Intake）始终运行，因此未显示在上面的“执行的阶段�
 
 ## Security-review trigger
 
-当 diff 触及以下任一内容时，拉入 `security-reviewer`：authentication 或 authorization、user-input handling、database queries、file-system paths、external API calls、cryptography 或 secrets / credentials。（依据 `rules/common/security.md`。）
+当 diff 触及以下任一内容时，拉入 `security-reviewer`：authentication 或 authorization、user-input handling、database queries、file-system paths、external API calls、cryptography 或 secrets / credentials。（依据 `rules/ecc/common/security.md`。）
 
 ## Handoff artifact
 
 本 pipeline 不携带任何隐藏状态——规划文档 *就是* handoff：
 
 - `task_list`（来自 Plan）驱动 Implement 循环。
-- 较大的工作可能还会按 `rules/common/development-workflow.md` 在 repo 的 `docs/` 下产出 PRD / architecture / system_design。
+- 较大的工作可能还会按 `rules/ecc/common/development-workflow.md` 在 repo 的 `docs/` 下产出 PRD / architecture / system_design。
 - Review 的发现（CRITICAL / HIGH）必须在 Gate 2 之前解决。
 
 ## Verification
@@ -94,4 +94,4 @@ Phase 0（Intake）始终运行，因此未显示在上面的“执行的阶段�
 - Gate 1（plan）与 Gate 2（commit）均被遵守
 - 当且仅当触及 security trigger 时，`security-reviewer` 才运行
 - commit 为 conventional 且范围限定于单一逻辑变更
-- 新增 / 变更的行为有测试；coverage ≥ 80%（依据 `rules/common/testing.md`）
+- 新增 / 变更的行为有测试；coverage ≥ 80%（依据 `rules/ecc/common/testing.md`）

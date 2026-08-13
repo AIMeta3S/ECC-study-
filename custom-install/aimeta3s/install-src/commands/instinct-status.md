@@ -24,8 +24,8 @@ python3 "$ECC_ROOT/skills/continuous-learning-v2/scripts/instinct-cli.py" status
 ## What to Do
 
 1. 检测当前项目上下文（git remote/path hash）
-2. 从 `~/.claude/homunculus/projects/<project-id>/instincts/` 读取项目 instinct
-3. 从 `~/.claude/homunculus/instincts/` 读取全局 instinct
+2. 从 `${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/projects/<project-id>/instincts/` 读取项目 instinct
+3. 从 `${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/instincts/` 读取全局 instinct
 4. 按优先级规则合并（当 ID 冲突时，项目 覆盖 全局）
 5. 按 domain 分组显示，包含 confidence bar 和 observation stats
 

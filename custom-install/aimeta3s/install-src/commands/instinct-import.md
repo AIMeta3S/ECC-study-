@@ -36,8 +36,8 @@ command: true
 3. 检查与现有 instincts 是否重复
 4. 合并或添加新 instincts
 5. 保存到 inherited instincts 目录：
-   - Project scope：`~/.claude/homunculus/projects/<project-id>/instincts/inherited/`
-   - Global scope：`~/.claude/homunculus/instincts/inherited/`
+   - Project scope：`${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/projects/<project-id>/instincts/inherited/`
+   - Global scope：`${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/instincts/inherited/`
 
 ## Import Process
 
@@ -106,7 +106,7 @@ PASS: Import complete!
 更新: 1 instinct
 跳过: 3 instincts (equal/higher confidence already exists)
 
-新 instincts 已保存到: ~/.claude/homunculus/instincts/inherited/
+新 instincts 已保存到: ${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/instincts/inherited/
 
 运行 /instinct-status 查看所有 instincts。
 ```

@@ -30,7 +30,7 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py projects
 
 ## What to Do
 
-1. 读取 `~/.claude/homunculus/projects.json`
+1. 读取 `${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/projects.json`
 2. 对于每个项目，显示：
    - Project name, id, root, remote
    - Personal and inherited instinct counts

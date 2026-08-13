@@ -171,4 +171,4 @@ watch(userId, async (newId, _old, onCleanup) => {
 - Agent：`agents/vue-reviewer.md`
 - 配套 agent：`agents/typescript-reviewer.md`（与 Vue 相关的 TS/JS 时同时运行）
 - Skills：`skills/vue-patterns/`
-- Rules：`rules/vue/`
+- Rules：`rules/ecc/vue/`

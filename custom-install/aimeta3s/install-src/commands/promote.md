@@ -38,4 +38,4 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py promote 
 3. 否则，查找符合以下条件的跨项目候选：
    - 至少出现在 2 个项目中
    - 满足 confidence threshold
-4. 将已提升的 instincts 写入 `~/.claude/homunculus/instincts/personal/`，并设置 `scope: global`
+4. 将已提升的 instincts 写入 `${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/instincts/personal/`，并设置 `scope: global`

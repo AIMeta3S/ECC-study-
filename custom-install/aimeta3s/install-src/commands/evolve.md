@@ -85,8 +85,8 @@ python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve [
    - Agent candidates (larger, high-confidence clusters)
 5. Show promotion candidates (project -> global) when applicable
 6. 如果传入 `--generate`，将文件写入：
-   - 项目范围：`~/.claude/homunculus/projects/<project-id>/evolved/`
-   - 全局回退：`~/.claude/homunculus/evolved/`
+   - 项目范围：`${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/projects/<project-id>/evolved/`
+   - 全局回退：`${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/evolved/`
 
 ## 输出格式示例
 

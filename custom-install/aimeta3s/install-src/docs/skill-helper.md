@@ -2,7 +2,7 @@
 
 # aimeta3s Skill 使用建议
 
-本指南面向 `install-src/skills/` 下的 **34 个 skill**。与同目录的《[使用建议.md](使用建议.md)》（39 条**命令**指南）正交——那篇讲「该敲哪条 `/命令`」，本篇讲「Claude 会在什么场景自动用上哪个 skill、以及你该如何主动引导」。
+本指南面向 `install-src/skills/` 下的 **34 个 skill**。与同目录的《[command-helper.md](command-helper.md)》（40 条**命令**指南）正交——那篇讲「该敲哪条 `/命令`」，本篇讲「Claude 会在什么场景自动用上哪个 skill、以及你该如何主动引导」。
 
 > 全文基于逐个 SKILL.md 真实内容提炼，每个 skill 按「定位 / 适用场景 / 触发条件 / 处理流程 / 生成物 / 边界 / 关联」七维呈现。
 
@@ -606,8 +606,8 @@ continuous-learning-v2（自动、持续）
 ## 六、使用注意事项
 
 1. **Skill 是被动触发的**——靠 `description` 匹配。任务描述带上明确技术栈/关键词能提高命中率；没自动激活就显式点名。
-2. **skill 名即目录名**。安装后扁平放在 `~/.claude/skills/<name>/`，Claude Code 只发现 `skills/` 直接子目录（见《install-readme》4.1）。
-3. **与命令版配合**：本文（skill）讲「Claude 自动用哪个知识包」，《[使用建议.md](使用建议.md)》（command）讲「你该敲哪条 `/命令`」。两者正交，配合阅读。
+2. **skill 名即目录名**。安装后扁平放在 `~/.claude/skills/<name>/`，Claude Code 只发现 `skills/` 直接子目录（不会递归识别嵌套子目录）。
+3. **与命令版配合**：本文（skill）讲「Claude 自动用哪个知识包」，《[command-helper.md](command-helper.md)》（command）讲「你该敲哪条 `/命令`」。两者正交，配合阅读。
 4. **`metadata.origin: ECC`** 标记 skill 源自 ECC 项目，便于追溯与升级。
 5. **部分 skill 引用的对象需另行就位**：
    - `orch-*` 委托的 agent（`planner`/`code-reviewer`/`tdd-guide`/`security-reviewer`/`refactor-cleaner`/`code-explorer`/`build-error-resolver`）和命令（`/plan` `/code-review` `/build-fix` `/gan-build`）需对应 agents/commands 已安装。

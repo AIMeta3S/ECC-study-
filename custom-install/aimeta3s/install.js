@@ -20,7 +20,7 @@
  *   rules/ → rules/ecc/   (加 ecc/ 命名空间，避免与用户自有 rules 冲突)
  *   docs/  → aimeta3s/docs (装到 aimeta3s/ 子树下，/aimeta3s-help 的资料与资源清单)
  *   skills/ → skills/     (扁平，每个 skill 直接子目录)
- *   agents/ commands/ config/ hooks/ scripts/ → 同名平铺
+ *   agents/ commands/ hooks/ scripts/ → 同名平铺
  */
 
 const fs = require('fs');
@@ -40,7 +40,6 @@ const SCHEMA_VERSION = 'aimeta3s.install.v1';
 const MAPPINGS = [
   { src: 'agents',   dest: 'agents' },
   { src: 'commands', dest: 'commands' },
-  { src: 'config',   dest: 'config' },
   { src: 'docs',     dest: 'aimeta3s/docs' },
   { src: 'hooks',    dest: 'hooks' },
   { src: 'rules',    dest: 'rules/ecc' },
@@ -257,6 +256,7 @@ function applyInstall(dryRun) {
 
     fs.mkdirSync(path.dirname(f.destAbs), { recursive: true });
     fs.writeFileSync(f.destAbs, content);
+    fs.chmodSync(f.destAbs, fs.statSync(f.sourceAbs).mode & 0o777); // 保留源权限（.sh 等 +x，P0-2）
     operations.push({ sourceRelativePath: f.sourceRel, destinationPath: f.destAbs, contentSha256: sha256(content) });
   }
 
@@ -273,6 +273,23 @@ function applyInstall(dryRun) {
     fs.writeFileSync(manifestDestAbs, manifestBuf);
   }
   operations.push({ sourceRelativePath: '<generated>/' + manifestDestRel, destinationPath: manifestDestAbs, contentSha256: sha256(manifestBuf) });
+
+  // 生成 hooks 片段（P0-1：hooks/hooks.json 装到 ~/.claude/hooks/ 不会被 Claude Code 加载，
+  // 需用户把此处生成的片段手动合并进 ~/.claude/settings.json）
+  const hooksSrcAbs = path.join(SOURCE_ROOT, 'hooks', 'hooks.json');
+  if (fs.existsSync(hooksSrcAbs)) {
+    const snippetDestRel = 'aimeta3s/hooks.snippet.json';
+    const snippetDestAbs = path.join(TARGET_ROOT, snippetDestRel);
+    const snippetBuf = fs.readFileSync(hooksSrcAbs);
+    assertSafeDest(snippetDestAbs, TARGET_ROOT);
+    if (dryRun) {
+      console.log(`  <生成> ${snippetDestRel}  →  ${toPosix(path.relative(TARGET_ROOT, snippetDestAbs))}  (hooks 片段，需手动合并进 settings.json)`);
+    } else {
+      fs.mkdirSync(path.dirname(snippetDestAbs), { recursive: true });
+      fs.writeFileSync(snippetDestAbs, snippetBuf);
+    }
+    operations.push({ sourceRelativePath: '<generated>/' + snippetDestRel, destinationPath: snippetDestAbs, contentSha256: sha256(snippetBuf) });
+  }
 
   return operations;
 }
@@ -412,6 +429,12 @@ function main() {
   } else {
     writeInstallState(operations);
     console.log(`已安装 ${operations.length} 个文件；状态写入 ${STATE_PATH}`);
+    console.log(`
+⚠ hooks 不会自动生效（Claude Code 只从 settings.json 加载 hooks）。请手动合并：
+  1. 把 ${toPosix(path.join(TARGET_ROOT, 'aimeta3s', 'hooks.snippet.json'))} 里的 "hooks" 字段
+     按事件名追加进 ${toPosix(path.join(TARGET_ROOT, 'settings.json'))}（无则新建 {}；勿整体覆盖已有 hooks）。
+  2. 重启 Claude Code 会话，或在 /hooks 菜单 review（hooks 在启动时快照）。
+  3. 卸载仅删除片段文件；已合并进 settings.json 的 hooks 需按 id（如 pre:bash:dispatcher）手动移除。`);
   }
 }
 

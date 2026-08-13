@@ -13,15 +13,15 @@ argument-hint: [感兴趣的主题或问题，例如"怎么做代码审查""有�
 
 ## 一、AIMeta3S 能力地图（层0 · 自包含）
 
-AIMeta3S 是一套 Claude Code 资源套件，共 5 类资源、153+ 个条目：
+AIMeta3S 是一套 Claude Code 资源套件，共 5 类资源、148 个条目：
 
 | 类型 | 数量 | 触发方式 | 一句话定位 | 代表条目 |
 |---|---|---|---|---|
-| **commands** | 39 | 主动敲 `/命令` | 流水线串联的显式工作流 | `/plan` · `/code-review` · `/orch-add-feature` · `/gan-build` · `/learn` |
+| **commands** | 40 | 主动敲 `/命令` | 流水线串联的显式工作流 | `/plan` · `/code-review` · `/orch-add-feature` · `/gan-build` · `/learn` |
 | **skills** | 34 | 被动按 `description` 匹配 | 写代码时自动注入的知识包 | `coding-standards` · `tdd-workflow` · `orch-pipeline` · `frontend-patterns` |
 | **agents** | 19 | 由命令/skill 委托 spawn | 专精子任务的角色 | `architect` · `planner` · `code-reviewer` · `gan-planner` |
 | **rules** | 33 | 写代码时静默注入（无需调用） | 编码约束与检查清单 | `common/security` · `common/testing` · `typescript/coding-style` |
-| **hooks** | 28 | 生命周期事件自动执行 | 工具调用前后的自动化 | `run-with-flags` · `quality-gate` · `gateguard-fact-force` |
+| **hooks** | 22 | 生命周期事件自动执行 | 工具调用前后的自动化 | `run-with-flags` · `quality-gate` · `gateguard-fact-force` |
 
 逐条名录与精确路径在**资源清单** `manifest.json` 中（见三·层2），不在本命令内展开。
 

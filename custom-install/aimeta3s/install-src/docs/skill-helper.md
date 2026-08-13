@@ -164,7 +164,7 @@
 
 ### 相似 Skill 抉择
 
-- **编码规范**：`coding-standards`（跨项目基座）→ 框架专项让位 `frontend-patterns` / `backend-patterns` / `api-design` / 各 `*-patterns`。只想要最短规则层用 `rules/common/coding-style.md`。
+- **编码规范**：`coding-standards`（跨项目基座）→ 框架专项让位 `frontend-patterns` / `backend-patterns` / `api-design` / 各 `*-patterns`。只想要最短规则层用 `rules/ecc/common/coding-style.md`。
 - **测试**：`tdd-workflow`（通用 TDD 流程，含 plan handoff 安全节）→ Python 专项用 `python-testing` → E2E 用 `e2e-testing`。
 - **安全（关键区分）**：`security-review` = **应用代码**的安全编码清单（认证/注入/XSS/密钥/云配置）；`security-scan` = **Claude Code 自身 `.claude/` 配置**的漏洞扫描（settings/MCP/hooks）。两者对象完全不同，别混。
 - **数据库**：查询/索引/RLS 优化 → `postgres-patterns`；schema 变更/迁移 → `database-migrations`；OLAP 分析 → `clickhouse-io`。
@@ -188,8 +188,8 @@
 - **触发条件**：description 的 "naming, readability, immutability, code-quality review"；关键词：编码规范/code review/代码质量/重构/命名规范/lint 配置。
 - **处理流程 / 内容结构**：四大质量原则（Readability First / KISS / DRY / YAGNI）→ TS/JS 规范（命名、不可变 spread、错误处理、async 并行、类型安全）→ React 基础 → API 设计（REST/统一响应/zod）→ 文件组织 → 注释与 JSDoc → 性能 → 测试结构（AAA）→ Code Smell 检测（长函数/深嵌套/Magic Numbers）。
 - **生成物 / 预期结果**：对代码给出 PASS/FAIL 对比与改写建议；可作 lint/类型规则与评审 checklist 的依据。
-- **边界 / 不适用**：明确「基座层」——React 组合/hooks/渲染交 `frontend-patterns`；repository/service/endpoint/数据库分层交 `backend-patterns`/`api-design`；只需最短规则层用 `rules/common/coding-style.md`。
-- **关联**：`frontend-patterns`、`backend-patterns`、`api-design`、`rules/common/coding-style.md`。
+- **边界 / 不适用**：明确「基座层」——React 组合/hooks/渲染交 `frontend-patterns`；repository/service/endpoint/数据库分层交 `backend-patterns`/`api-design`；只需最短规则层用 `rules/ecc/common/coding-style.md`。
+- **关联**：`frontend-patterns`、`backend-patterns`、`api-design`、`rules/ecc/common/coding-style.md`。
 
 #### tdd-workflow
 - **定位**：强制 TDD（Red-Green-Refactor）、要求 80%+ coverage（unit+integration+E2E）的开发工作流 skill。

@@ -10,7 +10,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/pre-bash-dispatcher.js"
           }
         ],
-        "description": "Consolidated Bash preflight dispatcher for quality, tmux, push, and GateGuard checks",
+        "description": "整合的 Bash preflight dispatcher，用于 quality、tmux、push 和 GateGuard checks",
         "id": "pre:bash:dispatcher"
       },
       {
@@ -21,7 +21,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:write:doc-file-warning scripts/hooks/doc-file-warning.js standard,strict"
           }
         ],
-        "description": "Doc file warning: warn about non-standard documentation files (exit code 0; warns only)",
+        "description": "Doc file warning：警告关于 non-standard documentation files（exit code 0；仅警告）",
         "id": "pre:write:doc-file-warning"
       },
       {
@@ -32,7 +32,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:edit-write:suggest-compact scripts/hooks/suggest-compact.js standard,strict"
           }
         ],
-        "description": "Suggest manual compaction at logical intervals",
+        "description": "建议在逻辑间隔进行手动 compaction",
         "id": "pre:edit-write:suggest-compact"
       },
       {
@@ -40,12 +40,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:observe:continuous-learning scripts/hooks/observe-runner.js standard,strict",
+            "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:observe scripts/hooks/observe-runner.js standard,strict",
             "async": true,
             "timeout": 10
           }
         ],
-        "description": "Capture tool use observations for continuous learning",
+        "description": "捕获 tool use observations 用于 continuous learning",
         "id": "pre:observe:continuous-learning"
       },
       {
@@ -57,7 +57,7 @@
             "timeout": 10
           }
         ],
-        "description": "Capture governance events (secrets, policy violations, approval requests). Enable with ECC_GOVERNANCE_CAPTURE=1",
+        "description": "捕获 governance events（secrets、policy violations、approval requests）。通过 ECC_GOVERNANCE_CAPTURE=1 启用",
         "id": "pre:governance-capture"
       },
       {
@@ -69,7 +69,7 @@
             "timeout": 5
           }
         ],
-        "description": "Block modifications to linter/formatter config files. Steers agent to fix code instead of weakening configs.",
+        "description": "阻止对 linter/formatter config files 的修改。引导 agent 修复代码而不是削弱 configs",
         "id": "pre:config-protection"
       },
       {
@@ -80,7 +80,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:mcp-health-check scripts/hooks/mcp-health-check.js standard,strict"
           }
         ],
-        "description": "Check MCP server health before MCP tool execution and block unhealthy MCP calls",
+        "description": "在 MCP tool execution 之前检查 MCP server health，并阻止不健康的 MCP calls",
         "id": "pre:mcp-health-check"
       },
       {
@@ -92,7 +92,7 @@
             "timeout": 5
           }
         ],
-        "description": "Fact-forcing gate: block first Edit/Write/MultiEdit per file and demand investigation (importers, data schemas, user instruction) before allowing",
+        "description": "Fact-forcing gate：阻止每个文件的首次 Edit/Write/MultiEdit，并要求在允许之前进行调查（importers、data schemas、user instruction）",
         "id": "pre:edit-write:gateguard-fact-force"
       }
     ],
@@ -105,7 +105,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js pre:compact scripts/hooks/pre-compact.js standard,strict"
           }
         ],
-        "description": "Save state before context compaction",
+        "description": "在 context compaction 之前保存状态",
         "id": "pre:compact"
       }
     ],
@@ -118,7 +118,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/session-start-bootstrap.js"
           }
         ],
-        "description": "Load previous context and detect package manager on new session",
+        "description": "在新 session 加载之前的 context 并检测 package manager",
         "id": "session:start"
       },
       {
@@ -129,7 +129,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js session-start:plan-canvas-sessions scripts/hooks/plan-canvas-sessions.js standard,strict"
           }
         ],
-        "description": "Surface open Plan Canvas review sessions so a fresh session can resume the loop",
+        "description": "呈现打开状态的 Plan Canvas review sessions，以便新 session 可以恢复 loop",
         "id": "session-start:plan-canvas-sessions"
       }
     ],
@@ -143,7 +143,7 @@
             "timeout": 30
           }
         ],
-        "description": "Run synchronous PostToolUse hooks in one process while preserving per-hook controls",
+        "description": "在一个 process 中运行 synchronous PostToolUse hooks，同时保持 per-hook controls",
         "id": "post:dispatcher:sync"
       },
       {
@@ -156,7 +156,7 @@
             "timeout": 45
           }
         ],
-        "description": "Run background PostToolUse hooks in one process while preserving per-hook controls",
+        "description": "在一个 process 中运行 background PostToolUse hooks，同时保持 per-hook controls",
         "id": "post:dispatcher:async"
       }
     ],
@@ -169,7 +169,7 @@
             "command": "node -e \"const p=require('path');const r=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const s=p.join(r,'scripts/hooks/plugin-hook-bootstrap.js');process.env.CLAUDE_PLUGIN_ROOT=r;process.argv.splice(1,0,s);require(s)\" node scripts/hooks/run-with-flags.js post:mcp-health-check scripts/hooks/mcp-health-check.js standard,strict"
           }
         ],
-        "description": "Track failed MCP tool calls, mark unhealthy servers, and attempt reconnect",
+        "description": "跟踪失败的 MCP tool calls，标记 unhealthy servers，并尝试 reconnect",
         "id": "post:mcp-health-check"
       }
     ],
@@ -182,7 +182,7 @@
             "command": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const raw=fs.readFileSync(0,'utf8');const finish=(out,err,code)=>{let pending=1;const done=()=>{pending-=1;if(pending===0)process.exit(code);};if(out){pending+=1;process.stdout.write(out,done);}if(err){pending+=1;process.stderr.write(err,done);}process.nextTick(done);};const rel=path.join('scripts','hooks','run-with-flags.js');const root=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const script=path.join(root,rel);if(fs.existsSync(script)){const result=spawnSync(process.execPath,[script,'stop:plan-canvas-pending','scripts/hooks/plan-canvas-pending.js','minimal,standard,strict'],{input:raw,encoding:'utf8',env:process.env,cwd:process.cwd(),timeout:30000,maxBuffer:16*1024*1024});const failed=result.error||result.status===null||result.signal;const stdout=!failed&&typeof result.stdout==='string'?result.stdout:'';let stderr=typeof result.stderr==='string'?result.stderr:'';let code=Number.isInteger(result.status)?result.status:0;if(failed){const reason=result.error?result.error.message:(result.signal?'signal '+result.signal:'missing exit status');stderr+='[Stop] ERROR: hook runner failed: '+reason+String.fromCharCode(10);code=1;}finish(stdout,stderr,code);}else{finish(raw,'[Stop] WARNING: could not resolve ECC plugin root; skipping hook'+String.fromCharCode(10),0);}\""
           }
         ],
-        "description": "Deliver undelivered Plan Canvas browser feedback before the agent stops",
+        "description": "在 agent 停止之前投递未投递的 Plan Canvas browser feedback",
         "id": "stop:plan-canvas-pending"
       },
       {
@@ -194,7 +194,7 @@
             "timeout": 300
           }
         ],
-        "description": "Batch format (Biome/Prettier) and typecheck (tsc) all JS/TS files edited this response — runs once at Stop instead of after every Edit",
+        "description": "批量 format（Biome/Prettier）和 typecheck（tsc）本次 response 中编辑过的所有 JS/TS 文件——在 Stop 时运行一次，而不是每次 Edit 之后",
         "id": "stop:format-typecheck"
       },
       {
@@ -205,7 +205,7 @@
             "command": "node -e \"const fs=require('fs');const path=require('path');const {spawnSync}=require('child_process');const raw=fs.readFileSync(0,'utf8');const finish=(out,err,code)=>{let pending=1;const done=()=>{pending-=1;if(pending===0)process.exit(code);};if(out){pending+=1;process.stdout.write(out,done);}if(err){pending+=1;process.stderr.write(err,done);}process.nextTick(done);};const rel=path.join('scripts','hooks','run-with-flags.js');const root=(function(){var p=require('path'),f=require('fs'),o=require('os');var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var d=p.join(o.homedir(),'.claude');function L(x){try{return require(p.join(x,'scripts','lib','resolve-ecc-root')).resolveEccRoot()}catch(_){return null}}var r=L(d);if(r)return r;var s=['ecc','ecc@ecc','marketplaces/ecc','everything-claude-code','everything-claude-code@everything-claude-code','marketplaces/everything-claude-code'];for(var i=0;i<s.length;i++){r=L(p.join(d,'plugins',s[i]));if(r)return r}try{var g=['ecc','everything-claude-code'];for(var j=0;j<g.length;j++){var c=p.join(d,'plugins','cache',g[j]);var O=f.readdirSync(c);for(var k=0;k<O.length;k++){var q=p.join(c,O[k]);var V=f.readdirSync(q);for(var m=0;m<V.length;m++){r=L(p.join(q,V[m]));if(r)return r}}}}catch(_){}return d})();const script=path.join(root,rel);if(fs.existsSync(script)){const result=spawnSync(process.execPath,[script,'stop:check-console-log','scripts/hooks/check-console-log.js','standard,strict'],{input:raw,encoding:'utf8',env:process.env,cwd:process.cwd(),timeout:30000,maxBuffer:16*1024*1024});const failed=result.error||result.status===null||result.signal;const stdout=!failed&&typeof result.stdout==='string'?result.stdout:'';let stderr=typeof result.stderr==='string'?result.stderr:'';let code=Number.isInteger(result.status)?result.status:0;if(failed){const reason=result.error?result.error.message:(result.signal?'signal '+result.signal:'missing exit status');stderr+='[Stop] ERROR: hook runner failed: '+reason+String.fromCharCode(10);code=1;}finish(stdout,stderr,code);}else{finish(raw,'[Stop] WARNING: could not resolve ECC plugin root; skipping hook'+String.fromCharCode(10),0);}\""
           }
         ],
-        "description": "Check for console.log in modified files after each response",
+        "description": "每次 response 后检查 modified files 中的 console.log",
         "id": "stop:check-console-log"
       },
       {
@@ -218,7 +218,7 @@
             "timeout": 10
           }
         ],
-        "description": "Persist session state after each response (Stop carries transcript_path)",
+        "description": "每次 response 后持久化 session state（Stop 携带 transcript_path）",
         "id": "stop:session-end"
       },
       {
@@ -231,7 +231,7 @@
             "timeout": 10
           }
         ],
-        "description": "Evaluate session for extractable patterns",
+        "description": "评估 session 以获取 extractable patterns",
         "id": "stop:evaluate-session"
       },
       {
@@ -244,7 +244,7 @@
             "timeout": 10
           }
         ],
-        "description": "Track token and cost metrics per session",
+        "description": "跟踪每个 session 的 token 和 cost metrics",
         "id": "stop:cost-tracker"
       },
       {
@@ -257,7 +257,7 @@
             "timeout": 10
           }
         ],
-        "description": "Send desktop notification (macOS/WSL) with task summary when Claude responds",
+        "description": "当 Claude 响应时，发送带 task summary 的 desktop notification（macOS/WSL）",
         "id": "stop:desktop-notify"
       }
     ],
@@ -272,7 +272,7 @@
             "timeout": 10
           }
         ],
-        "description": "Session end lifecycle marker (non-blocking)",
+        "description": "Session end lifecycle marker（non-blocking）",
         "id": "session:end:marker"
       }
     ]

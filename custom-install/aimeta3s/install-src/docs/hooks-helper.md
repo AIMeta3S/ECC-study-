@@ -2,7 +2,7 @@
 
 # aimeta3s Hooks 使用建议
 
-> 本文是对 `custom-install/ai-meta-3s/install-src/hooks/hooks.json` 的深度逆向分析结果。
+> 本文是对 `custom-install/aimeta3s/install-src/hooks/hooks.json` 的深度逆向分析结果。
 > 每个 hook 都已追踪到最终执行的脚本（位于 `install-src/scripts/hooks/` 与 `install-src/scripts/lib/`），
 > 并与源码逐项核对。本次校验同步补齐了 hooks.json 引用链路中曾缺失的 8 个脚本（4 hooks + 4 lib，
 > 清单与识别方法见 §5.5），install-src 现已自包含。文末附使用建议与全部环境变量速查表。

@@ -25,7 +25,7 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 // the same drift silently.
 const HOOKS_JSON_COPIES = [
   'hooks/hooks.json',
-  'custom-install/ai-meta-3s/install-src/hooks/hooks.json',
+  'custom-install/aimeta3s/install-src/hooks/hooks.json',
   'docs/zh-CN/hooks/hooks.json'
 ];
 

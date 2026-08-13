@@ -12,12 +12,10 @@
  * - UserPromptSubmit runs every message (heavy, adds latency)
  */
 
-const path = require('path');
 const fs = require('fs');
 const {
   getLearnedSkillsDir,
   ensureDir,
-  readFile,
   countInFile,
   log
 } = require('../lib/utils');
@@ -52,29 +50,10 @@ async function main() {
     transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
   }
 
-  // Get script directory to find config
-  const scriptDir = __dirname;
-  const configFile = path.join(scriptDir, '..', '..', 'skills', 'continuous-learning-v2', 'config.json');
-
-  // Default configuration
-  let minSessionLength = 10;
-  let learnedSkillsPath = getLearnedSkillsDir();
-
-  // Load config if exists
-  const configContent = readFile(configFile);
-  if (configContent) {
-    try {
-      const config = JSON.parse(configContent);
-      minSessionLength = config.min_session_length ?? 10;
-
-      if (config.learned_skills_path) {
-        // Handle ~ in path
-        learnedSkillsPath = config.learned_skills_path.replace(/^~/, require('os').homedir());
-      }
-    } catch (err) {
-      log(`[ContinuousLearning] Failed to parse config: ${err.message}, using defaults`);
-    }
-  }
+  // v2 不通过 config.json 配置会话评估阈值（config 仅含 observer 设置），
+  // 故用内置默认值：minSessionLength=10，learnedSkillsPath 由 lib/utils 解析。
+  const minSessionLength = 10;
+  const learnedSkillsPath = getLearnedSkillsDir();
 
   // Ensure learned skills directory exists
   ensureDir(learnedSkillsPath);

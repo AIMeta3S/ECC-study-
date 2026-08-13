@@ -2,7 +2,7 @@
 
 # aimeta3s 规则使用建议
 
-本指南面向 `install-src/rules/` 下的 **33 条规则**，分布在 common / python / typescript / vue / web 五个目录。与同目录其他四份指南正交——《[命令使用建议](command-helper.md)》（40 条 `/命令`）、《[Skill 使用建议](skill-helper.md)》（34 个 skill）、《[Agent 使用建议](agent-helper.md)》（19 个 agent）、《[Hooks 使用建议](hooks-helper.md)》（22 条 hook）分别讲主动触发、按 description 匹配、spawn 委托、生命周期事件；本篇讲最底层的那一层——**被动注入的约束**：你不必"敲"它，它在你写代码时自动生效。
+本指南面向 `install-src/rules/` 下的 **33 条规则**，分布在 common / python / typescript / vue / web 五个目录。与同目录其他四份指南正交——《[命令使用建议](command-helper.md)》（41 条 `/命令`）、《[Skill 使用建议](skill-helper.md)》（35 个 skill）、《[Agent 使用建议](agent-helper.md)》（19 个 agent）、《[Hooks 使用建议](hooks-helper.md)》（22 条 hook）分别讲主动触发、按 description 匹配、spawn 委托、生命周期事件；本篇讲最底层的那一层——**被动注入的约束**：你不必"敲"它，它在你写代码时自动生效。
 
 > 全文基于逐个规则文件的真实内容提炼。每条规则按「定义 / 性质 / 激活机制 / 适用场景 / 核心约束或处理流程 / 生成物与预期结果 / 关联」七维呈现。
 

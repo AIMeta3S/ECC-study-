@@ -2,7 +2,7 @@
 
 # aimeta3s Skill 使用建议
 
-本指南面向 `install-src/skills/` 下的 **34 个 skill**。与同目录的《[command-helper.md](command-helper.md)》（40 条**命令**指南）正交——那篇讲「该敲哪条 `/命令`」，本篇讲「Claude 会在什么场景自动用上哪个 skill、以及你该如何主动引导」。
+本指南面向 `install-src/skills/` 下的 **35 个 skill**。与同目录的《[command-helper.md](command-helper.md)》（41 条**命令**指南）正交——那篇讲「该敲哪条 `/命令`」，本篇讲「Claude 会在什么场景自动用上哪个 skill、以及你该如何主动引导」。
 
 > 全文基于逐个 SKILL.md 真实内容提炼，每个 skill 按「定位 / 适用场景 / 触发条件 / 处理流程 / 生成物 / 边界 / 关联」七维呈现。
 

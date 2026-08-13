@@ -14,14 +14,21 @@ skill for the full workflow and rules.
 
 ## What This Command Does
 
+In an aimeta3s flat install there is no `ecc-plan-canvas` bin on PATH, so
+resolve the install root first and call `node "$ECC_ROOT/scripts/plan-canvas.js"`:
+
+```bash
+ECC_ROOT="${CLAUDE_PLUGIN_ROOT:-$(node -e "var r=(()=>{var e=process.env.CLAUDE_PLUGIN_ROOT;if(e&&e.trim())return e.trim();var p=require('path'),f=require('fs'),h=require('os').homedir(),d=p.join(h,'.claude'),q=p.join('scripts','lib','utils.js');if(f.existsSync(p.join(d,q)))return d;for(var s of [['ecc'],['ecc@ecc'],['marketplaces','ecc'],['everything-claude-code'],['everything-claude-code@everything-claude-code'],['marketplaces','everything-claude-code']]){var l=p.join(d,'plugins',...s);if(f.existsSync(p.join(l,q)))return l}try{for(var g of ['ecc','everything-claude-code']){var b=p.join(d,'plugins','cache',g);for(var o of f.readdirSync(b,{withFileTypes:true})){if(!o.isDirectory())continue;for(var v of f.readdirSync(p.join(b,o.name),{withFileTypes:true})){if(!v.isDirectory())continue;var c=p.join(b,o.name,v.name);if(f.existsSync(p.join(c,q)))return c}}}}catch(x){}return d})();console.log(r)")}"
+```
+
 1. Resolve the artifact: the given path, else the most recently modified
    `.claude/plans/*.plan.md`, else ask what to review.
-2. `ecc-plan-canvas open <artifact>` — opens the user's browser.
-3. `ecc-plan-canvas await <artifact>` — block until feedback,
+2. `node "$ECC_ROOT/scripts/plan-canvas.js" open <artifact>` — opens the user's browser.
+3. `node "$ECC_ROOT/scripts/plan-canvas.js" await <artifact>` — block until feedback,
    verdict, or session end; leave it running.
 4. Apply feedback to the artifact file (the canvas live-reloads), answer with
-   `await <artifact> --reply "..."`, and repeat until the user approves or
-   ends the session.
+   `node "$ECC_ROOT/scripts/plan-canvas.js" await <artifact> --reply "..."`, and repeat
+   until the user approves or ends the session.
 
 An `approve` verdict counts as plan confirmation for `/plan`-style gates:
 stop polling, `end` the session, and begin implementation.

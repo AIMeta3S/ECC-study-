@@ -29,6 +29,10 @@ const http = require('http');
 const os = require('os');
 const path = require('path');
 
+// 提示文案里给出的可执行命令名。aimeta3s 平铺安装不提供 `ecc-plan-canvas` bin，
+// 故提示必须指向脚本自身（绝对路径，AI 可直接复制执行）。
+const PLAN_CANVAS_CMD = `node "${path.join(__dirname, '..', 'plan-canvas.js')}"`;
+
 // Loopback only, and short: a Stop hook must not stall the turn if the canvas
 // server is wedged. Falling back to the state file keeps delivery working.
 const SERVER_TIMEOUT_MS = 1000;
@@ -173,7 +177,7 @@ function buildReason(delivered) {
       lines.push('  your normal reply; do not reopen the canvas.');
     } else {
       lines.push('  Reply IN THE CANVAS so the human sees it, and keep listening, with one command:');
-      lines.push(`    ecc-plan-canvas await ${JSON.stringify(entry.file)} --reply "<what you did>"`);
+      lines.push(`    ${PLAN_CANVAS_CMD} await ${JSON.stringify(entry.file)} --reply "<what you did>"`);
     }
     lines.push('');
   }

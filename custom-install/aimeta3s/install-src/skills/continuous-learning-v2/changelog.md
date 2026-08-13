@@ -34,7 +34,7 @@ Hooks **100% 会触发**，是确定性的。这意味着：
 ## 向后兼容
 
 v2.1 与 v2.0 和 v1 完全兼容：
-- 现有的 global instincts 可以通过 `scripts/migrate-homunculus.sh` 从 `~/.claude/homunculus/instincts/` 迁移
+- 现有的 global instincts 可以通过 `skills/continuous-learning-v2/scripts/migrate-homunculus.sh` 从 `~/.claude/homunculus/instincts/` 迁移
 - v1 现有的 `~/.claude/skills/learned/` skills 仍然可用
 - Stop hook 仍然运行（但现在也会馈送到 v2）
 - 渐进式迁移：两者并行运行

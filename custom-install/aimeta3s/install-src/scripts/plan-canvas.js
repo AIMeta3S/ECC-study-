@@ -43,6 +43,10 @@ try {
   VERSION = 'unknown';
 }
 
+// next_step 提示文案里给出的可执行命令名。aimeta3s 平铺安装不提供 `ecc-plan-canvas`
+// bin，故提示必须指向脚本自身（绝对路径，AI 可直接复制执行）。
+const SELF_CMD = `node "${path.join(__dirname, 'plan-canvas.js')}"`;
+
 const SAFE_REQUEST_PATHS = new Set([
   '/',
   '/health',
@@ -244,7 +248,7 @@ async function cmdOpen(file, args, { stateDir, port }) {
     url,
     browser: launched ? 'opened' : 'not opened',
     next_step:
-      'Run `ecc-plan-canvas await <file>` and leave it running; it returns when the human sends feedback, a verdict, or ends the session.'
+      `Run \`${SELF_CMD} await <file>\` and leave it running; it returns when the human sends feedback, a verdict, or ends the session.`
   };
 }
 
@@ -292,7 +296,7 @@ async function cmdAwait(file, args, { stateDir, port }) {
   if (result.status === 'feedback') {
     result.next_step = result.sessionEnded
       ? 'The user sent this feedback and ended the session. Address it and report in chat; do not reopen the canvas uninvited.'
-      : 'Address the feedback, then run `ecc-plan-canvas await <file> --reply "<what you changed>"` to answer in the canvas and keep listening.';
+      : `Address the feedback, then run \`${SELF_CMD} await <file> --reply "<what you changed>"\` to answer in the canvas and keep listening.`;
   } else if (result.status === 'ended') {
     result.next_step =
       result.endedBy === 'user'
@@ -326,7 +330,7 @@ function cmdPending({ stateDir }) {
     status: waiting.length ? 'pending' : 'clear',
     sessions: waiting,
     next_step: waiting.length
-      ? 'Run `ecc-plan-canvas await <file>` for each file above to receive the messages.'
+      ? `Run \`${SELF_CMD} await <file>\` for each file above to receive the messages.`
       : 'No canvas feedback is waiting.'
   };
 }

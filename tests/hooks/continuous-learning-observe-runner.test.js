@@ -117,7 +117,7 @@ function runTests() {
 
   if (test('observe hooks use node-mode runner instead of shell-mode dispatch', () => {
     const preCommand = loadHook('pre:observe:continuous-learning');
-    assert.ok(preCommand.includes('node scripts/hooks/run-with-flags.js pre:observe scripts/hooks/observe-runner.js standard,strict'));
+    assert.ok(preCommand.includes('node scripts/hooks/run-with-flags.js pre:observe:continuous-learning scripts/hooks/observe-runner.js standard,strict'));
     assert.ok(!preCommand.includes('shell scripts/hooks/run-with-flags-shell.sh'));
     assert.ok(!preCommand.includes('skills/continuous-learning-v2/hooks/observe.sh'));
 

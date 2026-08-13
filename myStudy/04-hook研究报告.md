@@ -4,17 +4,17 @@
 
 ## 关键结论（先看重点）
 
-1. **`install.sh` 是文件复制**，不是真正"安装 hook 到 settings.json"，**完全不碰** `~/.claude/settings.json`。
-  - **拷贝`hooks/` → `~/.claude/hooks/`**（5 文件）
-  - **拷贝`scripts/hooks/` → `~/.claude/scripts/hooks/`**（约 50 文件）
-  - **拷贝`scripts/lib/` → `~/.claude/scripts/lib/`**（约 123 文件，递归）
-  - **替换`~/.claude/hooks/hooks.json`中的`{CLAUDE_PLUGIN_ROOT}`**：读源文件 → 替换 → 回写文件
-  - **更新`~/.claude/ecc/install-state.json`**：记录拷贝了哪些文件
+1. **`install.sh` 是文件复制**，**不通过 `~/.claude/settings.json` 注册 hook**（hook 写到独立的 `~/.claude/hooks/hooks.json`）。⚠️ 但它**并非"完全不碰 settings.json"**：会写 `settings.json` 的 commit attribution 字段，默认禁用 co-author 署名（用户已有显式偏好则跳过，`apply.js:379-381` → `writeClaudeCommitAttributionPreference` L126-156）。
+  - **拷贝`hooks/` → `~/.claude/hooks/`**（4 条目：`hooks.json`、`README.md`、`codex-hooks.json`、`memory-persistence/`）
+  - **拷贝`scripts/hooks/` → `~/.claude/scripts/hooks/`**（51 文件）
+  - **拷贝`scripts/lib/` → `~/.claude/scripts/lib/`**（125 文件，递归）
+  - **替换`~/.claude/hooks/hooks.json`中的`${CLAUDE_PLUGIN_ROOT}`**：`apply.js:228-258`（`buildResolvedClaudeHooks`）读源 → `replacePluginRootPlaceholders` L158-181（递归遍历，**只替换字面量 `${CLAUDE_PLUGIN_ROOT}`**）→ L361-373 回写
+  - **更新`~/.claude/ecc/install-state.json`**：记录拷贝了哪些文件（每文件 content digest）
 2. **1中描述的替换**：代码里的占位符替换函数只替换字面量 `${CLAUDE_PLUGIN_ROOT}`，而当前 `hooks/hooks.json` 里这种占位符**一个都没有**。路径之所以正确，是因为每条 command 内嵌了一段运行时 root 解析器。
 3. **"profile" 一词双义**，是最大混淆点：安装 profile（`manifests/install-profiles.json` 里 7 个：minimal/opencode/core/developer/security/research/full，决定**装哪些模块**）≠ 运行时 hook profile（minimal/standard/strict，决定**已装的某条 hook 是否在本会话执行**）。
 4. **`hooks/memory-persistence/hooks.json` 不是活配置**，是一份"参考契约"文档——schema 都不是 Claude Code 的 hook schema，运行时 hook 脚本不读取它；安装器会随 hooks/ 目录把它原样复制到 ~/.claude/hooks/memory-persistence/，但不解析其内容（无占位符重写、无 merge）。
 5. ECC 采用一种自有 hook 运行模式：通过原生 hook 机制注册，但在每条 hook 的 command 内部套一层包装层（inline 根解析 + plugin-hook-bootstrap → run-with-flags.js/dispatchers + env 门控），用少数几条原生 hook 组织大量检查。包装层在自身出错时 fail-open（exit 0），但 hook 有意的安全 block 仍如实传播 exit 2。
-6. **⚠️ install.sh 安装后 hooks 是否「生效」存疑（重要）**。官方「Hook locations」封闭枚举里**没有**「独立的 `~/.claude/hooks/hooks.json`」这一项——`hooks/hooks.json` 只挂在「Plugin」行下，须是**已注册插件根目录下**；而 install.sh 路径**不注册插件**。ECC `README:466` 引用的 "v2.1 auto-loads plugin hooks/hooks.json" 在官方文档**查无此句**，准确描述应该是 “v2.1 auto-loads {plugin root path}/hooks/hooks.json”。故「install.sh 装完 hook 即生效」缺乏证据，需运行时实证（`/hooks`）。详见 §2.3。
+6. **⚠️ install.sh 安装后 hooks 是否「生效」存疑（重要）**。官方「Hook locations」封闭枚举里**没有**「独立的 `~/.claude/hooks/hooks.json`」这一项——`hooks/hooks.json` 只挂在「Plugin」行下，须是**已注册插件根目录下**；而 install.sh 路径**不注册插件**。ECC `README:418` 引用的 "Claude Code v2.1+ already auto-loads plugin `hooks/hooks.json`" —— 官方文档（hooks.md / plugins-reference.md）**确有**"插件启用时其 hooks 自动加载"的描述，但**前提是插件已注册并启用**；install.sh 路径不满足此前提，故「装完即生效」缺乏证据，需运行时实证（`/hooks`）。详见 §2.3。
 
 ---
 
@@ -22,15 +22,16 @@
 
 ### 1.1 配置位置与层级
 
-hook 定义在 `settings.json` 的 `hooks` 字段。层级（优先级从低到高，**叠加合并而非覆盖**）：
+hook 定义在 `settings.json` 的 `hooks` 字段。配置分 6 层，**叠加合并**——各层匹配的 hook 都会运行，而非高层覆盖低层（企业 managed policy 可经 `allowManagedHooksOnly` 屏蔽用户/项目/插件层）：
 
-| 文件 | 作用域 |
+| 载体 | 作用域 |
 |---|---|
 | 企业 managed policy settings | 组织级 |
 | `~/.claude/settings.json` | 用户级 |
 | `.claude/settings.json` | 项目级（可 commit） |
 | `.claude/settings.local.json` | 项目本地（gitignore） |
 | 插件根下的 hooks/hooks.json | 插件级；插件启用时由 Claude Code 自动加载 |
+| skill / agent 的 frontmatter（`hooks:` 字段） | 单个技能/子代理级；随其载体加载 |
 
 ### 1.2 事件类型
 
@@ -57,24 +58,26 @@ hook 定义在 `settings.json` 的 `hooks` 字段。层级（优先级从低到�
   - `FileChanged` : 被监听文件发生变更时触发，可动态更新监听路径（`watchPaths`）。
   - `PostCompact`: 上下文压缩完成后触发，用于对压缩后状态作出反应（如记录摘要）。
 
+> 注：官方事件远不止上述 19 个（约 31 个），另含 `MessageDisplay`、`TaskCreated`/`TaskCompleted`、`TeammateIdle`、`InstructionsLoaded`、`ConfigChange`、`CwdChanged`、`DirectoryAdded`、`WorktreeCreate`/`WorktreeRemove`、`Elicitation`/`ElicitationResult` 等，本仓库未涉及，略。
+
 ### 1.3 matcher 语义
 
 - `"*"`/空/省略 → 匹配全部；
-- 仅含字母/数字/`_`/`-`/`|`/`,` → **精确字符串匹配**，`|` 和 `,` 分隔多值（如 `Edit|Write`）；
+- 仅含字母/数字/`_`/`-`/空格/`|`/`,` → **精确字符串匹配**，`|` 和 `,` 分隔多值（如 `Edit|Write`；连字符需 v2.1.195+、逗号需 v2.1.191+）；
 - 含其他字符 → 当**正则**用（unanchored）。
 - 对工具事件（PreToolUse/PostToolUse/...）匹配的是**工具名**；对 SessionStart 匹配的是来源（`startup`/`resume`/`clear`/`compact`）等，不同事件含义不同。
 
 ### 1.4 stdin 协议（Claude Code → hook）
 
-公共字段：`session_id`、`transcript_path`、`cwd`、`permission_mode`、`hook_event_name`。
-工具事件额外：`tool_name`、`tool_input`（Write 含 `file_path`/`content`；Edit 含 `file_path`/`old_string`/`new_string`；Bash 含 `command`/`description`）、`tool_response`（仅 PostToolUse）。
+公共字段：`session_id`、`transcript_path`、`cwd`、`permission_mode`、`hook_event_name`（新版本另含 `prompt_id`、`effort`）。
+工具事件额外：`tool_name`、`tool_input`（Write 含 `file_path`/`content`；Edit 含 `file_path`/`old_string`/`new_string`/`replace_all`；Bash 含 `command`/`description`/`timeout`/`run_in_background`）。`tool_response` 见 PostToolUse 与 PostToolBatch；PostToolUseFailure 带 `error`（非 `tool_response`）。
 
 ### 1.5 输出与控制语义
 
 - **exit 0** = 通过（stdout 若是 JSON 则被解析）；
 - **exit 2** = 阻塞，stderr 反馈给 Claude（PreToolUse 阻止工具；Stop 阻止停止让 Claude 继续；PostToolUse/PostToolUseFailure 工具已执行无法阻止，但 exit 2 仍会把 stderr 作为警告反馈给 Claude）；
 - **其他非零** = 非阻塞错误（注意：`exit 1` 不阻塞，想强制必须 `exit 2`）。
-- stdout 可输出 JSON 做高级控制：PreToolUse 用 `hookSpecificOutput.permissionDecision = allow|deny|ask`；各类事件可用 `additionalContext` 给模型注入上下文、`systemMessage` 给用户提示、`continue:false` 停止 Claude。输出字符串上限 10000 字符。
+- stdout 可输出 JSON 做高级控制：PreToolUse 用 `hookSpecificOutput.permissionDecision = allow|deny|ask|defer`；各类事件可用 `additionalContext` 给模型注入上下文、`systemMessage` 给用户提示、`continue:false` 停止 Claude。输出字符串上限 10000 字符。
 
 ### 1.6 async / timeout
 
@@ -101,11 +104,11 @@ bash ./install.sh --target claude --modules hooks-runtime
 ```
 
 命令将：
-  - **拷贝`hooks/` → `~/.claude/hooks/`**（5 文件）
-  - **拷贝`scripts/hooks/` → `~/.claude/scripts/hooks/`**（约 50 文件）
-  - **拷贝`scripts/lib/` → `~/.claude/scripts/lib/`**（约 123 文件，递归）
-  - **替换`~/.claude/hooks/hooks.json`中的`${CLAUDE_PLUGIN_ROOT}`**：读源文件 → 替换 → 回写文件
-  - **更新`~/.claude/ecc/install-state.json`**：账本，schema `ecc.install.v1`，记录 target/modules/operations/每文件 contentSha256
+  - **拷贝`hooks/` → `~/.claude/hooks/`**（4 条目：`hooks.json`/`README.md`/`codex-hooks.json`/`memory-persistence/`）
+  - **拷贝`scripts/hooks/` → `~/.claude/scripts/hooks/`**（51 文件）
+  - **拷贝`scripts/lib/` → `~/.claude/scripts/lib/`**（125 文件，递归）
+  - **替换`~/.claude/hooks/hooks.json`中的`${CLAUDE_PLUGIN_ROOT}`**：`apply.js:228-258` 读源 → `replacePluginRootPlaceholders`（L158-181，只替换字面量 `${CLAUDE_PLUGIN_ROOT}`）→ L361-373 回写
+  - **更新`~/.claude/ecc/install-state.json`**：账本，记录 target/modules/operations/每文件 content digest
 
 ### 2.2 插件安装
 ```
@@ -118,7 +121,7 @@ ecc setup --mode claude-plugin
 ### 2.3 ⚠️ install.sh 安装后，hook 真的会生效吗？
 
 根据安装脚本实际代码和官方资料证实：
-1. install.sh 把 `hooks/hooks.json` 写到 `~/.claude/hooks/hooks.json`（`apply.js:184 / 311-323`），且不写 settings.json、不调用任何插件注册流程（不碰 `claude-plugin-setup.js`、不进 marketplace、不写 `enabledPlugins`）。
+1. install.sh 把 `hooks/hooks.json` 写到 `~/.claude/hooks/hooks.json`（`apply.js:228-258` 解析+替换、`L361-373` 写入），**不通过 settings.json 注册 hook**、不调用任何插件注册流程（不碰 `claude-plugin-setup.js`、不进 marketplace、不写 `enabledPlugins`）。⚠️ 但它**会写 settings.json 的 commit attribution 字段**（`apply.js:379-381`，默认禁用 co-author 署名）——"不写 settings.json"仅对 hook 注册成立，对 commit attribution 不成立。
 
 2. 官方「Hook locations」是**封闭式枚举**（[hooks.md](https://code.claude.com/docs/en/hooks.md)），6 个载体里**没有**「独立的 `~/.claude/hooks/hooks.json`」——`hooks/hooks.json` 这个文件名只出现在「Plugin」行，且明确限定"当插件启用时（when plugin is enabled）"。
 
@@ -145,7 +148,7 @@ ecc setup --mode claude-plugin
 | 形态 | 用于 | 终点（被 spawn/require 的目标） | 终点之后 |
 |---|---|---|---|
 | **A. 内联 → require(bootstrap) → spawn 目标** | PreToolUse(8)、PreCompact(1)、SessionStart(2)、PostToolUseFailure(1) | bootstrap.main() 按 mode=`node` spawn 目标 | 多数=**run-with-flags.js**（再跑业务脚本）；**Bash**=pre-bash-dispatcher.js（自处理，不再 spawn）；**session:start**=session-start-bootstrap.js（**再 spawn 一层** run-with-flags.js） |
-| **B. 内联 spawnSync 自管 → run-with-flags.js** | Stop(6)、SessionEnd(1) | 内联自己 `resolveEccRoot` + `spawnSync(node, [run-with-flags.js, id, script, profiles], {timeout, maxBuffer})` | run-with-flags.js 照常门控 + 跑业务脚本（同形态 A 的进程2） |
+| **B. 内联 spawnSync 自管 → run-with-flags.js** | Stop(7)、SessionEnd(1) | 内联自己 `resolveEccRoot` + `spawnSync(node, [run-with-flags.js, id, script, profiles], {timeout, maxBuffer})` | run-with-flags.js 照常门控 + 跑业务脚本（同形态 A 的进程2） |
 | **C. 内联 → require(dispatcher).cli()** | PostToolUse(sync / async) | posttooluse-dispatcher.js（同进程） | 不起子进程；遍历 SYNC/ASYNC_HOOKS 逐个调 `.run()`，合并 stdout 后一次输出 |
 
 **内联段干了什么**（形态 A/C 共 14 处——bootstrap 12 + dispatcher 2，每处重复同一段约 1.3 KB 的探测+splice+require）：
@@ -155,7 +158,7 @@ ecc setup --mode claude-plugin
 3. `require(targetPath)`：形态 A target=bootstrap、形态 C target=dispatcher，require 即触发其 `main()`/`cli()`。
 
 探测顺序（内联 `INLINE_RESOLVE`，与 `resolve-ecc-root.js` 的 `resolveEccRoot()` 完全一致）：
-`CLAUDE_PLUGIN_ROOT` env → `~/.claude` → `~/.claude/plugins/<6 个 slug>`（ecc / ecc@ecc / marketplaces/ecc / everything-claude-code / everything-claude-code@… / marketplaces/everything-claude-code）→ `~/.claude/plugins/cache/{ecc,everything-claude-code}/<org>/<version>/`（两级 readdirSync 扫描）→ fallback `~/.claude`。其中中间候选步（`~/.claude` / 6 slug / cache）借 `require(.../resolve-ecc-root).resolveEccRoot()` 做权威校验（含"scripts/lib 与 skills 同时存在"的残装 sentinel）；首步（env）与末步（fallback）直接返回、不委托。
+`CLAUDE_PLUGIN_ROOT` env → `~/.claude` → `~/.claude/plugins/<6 个 slug>`（ecc / ecc@ecc / marketplaces/ecc / everything-claude-code / everything-claude-code@… / marketplaces/everything-claude-code）→ `~/.claude/plugins/cache/{ecc,everything-claude-code}/<org>/<version>/`（两级 readdirSync 扫描）→ fallback `~/.claude`。其中中间候选步（`~/.claude` / 6 slug / cache）借 `require(.../resolve-ecc-root).resolveEccRoot()` 做权威校验（含残装 sentinel：`scripts/lib/utils.js` 文件与 `skills/continuous-learning-v2` 目录须同时存在）；首步（env）与末步（fallback）直接返回、不委托。
 
 
 **通用执行链（以 PreToolUse Write → run-with-flags.js → 业务脚本 export run() 为例）**
@@ -193,8 +196,12 @@ E  run() 返回值经 resolveHookResult 归一（接受 string / Buffer / {stdou
    Claude Code 读进程1 stdout + exit code
 ```
 
-**兜底（fail-open，绝不卡死 Claude Code）**：bootstrap 自身报错 / 子进程崩溃 / 超时 / 被 signal 终止 → 进程1 写 raw + exit 0。**例外**：`session:start` 走独立的 `session-start-bootstrap.js`，其子进程失败时 `exit(1)` 显式报错（不 fail-open），因会话启动失败值得被看见。
-**唯一阻塞路径**：业务脚本有意让 `run()` 返回 `exitCode=2`（或 legacy 进程 exit 2），该值经 run-with-flags → bootstrap 一路如实传播为进程1 exit code=2，Claude Code 据此 block 工具；其余任何异常一律被吞成 exit 0。
+**兜底（绝不卡死 Claude Code）**：
+- **形态 A**（bootstrap）：bootstrap 自身报错 / 子进程崩溃 / 超时 / 被 signal 终止 → 进程1 写 raw + **exit 0**（fail-open）。
+- **形态 B**（Stop/SessionEnd 自管 spawnSync）：root 解析不到（run-with-flags.js 缺失）→ raw + exit 0（fail-open）；但**子进程已启动却失败/超时/signal** → stdout 清空 + **exit 1**（非 fail-open，让失败被看见）。
+- **例外**：`session:start` 走独立的 `session-start-bootstrap.js`，其子进程失败时 `exit(1)` 显式报错（不 fail-open）。代码未注释此动机，推测是会话启动失败值得被看见。
+
+**唯一阻塞路径**：业务脚本有意让 `run()` 返回 `exitCode=2`（或 legacy 进程 exit 2），该值经 run-with-flags → bootstrap 一路如实传播为进程1 exit code=2，Claude Code 据此 block 工具；其余异常在形态 A 被吞成 exit 0、在形态 B 子进程失败为 exit 1。
 
 #### 三层门控
 
@@ -224,14 +231,14 @@ E  run() 返回值经 resolveHookResult 归一（接受 string / Buffer / {stdou
 
 ### 3.1 `hooks/hooks.json`（生产执行图）— 逐条讲解
 
-共 **21 条** hook（`grep '"id":' = 21`），顶层 `$schema` 指向 claude-code-settings schema。按事件分组。
+共 **22 条** hook（`grep -c '"id":' = 22`），顶层 `$schema` 指向 claude-code-settings schema。按事件分组。
 
 #### PreToolUse（8 条）
 
 **① `pre:bash:dispatcher`** — matcher `Bash`
 - 作用：Bash 命令的合并预检调度器（质量/tmux/push/GateGuard）。
 - 触发：每次要执行 Bash 工具前。
-- 流程：A→B→C 后，终点是 `scripts/hooks/pre-bash-dispatcher.js`（极薄 stdin 适配器）→ `scripts/hooks/bash-hook-dispatcher.js` `runPreBash` → **串行跑 6 个子检查、短路**（任一非 0 立即返回）。子检查：`block-no-verify`（全 profile）、`auto-tmux-dev`、`tmux-reminder`(strict)、`git-push-reminder`(strict)、`commit-quality`(strict)、`gateguard-fact-force`(standard,strict)。**不走 run-with-flags**，因为多 hook 合并进一个进程省 6× 启动开销。
+- 流程：A→B→C 后，终点是 `scripts/hooks/pre-bash-dispatcher.js`（极薄 stdin 适配器）→ `scripts/hooks/bash-hook-dispatcher.js` `runPreBash` → **串行跑 6 个子检查、短路**（任一非 0 立即返回）。子检查（id 均带 `pre:bash:` 前缀）：`pre:bash:block-no-verify`（全 profile）、`pre:bash:auto-tmux-dev`（standard,strict）、`pre:bash:tmux-reminder`(strict)、`pre:bash:git-push-reminder`(strict)、`pre:bash:commit-quality`(strict)、`pre:bash:gateguard-fact-force`(standard,strict)。**不走 run-with-flags**，因为多 hook 合并进一个进程省 6× 启动开销。
 - 使用：禁某个子检查用 `ECC_DISABLED_HOOKS=pre:bash:tmux-reminder`；`ECC_GATEGUARD=off` 专门关 GateGuard。
 
 **② `pre:write:doc-file-warning`** — matcher `Write`
@@ -292,7 +299,7 @@ E  run() 返回值经 resolveHookResult 归一（接受 string / Buffer / {stdou
 - 触发：每次工具成功后。
 - 流程：形态 C——内联 `require(posttooluse-dispatcher.js).cli()`，`main()` 读 argv[2] 选 `sync`/`async` → 从 `SYNC_HOOKS`(7)/`ASYNC_HOOKS`(3) 选一组 → **串行跑、不短路**（PostToolUse 本就不能阻断）、错误隔离。
   - SYNC 7 个：`post:edit:design-quality-check`、`post:edit:accumulator`、`post:edit:console-warn`、`post:governance-capture`、`post:session-activity-tracker`、`post:ecc-metrics-bridge`(全 profile)、`post:ecc-context-monitor`。
-  - ASYNC 3 个：`post:bash:dispatcher`（复用 bash-hook-dispatcher 的 POST 子表）、`post:quality-gate`、`post:observe:continuous-learning`。
+  - ASYNC 3 个：`post:bash:dispatcher`（matcher `Bash`，内联调 `bash-hook-dispatcher.runPostBash` 跑 4 个 post-bash 子检查：`post:bash:command-log-audit`/`command-log-cost`/`pr-created`/`build-complete`，均 standard,strict）、`post:quality-gate`、`post:observe:continuous-learning`。
   - 双重门控：先 `matchesTool(hook.matcher, tool_name)` 再 `isHookEnabled(hook.id, {profiles})`。
 - 使用：`ECC_DISABLED_HOOKS=post:edit:console-warn` 精确关某条；`ECC_CONTEXT_MONITOR_COST_WARNINGS=off` 关成本提醒（ecc-context-monitor 子项）。
 
@@ -303,27 +310,31 @@ E  run() 返回值经 resolveHookResult 归一（接受 string / Buffer / {stdou
 **⑭ `post:mcp-health-check`** — matcher `*`
 - 作用：MCP 工具失败后追踪、标记 server 不健康、尝试重连。复用 `scripts/hooks/mcp-health-check.js`。
 
-#### Stop（6 条，全形态 B）
+#### Stop（7 条，全形态 B）
 
-形态 B 特点：内联代码自己做 `fs.readFileSync(0)` 读 stdin，再 `spawnSync(run-with-flags.js, [...], {input:raw, timeout, maxBuffer:16MiB})`，用自定义 `finish()` 等流 drain 后退出。**绕过 bootstrap** 是为了自定义 timeout/maxBuffer。注：6 条 Stop 完全符合；`session:end:marker`（SessionEnd）为**轻量版**——无 `finish()`、无 `maxBuffer`，直接写+exit。
+形态 B 特点：内联代码自己做 `fs.readFileSync(0)` 读 stdin，再 `spawnSync(run-with-flags.js, [...], {input:raw, timeout, maxBuffer:16MiB})`，用自定义 `finish()` 等流 drain 后退出。**绕过 bootstrap** 是为了自定义 timeout/maxBuffer。注：7 条 Stop 完全符合；`session:end:marker`（SessionEnd）为**轻量版**——无 `finish()`、无 `maxBuffer`，直接写+exit。
 
-**⑮ `stop:format-typecheck`** — timeout 300（5 分钟）
+**⑮ `stop:plan-canvas-pending`** — timeout 30，profilesCsv `minimal,standard,strict`（全 profile）。**唯一阻断型 Stop**。
+- 作用：agent 停下前抽干当前项目未投递的 Plan Canvas 浏览器反馈（读 `~/.claude/plan-canvas/sessions.json`，优先经本地 server race-free 取）；抽到则返回 block 决策要求 agent 当场处理并回复，`stop_hook_active=true` 时防自锁不重复阻断。
+- 流程：spawnSync → run-with-flags → `scripts/hooks/plan-canvas-pending.js`。
+
+**⑯ `stop:format-typecheck`** — timeout 300（5 分钟）
 - 作用：在 Stop 时**批量**对本轮所有编辑过的 JS/TS 跑 Biome/Prettier + `tsc --noEmit`（而非每次 Edit 后跑）。
 - 流程：spawnSync → run-with-flags → `scripts/hooks/stop-format-typecheck.js`。
 
-**⑯ `stop:check-console-log`** — 作用：每轮响应后检查改动文件里的 `console.log`。target `scripts/hooks/check-console-log.js`。
+**⑰ `stop:check-console-log`** — 作用：每轮响应后检查改动文件里的 `console.log`。target `scripts/hooks/check-console-log.js`。
 
-**⑰ `stop:session-end`** — async，timeout 10。作用：每轮响应后持久化会话状态（Stop 携带 `transcript_path`）。target `scripts/hooks/session-end.js`。
+**⑱ `stop:session-end`** — async，timeout 10。作用：每轮响应后持久化会话状态（Stop 携带 `transcript_path`）。target `scripts/hooks/session-end.js`。
 
-**⑱ `stop:evaluate-session`** — async。作用：评估会话可提取的模式（持续学习）。target `scripts/hooks/evaluate-session.js`。
+**⑲ `stop:evaluate-session`** — async。作用：评估会话可提取的模式（持续学习）。target `scripts/hooks/evaluate-session.js`。
 
-**⑲ `stop:cost-tracker`** — async。作用：按会话追踪 token/成本指标。target `scripts/hooks/cost-tracker.js`。
+**⑳ `stop:cost-tracker`** — async。作用：按会话追踪 token/成本指标。target `scripts/hooks/cost-tracker.js`。
 
-**⑳ `stop:desktop-notify`** — async，standard+。作用：Claude 响应后发桌面通知（macOS/WSL）附任务摘要。target `scripts/hooks/desktop-notify.js`。
+**㉑ `stop:desktop-notify`** — async，standard+。作用：Claude 响应后发桌面通知（macOS/WSL）附任务摘要。target `scripts/hooks/desktop-notify.js`。
 
 #### SessionEnd（1 条，形态 B 轻量版）
 
-**㉑ `session:end:marker`** — async，timeout 10，profilesCsv `minimal,standard,strict`（全 profile）。
+**㉒ `session:end:marker`** — async，timeout 10，profilesCsv `minimal,standard,strict`（全 profile）。
 - 作用：会话结束生命周期标记（非阻塞）。target `scripts/hooks/session-end-marker.js`。
 
 ---
@@ -399,7 +410,8 @@ profile 语义：`minimal`（核心生命周期+安全）、`standard`（默认�
 
 ## 附：文档与代码不符处（建议修正）
 
-1. `hooks/README.md:26` "installer rewrites hook command paths" —— 实为 no-op，路径靠运行时解析器。
-2. `hooks/README.md:49-59` PostToolUse 表（Prettier/TypeScript）已过时，实际在 Stop 的 `stop:format-typecheck`。
+1. `hooks/README.md:26` "so hook commands are rewritten against your actual Claude root" —— installer 确有 rewrite 步骤（`apply.js:158-181` `replacePluginRootPlaceholders`），但当前 `hooks/hooks.json` 不含 `${CLAUDE_PLUGIN_ROOT}` 占位符（每条 command 自带运行时 root 解析器），故该步对 hooks.json 实为 no-op。
+2. `hooks/README.md:49-59` PostToolUse 表**部分过时**：`Prettier format`(L57)/`TypeScript check`(L58) 已不在 PostToolUse，实际在 Stop 的 `stop:format-typecheck`；其余（PR logger/Build analysis/Quality gate/Design quality check）仍存在。
 3. `.claude-plugin/plugin.json` 的 `hook_profile` 选项文档值（minimal/standard/strict）与安装 profile（7 个）名字撞车，易误解为同一概念。
-4. `README:466` 称 "Claude Code v2.1+ already auto-loads plugin hooks/hooks.json" —— 该原话在官方文档（hooks.md / plugins-reference.md / changelog）**查无**；官方"插件 hook 自动加载"只针对**已注册启用**的插件，而 install.sh 路径不注册插件，故此说法对路径 A 不成立（详见 §2.3）。
+4. `README:418` 称 "Claude Code v2.1+ already auto-loads plugin `hooks/hooks.json`" —— 官方文档确有"插件 hook 自动加载"描述，但仅针对**已注册启用**的插件；install.sh 路径不注册插件，故此说法对 install.sh 路径不成立（详见 §2.3）。
+5. `README:416` 称安装 "leaves any existing `~/.claude/settings.json` untouched" —— 与 `apply.js:379-381` 矛盾：install.sh 路径会写 settings.json 的 commit attribution 字段（禁用 co-author 署名，用户无显式偏好时）。

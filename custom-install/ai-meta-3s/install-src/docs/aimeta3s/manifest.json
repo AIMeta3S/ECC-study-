@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-12",
+  "generated": "2026-08-13",
   "aimeta3sHome": "~/.claude",
   "dirMappings": {
     "agents": "agents",
@@ -8,7 +8,7 @@
     "skills": "skills",
     "rules": "rules/ecc",
     "scripts": "scripts",
-    "docs": "ai-meta-3s/docs"
+    "docs": "aimeta3s/docs"
   },
   "hooksConfig": "~/.claude/hooks/hooks.json",
   "resources": [
@@ -668,6 +668,18 @@
     },
     {
       "category": "script",
+      "name": "hooks/plan-canvas-pending",
+      "installPath": "~/.claude/scripts/hooks/plan-canvas-pending.js",
+      "sourcePath": "scripts/hooks/plan-canvas-pending.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/plan-canvas-sessions",
+      "installPath": "~/.claude/scripts/hooks/plan-canvas-sessions.js",
+      "sourcePath": "scripts/hooks/plan-canvas-sessions.js"
+    },
+    {
+      "category": "script",
       "name": "hooks/plugin-hook-bootstrap",
       "installPath": "~/.claude/scripts/hooks/plugin-hook-bootstrap.js",
       "sourcePath": "scripts/hooks/plugin-hook-bootstrap.js"
@@ -707,6 +719,12 @@
       "name": "hooks/post-edit-console-warn",
       "installPath": "~/.claude/scripts/hooks/post-edit-console-warn.js",
       "sourcePath": "scripts/hooks/post-edit-console-warn.js"
+    },
+    {
+      "category": "script",
+      "name": "hooks/posttooluse-dispatcher",
+      "installPath": "~/.claude/scripts/hooks/posttooluse-dispatcher.js",
+      "sourcePath": "scripts/hooks/posttooluse-dispatcher.js"
     },
     {
       "category": "script",
@@ -776,6 +794,12 @@
     },
     {
       "category": "script",
+      "name": "hooks/session-start",
+      "installPath": "~/.claude/scripts/hooks/session-start.js",
+      "sourcePath": "scripts/hooks/session-start.js"
+    },
+    {
+      "category": "script",
       "name": "hooks/session-start-bootstrap",
       "installPath": "~/.claude/scripts/hooks/session-start-bootstrap.js",
       "sourcePath": "scripts/hooks/session-start-bootstrap.js"
@@ -806,6 +830,12 @@
     },
     {
       "category": "script",
+      "name": "lib/instinct-relevance",
+      "installPath": "~/.claude/scripts/lib/instinct-relevance.js",
+      "sourcePath": "scripts/lib/instinct-relevance.js"
+    },
+    {
+      "category": "script",
       "name": "lib/llm-summary",
       "installPath": "~/.claude/scripts/lib/llm-summary.js",
       "sourcePath": "scripts/lib/llm-summary.js"
@@ -821,6 +851,24 @@
       "name": "lib/package-manager",
       "installPath": "~/.claude/scripts/lib/package-manager.js",
       "sourcePath": "scripts/lib/package-manager.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/path-safety",
+      "installPath": "~/.claude/scripts/lib/path-safety.js",
+      "sourcePath": "scripts/lib/path-safety.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/project-detect",
+      "installPath": "~/.claude/scripts/lib/project-detect.js",
+      "sourcePath": "scripts/lib/project-detect.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/resolve-ecc-root",
+      "installPath": "~/.claude/scripts/lib/resolve-ecc-root.js",
+      "sourcePath": "scripts/lib/resolve-ecc-root.js"
     },
     {
       "category": "script",

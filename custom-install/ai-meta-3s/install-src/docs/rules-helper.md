@@ -1,6 +1,6 @@
 <!-- aimeta3s-doc: rules-helper | version: 1 | updated: 2026-08-12 | source: rules/**/*.md（精确路径见 manifest.json） -->
 
-# ai-meta-3s 规则使用建议
+# aimeta3s 规则使用建议
 
 本指南面向 `install-src/rules/` 下的 **33 条规则**，分布在 common / python / typescript / vue / web 五个目录。与同目录其他四份指南正交——《[命令使用建议](command-helper.md)》（39 条 `/命令`）、《[Skill 使用建议](skill-helper.md)》（34 个 skill）、《[Agent 使用建议](agent-helper.md)》（19 个 agent）、《[Hooks 使用建议](hooks-helper.md)》（28 条 hook）分别讲主动触发、按 description 匹配、spawn 委托、生命周期事件；本篇讲最底层的那一层——**被动注入的约束**：你不必"敲"它，它在你写代码时自动生效。
 
@@ -585,4 +585,4 @@ code-review 显式集成 → testing（80%）+ security（安全清单）+ git-w
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |
 
-> 这 5 份文档随 `docs/` 安装到 `~/.claude/docs/aimeta3s/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。
+> 这 5 份文档随 `docs/` 安装到 `~/.claude/aimeta3s/docs/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。

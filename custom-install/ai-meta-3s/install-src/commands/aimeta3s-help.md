@@ -40,7 +40,7 @@ AIMeta3S 是一套 Claude Code 资源套件，共 5 类资源、153+ 个条目�
 | hook / 钩子 / profile / 提交前阻塞 / 自动检查 / 调优 | `hooks-helper.md` |
 | **横跨多类**或**模糊**（如"怎么做代码审查""怎么开发功能"） | 先读 `command-helper.md`，按其指引扩展到 skill/agent 的 helper |
 
-helper 位置：`<aimeta3sHome>/docs/aimeta3s/<file>.md`（`aimeta3sHome` 默认 `~/.claude`，或读环境变量 `AI_META_3S_HOME`）；开发环境（上者不存在时）回退到仓库内 `install-src/docs/aimeta3s/<file>.md`。
+helper 位置：`<aimeta3sHome>/ai-meta-3s/docs/<file>.md`（`aimeta3sHome` 默认 `~/.claude`，或读环境变量 `AI_META_3S_HOME`）；开发环境（上者不存在时）回退到仓库内 `install-src/docs/<file>.md`。
 
 ---
 
@@ -73,7 +73,7 @@ helper 位置：`<aimeta3sHome>/docs/aimeta3s/<file>.md`（`aimeta3sHome` 默认
 当 helper 未覆盖用户问题的细节（如某 hook 的具体环境变量、某 agent 的 `tools` 列表、某命令的精确参数/产物路径），按以下**清单驱动**流程核实。**开发环境与安装后环境统一走同一条链路**：
 
 1. **读清单**：Read `manifest.json`。查找顺序：
-   - 安装环境：`<aimeta3sHome>/docs/aimeta3s/manifest.json`
+   - 安装环境：`<aimeta3sHome>/ai-meta-3s/docs/manifest.json`
    - 开发环境（上者不存在）：仓库内 `install-src/docs/aimeta3s/manifest.json`
 2. **定位资源**：helper 的回答里必然点到了具体**资源名**（如 `code-reviewer`、`run-with-flags`）。在 `manifest.json` 的 `resources` 数组里按 `name` 匹配到该条目，取路径：
    - 安装环境 → `installPath`（已是绝对路径，直接 Read）。
@@ -103,6 +103,6 @@ helper 位置：`<aimeta3sHome>/docs/aimeta3s/<file>.md`（`aimeta3sHome` 默认
 ## 附：资源清单 `manifest.json` 结构速查
 
 - `aimeta3sHome`：安装根（默认 `~/.claude`）
-- `dirMappings`：源目录→安装目录映射（`rules`→`rules/ecc`、`docs`→`docs/aimeta3s` 等）
+- `dirMappings`：源目录→安装目录映射（`rules`→`rules/ecc`、`docs`→`ai-meta-3s/docs` 等）
 - `hooksConfig`：`hooks.json` 路径
 - `resources[]`：每条 `{ category, name, installPath, sourcePath }`，`category` ∈ `agent | command | skill | rule | script`

@@ -1,6 +1,6 @@
 <!-- aimeta3s-doc: agent-helper | version: 1 | updated: 2026-08-12 | source: agents/*.md（精确路径见 manifest.json） -->
 
-# ai-meta-3s Agent 使用建议
+# aimeta3s Agent 使用建议
 
 本指南面向 `agents/` 下的 **19 个 agent**。这些 agent 分属五个族系，职责边界与触发入口各不相同，单看每个 agent 文件难以判断"我这个任务该 spawn 哪个 agent / 哪条命令会用到它"。本文档把视角从「按 agent 查」翻转为「按场景用」：
 
@@ -519,4 +519,4 @@ PostgreSQL/Supabase 表结构与查询              → database-reviewer
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |
 
-> 这 5 份文档随 `docs/` 安装到 `~/.claude/docs/aimeta3s/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。
+> 这 5 份文档随 `docs/` 安装到 `~/.claude/aimeta3s/docs/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。

@@ -18,7 +18,7 @@
  *
  * 映射规则（对应官方 scripts/lib/install-targets/claude-home.js）:
  *   rules/ → rules/ecc/   (加 ecc/ 命名空间，避免与用户自有 rules 冲突)
- *   docs/  → docs/aimeta3s (加 aimeta3s/ 命名空间，/aimeta3s-help 的资料与资源清单)
+ *   docs/  → aimeta3s/docs (装到 aimeta3s/ 子树下，/aimeta3s-help 的资料与资源清单)
  *   skills/ → skills/     (扁平，每个 skill 直接子目录)
  *   agents/ commands/ config/ hooks/ scripts/ → 同名平铺
  */
@@ -32,16 +32,16 @@ const crypto = require('crypto');
 
 const SOURCE_ROOT = path.join(__dirname, 'install-src');
 const TARGET_ROOT = process.env.AI_META_3S_HOME || path.join(os.homedir(), '.claude');
-const STATE_DIR = path.join(TARGET_ROOT, 'ai-meta-3s');
+const STATE_DIR = path.join(TARGET_ROOT, 'aimeta3s');
 const STATE_PATH = path.join(STATE_DIR, 'install-state.json');
-const SCHEMA_VERSION = 'ai-meta-3s.install.v1';
+const SCHEMA_VERSION = 'aimeta3s.install.v1';
 
 // 源（install-src/）→ 目标（~/.claude/）映射
 const MAPPINGS = [
   { src: 'agents',   dest: 'agents' },
   { src: 'commands', dest: 'commands' },
   { src: 'config',   dest: 'config' },
-  { src: 'docs',     dest: 'docs/aimeta3s' },
+  { src: 'docs',     dest: 'aimeta3s/docs' },
   { src: 'hooks',    dest: 'hooks' },
   { src: 'rules',    dest: 'rules/ecc' },
   { src: 'scripts',  dest: 'scripts' },
@@ -75,13 +75,13 @@ function assertSafeDest(destAbs, targetRoot) {
 }
 
 // --- markdown 链接重写（内联简化版，参考官方 scripts/lib/install/link-rewrite.js）---
-// 两个变形目录：rules/ → rules/ecc/、docs/ → docs/aimeta3s/，故 destOf 硬编码这两条，无需官方通用 ancestor 映射。
+// 两个变形目录：rules/ → rules/ecc/、docs/ → aimeta3s/docs/，故 destOf 硬编码这两条，无需官方通用 ancestor 映射。
 
 function destOf(logicalPath) {
   if (logicalPath === 'rules') return 'rules/ecc';
   if (logicalPath.startsWith('rules/')) return 'rules/ecc/' + logicalPath.slice(6);
-  if (logicalPath === 'docs') return 'docs/aimeta3s';
-  if (logicalPath.startsWith('docs/')) return 'docs/aimeta3s/' + logicalPath.slice(5);
+  if (logicalPath === 'docs') return 'aimeta3s/docs';
+  if (logicalPath.startsWith('docs/')) return 'aimeta3s/docs/' + logicalPath.slice(5);
   return logicalPath;
 }
 
@@ -222,7 +222,7 @@ function buildManifest(files, homeLabel) {
     aimeta3sHome: home,
     dirMappings: {
       agents: 'agents', commands: 'commands', skills: 'skills',
-      rules: 'rules/ecc', scripts: 'scripts', docs: 'docs/aimeta3s',
+      rules: 'rules/ecc', scripts: 'scripts', docs: 'aimeta3s/docs',
     },
     hooksConfig: home + '/hooks/hooks.json',
     resources,
@@ -262,7 +262,7 @@ function applyInstall(dryRun) {
 
   // 动态生成 /aimeta3s-help 资源清单 manifest.json（白名单 + 名→路径翻译表）
   const manifest = buildManifest(files);
-  const manifestDestRel = 'docs/aimeta3s/manifest.json';
+  const manifestDestRel = 'aimeta3s/docs/manifest.json';
   const manifestDestAbs = path.join(TARGET_ROOT, manifestDestRel);
   const manifestBuf = Buffer.from(JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   assertSafeDest(manifestDestAbs, TARGET_ROOT);

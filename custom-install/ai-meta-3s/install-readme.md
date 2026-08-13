@@ -23,7 +23,7 @@
 
 ```bash
 # 进入安装目录
-cd {安装包所在目录}/ai-meta-3s
+cd {安装包所在目录}/aimeta3s
 
 # 方式 1：bash 入口（推荐）
 chmod +x install.sh
@@ -39,7 +39,7 @@ node install.js
 
 ```powershell
 # 进入安装目录
-cd {安装包所在目录}\ai-meta-3s
+cd {安装包所在目录}\aimeta3s
 
 # 方式 1：PowerShell 入口
 .\install.ps1
@@ -96,13 +96,13 @@ AI_META_3S_HOME=/tmp/aimeta3s-trial node install.js --dry-run
 | `agents/` | `agents/` | 平铺 |
 | `commands/` | `commands/` | 平铺 |
 | `config/` | `config/` | 平铺 |
-| `docs/` | `docs/aimeta3s/` | ⭐ 加 `aimeta3s/` 命名空间，`/aimeta3s-help` 的资料目录 |
+| `docs/` | `aimeta3s/docs/` | ⭐ 装到 `aimeta3s/` 子树下，`/aimeta3s-help` 的资料目录 |
 | `hooks/` | `hooks/` | 平铺（含 `hooks.json`） |
 | `rules/` | `rules/ecc/` | ⭐ 加 `ecc/` 命名空间，避免与用户自有 rules 冲突 |
 | `scripts/` | `scripts/` | 平铺 |
 | `skills/` | `skills/` | ⭐ 扁平（Claude Code 只发现 `skills/` 直接子目录） |
 
-安装时还会**动态生成** `docs/aimeta3s/manifest.json`——`/aimeta3s-help` 命令的资源清单（白名单 + 资源名→路径翻译表）。它不在 `install-src/` 源中，由安装器遍历实际安装文件后产出。资源增减后用 `node install.js --gen-manifest` 重新生成仓库内版本。文件总数随资源变化，用 `--dry-run` 查看准确数量。
+安装时还会**动态生成** `aimeta3s/docs/manifest.json`——`/aimeta3s-help` 命令的资源清单（白名单 + 资源名→路径翻译表）。它不在 `install-src/` 源中，由安装器遍历实际安装文件后产出。资源增减后用 `node install.js --gen-manifest` 重新生成仓库内版本。文件总数随资源变化，用 `--dry-run` 查看准确数量。
 
 ### 4.2 覆盖策略：直接覆盖
 
@@ -120,11 +120,11 @@ AI_META_3S_HOME=/tmp/aimeta3s-trial node install.js --dry-run
 
 ### 4.4 安装状态文件
 
-每次安装写入 `~/.claude/ai-meta-3s/install-state.json`（AIMeta3S 版**自有命名空间**，与官方 `~/.claude/ecc/` 互不干扰）：
+每次安装写入 `~/.claude/aimeta3s/install-state.json`（AIMeta3S 版**自有命名空间**，与官方 `~/.claude/ecc/` 互不干扰）：
 
 ```json
 {
-  "schemaVersion": "ai-meta-3s.install.v1",
+  "schemaVersion": "aimeta3s.install.v1",
   "installedAt": "2026-08-12T...",
   "target": { "root": "~/.claude", "installStatePath": "..." },
   "source": { "sourceRoot": ".../install-src" },
@@ -172,7 +172,7 @@ node install.js --uninstall --dry-run
 1. **直接覆盖，无备份**。安装前若 `~/.claude/` 已有同名文件（尤其 `skills/` 扁平目录、`commands/`、`agents/`），会被覆盖。建议先 `--dry-run` 核对，或把现有配置备份一份。
    - `rules/` 因加了 `ecc/` 命名空间，**不会**碰你在 `~/.claude/rules/` 下自有的 rules。
 2. **只增不删**。安装器不会清理此前（包括官方全量 `install.sh --profile full`）装过的旧文件。想清空旧安装，需用官方卸载工具，或手动处理。
-3. **与官方全量安装可共存**。本安装器写到独立状态文件 `~/.claude/ai-meta-3s/install-state.json`，卸载互不影响。但同一目标文件（如 `~/.claude/commands/plan.md`）后装者覆盖先装者。
+3. **与官方全量安装可共存**。本安装器写到独立状态文件 `~/.claude/aimeta3s/install-state.json`，卸载互不影响。但同一目标文件（如 `~/.claude/commands/plan.md`）后装者覆盖先装者。
 4. **幂等**。重复运行安全——每次覆盖并刷新 `installedAt`，文件清单不变。
 5. **Node 版本**。低于 Node 18 未测试；`fs.readdirSync({withFileTypes})` / `mkdirSync({recursive})` 至少需 Node 10.12+，但建议跟随主仓用 18 LTS+。
 
@@ -207,10 +207,10 @@ node install.js --uninstall --dry-run
 
 ## 十、独立性说明
 
-整个 `ai-meta-3s/` 目录可整体拷走独立运行——`install.js` 只从自身同级的 `install-src/` 读取资源，不依赖仓库根的任何文件。把本目录复制到任意位置，`node install.js` 即可工作。
+整个 `aimeta3s/` 目录可整体拷走独立运行——`install.js` 只从自身同级的 `install-src/` 读取资源，不依赖仓库根的任何文件。把本目录复制到任意位置，`node install.js` 即可工作。
 
 验证独立性：
 ```bash
-cp -r custom-install/ai-meta-3s /tmp/aimeta3s-standalone
+cp -r custom-install/aimeta3s /tmp/aimeta3s-standalone
 AI_META_3S_HOME=/tmp/aimeta3s-trial node /tmp/aimeta3s-standalone/install.js --dry-run
 ```

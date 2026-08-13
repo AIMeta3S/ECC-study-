@@ -1,6 +1,6 @@
 <!-- aimeta3s-doc: skill-helper | version: 1 | updated: 2026-08-12 | source: skills/*/SKILL.md（精确路径见 manifest.json） -->
 
-# ai-meta-3s Skill 使用建议
+# aimeta3s Skill 使用建议
 
 本指南面向 `install-src/skills/` 下的 **34 个 skill**。与同目录的《[使用建议.md](使用建议.md)》（39 条**命令**指南）正交——那篇讲「该敲哪条 `/命令`」，本篇讲「Claude 会在什么场景自动用上哪个 skill、以及你该如何主动引导」。
 
@@ -628,4 +628,4 @@ continuous-learning-v2（自动、持续）
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |
 
-> 这 5 份文档随 `docs/` 安装到 `~/.claude/docs/aimeta3s/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。
+> 这 5 份文档随 `docs/` 安装到 `~/.claude/aimeta3s/docs/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。

@@ -1,8 +1,8 @@
 <!-- aimeta3s-doc: hooks-helper | version: 1 | updated: 2026-08-12 | source: scripts/hooks/*.js + scripts/lib/*.js（精确路径见 manifest.json） -->
 
-# ai-meta-3s Hooks 使用建议
+# aimeta3s Hooks 使用建议
 
-> 本文是对 `custom-install/ai-meta-3s/install-src/hooks/hooks.json` 的深度逆向分析结果。
+> 本文是对 `custom-install/aimeta3s/install-src/hooks/hooks.json` 的深度逆向分析结果。
 > 每个 hook 都已追踪到最终执行的脚本（位于 `install-src/scripts/hooks/` 与 `install-src/scripts/lib/`），
 > 并与源码逐项核对。文末附使用建议与全部环境变量速查表。
 
@@ -647,7 +647,7 @@ post:mcp-health-check (失败后) ─────┘
 
 ---
 
-> **校验说明**：本文所有断言均可回指到 `custom-install/ai-meta-3s/install-src/scripts/hooks/` 或 `scripts/lib/` 下的具体脚本。关键校验点：阻塞语义三态（§2.1）、profile 矩阵（§2.2）、五条数据流接口（§4）均与源码逐项核对；`session-start.js` 部署缺失（§5.5-2）已通过文件系统验证。
+> **校验说明**：本文所有断言均可回指到 `custom-install/aimeta3s/install-src/scripts/hooks/` 或 `scripts/lib/` 下的具体脚本。关键校验点：阻塞语义三态（§2.1）、profile 矩阵（§2.2）、五条数据流接口（§4）均与源码逐项核对；`session-start.js` 部署缺失（§5.5-2）已通过文件系统验证。
 
 ---
 
@@ -661,4 +661,4 @@ post:mcp-health-check (失败后) ─────┘
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |
 
-> 这 5 份文档随 `docs/` 安装到 `~/.claude/docs/aimeta3s/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。
+> 这 5 份文档随 `docs/` 安装到 `~/.claude/aimeta3s/docs/`，供 `/aimeta3s-help` 命令按需读取；资源名→路径的精确映射见同目录 `manifest.json`。

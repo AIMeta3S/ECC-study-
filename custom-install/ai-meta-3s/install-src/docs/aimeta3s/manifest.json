@@ -8,7 +8,7 @@
     "skills": "skills",
     "rules": "rules/ecc",
     "scripts": "scripts",
-    "docs": "docs/aimeta3s"
+    "docs": "ai-meta-3s/docs"
   },
   "hooksConfig": "~/.claude/hooks/hooks.json",
   "resources": [

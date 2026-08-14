@@ -112,11 +112,11 @@ AI_META_3S_HOME=/tmp/aimeta3s-trial node install.js --dry-run
 
 ### 4.3 Markdown 链接自动重写
 
-`rules/` 是唯一变形目录（→ `rules/ecc/`）。安装时会对每个 `.md` 的内联链接自动重算相对路径：
+`rules/` 与 `docs/` 是两个变形目录（分别 → `rules/ecc/`、`aimeta3s/docs/`）。安装时会对每个 `.md` 的内联链接自动重算相对路径：
 
-- **rules 内部互链**：两端同移一层，结果不变（no-op）。
-- **跨出 rules 的链接**（如 rules 里链接 `../../commands/tdd.md`）：自动补一个 `../` → `../../../commands/tdd.md`。
-- **外部链接 / 锚点 / 代码块内链接**：原样不动。
+- **变形目录内部互链**（rules↔rules、docs↔docs）：两端同移一层，相对路径不变（no-op）。
+- **跨类链接**（如 docs 里链接 `../rules/common/security.md`，或 rules 里链接 `../../commands/build-fix.md`）：自动补一个 `../` 并按目标变形加前缀 → `../../rules/ecc/common/security.md` / `../../../commands/build-fix.md`。
+- **外部链接 / 锚点 / 代码块内链接 / 真正跨出源根的链接**：原样不动。
 
 非 `.md` 文件按字节原样复制。
 

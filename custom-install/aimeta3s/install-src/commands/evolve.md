@@ -8,16 +8,10 @@ command: true
 
 ## 实现
 
-使用 plugin 根路径运行 instinct CLI：
+使用 plugin 根路径运行 instinct CLI（未设置 `CLAUDE_PLUGIN_ROOT` 时回退到 `~/.claude`）：
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" evolve [--generate]
-```
-
-或者如果未设置 `CLAUDE_PLUGIN_ROOT`（手动安装）：
-
-```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py evolve [--generate]
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/continuous-learning-v2/scripts/instinct-cli.py" evolve [--generate]
 ```
 
 分析 instincts 并将相关的 instincts 聚类为更高层级的结构：

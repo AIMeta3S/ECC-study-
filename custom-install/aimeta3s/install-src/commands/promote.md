@@ -10,16 +10,10 @@ command: true
 
 ## Implementation
 
-运行 instinct CLI：
+运行 instinct CLI（未设置 `CLAUDE_PLUGIN_ROOT` 时回退到 `~/.claude`）：
 
-- 如果 `CLAUDE_PLUGIN_ROOT` 已设置：
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" promote [instinct-id] [--force] [--dry-run]
-```
-
-- 如果 `CLAUDE_PLUGIN_ROOT` 未设置（手动安装）：
-```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py promote [instinct-id] [--force] [--dry-run]
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/continuous-learning-v2/scripts/instinct-cli.py" promote [instinct-id] [--force] [--dry-run]
 ```
 
 ## Usage

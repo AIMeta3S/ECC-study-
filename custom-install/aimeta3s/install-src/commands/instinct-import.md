@@ -7,17 +7,10 @@ command: true
 # Instinct 导入命令
 
 ## Implementation
-运行 instinct CLI 从本地文件路径或 HTTP(S) URL 导入 instincts：
-- 如果 `CLAUDE_PLUGIN_ROOT` 已设置，使用 plugin 根路径：
+运行 instinct CLI 从本地文件路径或 HTTP(S) URL 导入 instincts（未设置 `CLAUDE_PLUGIN_ROOT` 时回退到 `~/.claude`）：
 
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
-   ```
-
-- 如果 `CLAUDE_PLUGIN_ROOT` 未设置（手动安装）：
-
-   ```bash
-   python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py import <file-or-url>
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/continuous-learning-v2/scripts/instinct-cli.py" import <file-or-url> [--dry-run] [--force] [--min-confidence 0.7] [--scope project|global]
    ```
 
 ## Usage

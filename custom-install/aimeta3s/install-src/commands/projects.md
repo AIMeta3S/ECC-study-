@@ -9,17 +9,10 @@ command: true
 列出 continuous-learning-v2 的项目注册表条目以及每个项目的 instinct/observation 计数。
 
 ## Implementation
-运行 instinct CLI：
-- 如果 `CLAUDE_PLUGIN_ROOT` 已设置，使用 plugin 根路径：
+运行 instinct CLI（未设置 `CLAUDE_PLUGIN_ROOT` 时回退到 `~/.claude`）：
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/continuous-learning-v2/scripts/instinct-cli.py" projects
-```
-
-- 如果 `CLAUDE_PLUGIN_ROOT` 未设置（手动安装）：
-
-```bash
-python3 ~/.claude/skills/continuous-learning-v2/scripts/instinct-cli.py projects
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}/skills/continuous-learning-v2/scripts/instinct-cli.py" projects
 ```
 
 ## Usage

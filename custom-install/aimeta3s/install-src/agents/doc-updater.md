@@ -29,7 +29,8 @@ model: haiku
 ## 分析命令
 
 ```bash
-npx tsx scripts/codemaps/generate.ts    # 生成 codemaps
+ECC_ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}"
+npx tsx "$ECC_ROOT/scripts/codemaps/generate.ts"    # 生成 codemaps
 npx madge --image graph.svg src/        # 依赖图
 npx jsdoc2md src/**/*.ts                # 提取 JSDoc
 ```

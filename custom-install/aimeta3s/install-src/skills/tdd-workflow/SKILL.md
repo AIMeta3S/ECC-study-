@@ -92,7 +92,8 @@ metadata:
 1. **运行 package-manager 检测器**：
 
    ```bash
-   node scripts/setup-package-manager.js --detect
+   ECC_ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude}"
+   node "$ECC_ROOT/scripts/setup-package-manager.js" --detect
    ```
 
    它会按以下优先级解析 package manager (npm / pnpm / yarn / bun)：`CLAUDE_PACKAGE_MANAGER`、`.claude/package-manager.json`、`package.json` 的 `packageManager` 字段、lockfile，最后是全局配置。

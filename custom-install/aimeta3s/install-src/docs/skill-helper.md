@@ -31,7 +31,7 @@
 
 ---
 
-## 二、34 个 Skill 总览速查表
+## 二、35 个 Skill 总览速查表
 
 按域分组，每个一行。`→` 指向主要委托对象，`|` 表示二选一。
 
@@ -41,6 +41,7 @@
 |---|---|---|---|
 | `coding-standards` | 跨项目编码规范基座（命名/可读性/不可变性/质量评审） | 编码规范、code review、代码质量、重构、命名 | PASS/FAIL 对照判断、lint/评审 checklist |
 | `tdd-workflow` | 强制 TDD 流程，要求 80%+ coverage | 新 feature、修 bug、refactor、`*.plan.md` | 先失败后通过的测试、coverage 报告、`.tdd.md` 证据 |
+| `plan-canvas` | 浏览器画布评审 plan/HTML artifact（标注+聊天+approve/request-changes） | 评审 plan、可视化 review、"在浏览器打开"、指认式反馈 | 画布内回复、approve 裁决（触发实施） |
 
 ### 编排族 orch（端到端工作流，被命令/agent 委托）
 
@@ -160,6 +161,7 @@
 | 做安全编码自查 | `security-review` | 代码层 FAIL/PASS |
 | 扫描 .claude 配置漏洞 | `security-scan` | AgentShield 评级 |
 | 走严格 TDD | `tdd-workflow` | /tdd，接续 `*.plan.md` |
+| 评审 plan/产物（浏览器画布） | `plan-canvas` | → `/plan` 产出后确认 |
 | 让 Claude 自动学习会话模式 | `continuous-learning-v2` | 需启用 observer |
 
 ### 相似 Skill 抉择
@@ -199,6 +201,15 @@
 - **生成物 / 预期结果**：先失败后通过的测试套件、≥80% coverage 报告、按阶段的 checkpoint commit、`<name>.tdd.md` 证据报告（journeys/guarantees 表/coverage/已知缺口）。
 - **边界 / 不适用**：不跳过 RED gate（未编译/未执行的测试不算 RED）；纯文档/配置变更不适用；Bun 细节交 `bun-runtime`。
 - **关联**：被 `orch-*` 族和 `/tdd` 命令引用为实现阶段执行器；接续 `/plan`、`*.plan.md`；cross-ref `bun-runtime`、`scripts/setup-package-manager.js`。
+
+#### plan-canvas
+- **定位**：浏览器画布评审循环——你写 plan/HTML artifact，人类在浏览器标注元素、聊天、给 Approve/Request changes 裁决，你阻塞在单个 CLI 调用上拿 JSON 反馈；是 `/plan` 确认 gate 的可视化版。
+- **适用场景**：①刚写完 plan artifact（`.claude/plans/*.plan.md`）需 CONFIRM/approve；②用户应"指认"改动（审 design/对比/报告/任意本地 `.md`/`.html`）；③用户要 `/plan-canvas`、可视化评审、"在浏览器打开"。
+- **触发条件**：presenting a plan for review；feedback like "move this, change that" 更适合指认而非打字；用户点名。
+- **处理流程 / 内容结构**：`open <artifact>`（浏览器打开，立即返回）→ `await <artifact>`（**后台**阻塞到反馈，留运行）→ 收 JSON（`chat`/`annotation`/`verdict`）→ 改 artifact 文件（画布热重载）→ `await <file> --reply "..."` 回复并继续听 → `verdict:approve` 即计划确认，`end <file>`；配 `typing` 活动指示。
+- **生成物 / 预期结果**：画布内的回复与 artifact 修订；`approve` 裁决作为 plan 确认信号触发实施。
+- **边界 / 不适用**：不用于代码 diff 审查（→ `/code-review`）、运行中的 web 应用、远程 URL；只服务本地 artifact 文件。
+- **关联**：`/plan-canvas` 命令（thin entry point）；`/plan`（产出被评审的 plan.md）；`scripts/plan-canvas.js` + `scripts/lib/plan-canvas/`；`stop:plan-canvas-pending` hook 兜底未送达反馈。
 
 ### 编排族 orch
 
@@ -623,7 +634,7 @@ continuous-learning-v2（自动、持续）
 | 文档 | 主题 |
 |---|---|
 | `command-helper.md` | 命令总览、9 条流水线、选型决策树 |
-| `skill-helper.md` | Skill 触发机制、相似抉择、34 张详解卡 |
+| `skill-helper.md` | Skill 触发机制、相似抉择、35 张详解卡 |
 | `agent-helper.md` | Agent 分工、协作关系、spawn 入口 |
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |

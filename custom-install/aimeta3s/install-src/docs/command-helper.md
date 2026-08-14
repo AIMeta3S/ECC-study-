@@ -14,7 +14,7 @@
 
 ## 一、命令总览速查表
 
-按族归类的 40 个命令，每个一句话用途；带 commit 前缀的标注前缀。
+按族归类的 41 个命令，每个一句话用途；带 commit 前缀的标注前缀。
 
 ### 规划与实施族
 
@@ -34,6 +34,7 @@
 | `orch-refine-code` | orch | 保行为重构（以现有测试为安全网） | `refactor:` |
 | `feature-dev` | 引导式 | 手动引导式开发：探索→澄清→架构→实现→评审 | — |
 | `build-fix` | 横切 | 检测构建系统，逐个最小修复构建/类型错误 | — |
+| `plan-canvas` | 评审 | 浏览器画布评审 plan/HTML artifact：标注元素+聊天+approve/request-changes | — |
 
 ### 审查与质量族
 
@@ -446,6 +447,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 - **理清需求**：`plan-prd` · `prp-prd`
 - **出实施计划**：`plan` · `prp-plan`
+- **评审 plan/产物（浏览器画布）**：`plan-canvas`
 - **实现新功能**：`orch-add-feature` · `feature-dev` · `prp-implement` · `gan-build` · `gan-design`
 - **从设计文档落地**：`orch-build-mvp`
 - **修 bug**：`orch-fix-defect`
@@ -463,7 +465,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 ---
 
-*本指南基于 `commands/` 下 40 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
+*本指南基于 `commands/` 下 41 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
 
 ---
 
@@ -472,7 +474,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 | 文档 | 主题 |
 |---|---|
 | `command-helper.md` | 命令总览、9 条流水线、选型决策树 |
-| `skill-helper.md` | Skill 触发机制、相似抉择、34 张详解卡 |
+| `skill-helper.md` | Skill 触发机制、相似抉择、35 张详解卡 |
 | `agent-helper.md` | Agent 分工、协作关系、spawn 入口 |
 | `rules-helper.md` | Rule 三种激活机制、跨语言矩阵、master checklist |
 | `hooks-helper.md` | Hook 阻塞语义三态、profile 矩阵、数据流 |

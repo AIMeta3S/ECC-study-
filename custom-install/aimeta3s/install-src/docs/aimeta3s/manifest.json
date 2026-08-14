@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-13",
+  "generated": "2026-08-14",
   "aimeta3sHome": "~/.claude",
   "dirMappings": {
     "agents": "agents",
@@ -239,6 +239,12 @@
       "name": "plan",
       "installPath": "~/.claude/commands/plan.md",
       "sourcePath": "commands/plan.md"
+    },
+    {
+      "category": "command",
+      "name": "plan-canvas",
+      "installPath": "~/.claude/commands/plan-canvas.md",
+      "sourcePath": "commands/plan-canvas.md"
     },
     {
       "category": "command",
@@ -842,6 +848,12 @@
     },
     {
       "category": "script",
+      "name": "lib/loopback-guard",
+      "installPath": "~/.claude/scripts/lib/loopback-guard.js",
+      "sourcePath": "scripts/lib/loopback-guard.js"
+    },
+    {
+      "category": "script",
       "name": "lib/observer-sessions",
       "installPath": "~/.claude/scripts/lib/observer-sessions.js",
       "sourcePath": "scripts/lib/observer-sessions.js"
@@ -857,6 +869,36 @@
       "name": "lib/path-safety",
       "installPath": "~/.claude/scripts/lib/path-safety.js",
       "sourcePath": "scripts/lib/path-safety.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/plan-canvas/markdown",
+      "installPath": "~/.claude/scripts/lib/plan-canvas/markdown.js",
+      "sourcePath": "scripts/lib/plan-canvas/markdown.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/plan-canvas/sdk",
+      "installPath": "~/.claude/scripts/lib/plan-canvas/sdk.js",
+      "sourcePath": "scripts/lib/plan-canvas/sdk.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/plan-canvas/server",
+      "installPath": "~/.claude/scripts/lib/plan-canvas/server.js",
+      "sourcePath": "scripts/lib/plan-canvas/server.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/plan-canvas/sessions",
+      "installPath": "~/.claude/scripts/lib/plan-canvas/sessions.js",
+      "sourcePath": "scripts/lib/plan-canvas/sessions.js"
+    },
+    {
+      "category": "script",
+      "name": "lib/plan-canvas/ui",
+      "installPath": "~/.claude/scripts/lib/plan-canvas/ui.js",
+      "sourcePath": "scripts/lib/plan-canvas/ui.js"
     },
     {
       "category": "script",
@@ -941,6 +983,12 @@
       "name": "lib/utils",
       "installPath": "~/.claude/scripts/lib/utils.js",
       "sourcePath": "scripts/lib/utils.js"
+    },
+    {
+      "category": "script",
+      "name": "plan-canvas",
+      "installPath": "~/.claude/scripts/plan-canvas.js",
+      "sourcePath": "scripts/plan-canvas.js"
     },
     {
       "category": "script",
@@ -1085,6 +1133,12 @@
       "name": "orch-refine-code",
       "installPath": "~/.claude/skills/orch-refine-code/SKILL.md",
       "sourcePath": "skills/orch-refine-code/SKILL.md"
+    },
+    {
+      "category": "skill",
+      "name": "plan-canvas",
+      "installPath": "~/.claude/skills/plan-canvas/SKILL.md",
+      "sourcePath": "skills/plan-canvas/SKILL.md"
     },
     {
       "category": "skill",

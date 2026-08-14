@@ -19,6 +19,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// 提示文案里给出的可执行命令名。aimeta3s 平铺安装不提供 `ecc-plan-canvas` bin，
+// 故提示必须指向脚本自身（绝对路径，AI 可直接复制执行）。
+const PLAN_CANVAS_CMD = `node "${path.join(__dirname, '..', 'plan-canvas.js')}"`;
+
 function stateDir() {
   const override = process.env.ECC_PLAN_CANVAS_STATE_DIR;
   if (override && override.trim()) return path.resolve(override.trim());
@@ -43,7 +47,7 @@ function buildContext(sessions) {
     lines.push(`  - ${session.file}${pending ? ` (${pending} undelivered feedback item${pending === 1 ? '' : 's'})` : ''}`);
   }
   lines.push(
-    'Resume with `node scripts/plan-canvas.js await <file>` (plan-canvas skill), or `end <file>` if the review is obsolete.'
+    `Resume with \`${PLAN_CANVAS_CMD} await <file>\` (plan-canvas skill), or \`${PLAN_CANVAS_CMD} end <file>\` if the review is obsolete.`
   );
   return lines.join('\n');
 }

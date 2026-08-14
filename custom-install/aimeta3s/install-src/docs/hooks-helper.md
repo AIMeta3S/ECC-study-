@@ -439,7 +439,7 @@ node -e 引导 ─→ bootstrap ┤
 - **关联**：⚠️ **会话连续性核心**——下次 `session:start` 按 `**Worktree:**` 头匹配注入。
 
 #### 3.6.4 `stop:evaluate-session`（matcher: `*`，async，timeout 10）→ `evaluate-session.js` 〔全 profile〕
-- **流程**：读 `skills/continuous-learning/config.json`（`min_session_length` 默认 10）→ 数用户消息数 → 足够长则 stderr 信号 `[ContinuousLearning] Session has N messages - evaluate for extractable patterns` + 保存路径。**不写 skill 内容**（仅 `ensureDir(learnedSkillsPath)` 确保目标目录存在，:80；真正落盘 learned skill 由 Claude 调 continuous-learning skill 完成）。
+- **流程**：用内置默认 `minSessionLength=10`（v2 不再读 config.json）→ 数用户消息数 → 足够长则 stderr 信号 `[ContinuousLearning] Session has N messages - evaluate for extractable patterns` + 保存路径。**不写 skill 内容**（仅 `ensureDir(learnedSkillsPath)` 确保目标目录存在，:80；真正落盘 learned skill 由 Claude 调 continuous-learning skill 完成）。
 - **作用**：给 Claude 信号，让其主动调 continuous-learning skill 提取可复用模式到 `~/.claude/skills/learned/`。
 - **关联**：产出的 learned skills 被 `session:start` 的 `summarizeLearnedSkills` 读取。
 

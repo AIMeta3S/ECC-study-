@@ -1,6 +1,6 @@
 # AIMeta3S 版安装说明
 
-本目录的 `install.js` 是一个**独立、零依赖**的安装器，把 `install-src/` 里的精简版插件内容（agents / commands / config / docs / hooks / rules / scripts / skills）按 ECC 的 claude target 映射规则装到 `~/.claude/`。
+本目录的 `install.js` 是一个**独立、零依赖**的安装器，把 `install-src/` 里的精简版插件内容（agents / commands / docs / hooks / rules / scripts / skills）按 ECC 的 claude target 映射规则装到 `~/.claude/`。
 
 - **零第三方依赖**：只用 Node 内置模块（`fs` / `path` / `os` / `crypto`），无需 `npm install`。
 - **跨平台**：核心逻辑 `install.js` 三平台通用；入口脚本按系统二选一（`install.sh` / `install.ps1`）。
@@ -95,7 +95,6 @@ AI_META_3S_HOME=/tmp/aimeta3s-trial node install.js --dry-run
 |---|---|---|
 | `agents/` | `agents/` | 平铺 |
 | `commands/` | `commands/` | 平铺 |
-| `config/` | `config/` | 平铺 |
 | `docs/` | `aimeta3s/docs/` | ⭐ 装到 `aimeta3s/` 子树下，`/aimeta3s-help` 的资料目录 |
 | `hooks/` | `hooks/` | 平铺（含 `hooks.json`） |
 | `rules/` | `rules/ecc/` | ⭐ 加 `ecc/` 命名空间，避免与用户自有 rules 冲突 |
@@ -198,7 +197,7 @@ node install.js --uninstall --dry-run
 | [install.js](install.js) | 主安装逻辑（零依赖，Node 内置模块） |
 | [install.sh](install.sh) | macOS / Linux 入口（透传参数给 install.js） |
 | [install.ps1](install.ps1) | Windows PowerShell 入口（透传参数给 install.js） |
-| [install-src/](install-src/) | 安装源：8 个子目录（含 `docs/`），安装器的唯一资源依赖 |
+| [install-src/](install-src/) | 安装源：7 个子目录（含 `docs/`），安装器的唯一资源依赖 |
 | [使用建议.md](使用建议.md) | **装好之后** 39 条命令的使用指南（与本文档正交） |
 
 > `使用建议.md` 与 5 个 `资源依赖检查报告*.md` 是参考文档，**不参与安装**（不在 `install-src/` 内）。

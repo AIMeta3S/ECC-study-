@@ -154,7 +154,7 @@ save-session（会话结束时存档） ◀────▶ resume-session（新�
   skill-health（监控反馈）──▶ 回 evolve 迭代
 ```
 
-- **产物路径**：`~/.claude/homunculus/`（instinct 数据）；`~/.claude/skills/learned/`（会话级 skill）。
+- **产物路径**：`${XDG_DATA_HOME:-~/.local/share}/ecc-homunculus/`（instinct 数据；可被 `CLV2_HOMUNCULUS_DIR` 覆盖）；`~/.claude/skills/learned/`（会话级 skill）。
 - **注意**：`learn-eval` 是 `learn` 的**加强替代**（多了质量把关/去重/定位），不是串联的下一步。
 - **何时用**：解决了难题想沉淀、经验要跨项目/跨机器复用、监控 skill 是否健康。
 

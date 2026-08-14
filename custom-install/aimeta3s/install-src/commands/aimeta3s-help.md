@@ -127,7 +127,8 @@ helper 位置：`<aimeta3sHome>/aimeta3s/docs/<file>.md`（`aimeta3sHome` 默认
 - `aimeta3sHome`：安装根（`paths.json` 文件所在树的根）
 - `variables`：路径变量解析规则 + `resolved`（本机字面值）：`CLAUDE_DIR` / `HOMUNCULUS` / `TMPDIR` / `GATEGUARD_STATE_DIR` / `PROJECT_DIR`
 - `groups[]`：按根目录分组，每组 `{ root, resolved, note, items[] }`
-- `items[]`：每条 `{ path, resolved, category, source, write, lifecycle, trigger, cleanup, note? }`
+- `items[]`：每条 `{ path, resolved, description, category, source, write, lifecycle, trigger, cleanup, note? }`
+  - `description`：文件说明（生成时机 + 文件内容/用途）
   - `write` ∈ `write | append | atomic | in-place | mv | mkdir | external`
   - `lifecycle` ∈ `persistent（持久） | session-temp（会话级） | ephemeral（瞬态）`
   - `cleanup`：清理责任（`无（手动）` · `OS 自动` · `hook 自清理（条件）`）

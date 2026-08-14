@@ -68,6 +68,7 @@ node install.js                # 确认无误后正式安装
 | `node install.js --dry-run` | 只打印安装计划，不写盘 |
 | `node install.js --uninstall` | 按状态清单卸载（内容被改过的文件会跳过） |
 | `node install.js --gen-manifest` | 只生成 `/aimeta3s-help` 资源清单到仓库 `install-src/docs/aimeta3s/manifest.json`（不安装） |
+| `node install.js --gen-paths` | 只生成运行时产物路径索引到仓库 `install-src/docs/aimeta3s/paths.json`（不安装；`resolved` 为占位） |
 | `node install.js --help` / `-h` | 显示帮助 |
 
 所有参数同样适用于 `bash install.sh ...` 和 `.\install.ps1 ...`（入口脚本仅透传参数）。
@@ -102,6 +103,8 @@ AI_META_3S_HOME=/tmp/aimeta3s-trial node install.js --dry-run
 | `skills/` | `skills/` | ⭐ 扁平（Claude Code 只发现 `skills/` 直接子目录） |
 
 安装时还会**动态生成** `aimeta3s/docs/manifest.json`——`/aimeta3s-help` 命令的资源清单（白名单 + 资源名→路径翻译表）。它不在 `install-src/` 源中，由安装器遍历实际安装文件后产出。资源增减后用 `node install.js --gen-manifest` 重新生成仓库内版本。文件总数随资源变化，用 `--dry-run` 查看准确数量。
+
+同时**动态生成** `aimeta3s/docs/paths.json`——运行时落盘产物路径索引（manifest 的姊妹篇：manifest 管「装了什么」，paths 管「运行时往哪写」）。它登记所有运行时产物（`~/.claude/` 下的 metrics/session-data、`$HOMUNCULUS/` 的 observer/instinct、`$TMPDIR/` 的瞬态 IPC、`~/.gateguard/` 等）的实际位置，含当前机器解析后的字面路径（`resolved`），**不移动任何数据**。`/aimeta3s-help` 据此回答"数据存在哪/怎么清理"。`paths.json` 的 `resolved` 反映 ECC 运行时真实根（由 `ECC_AGENT_DATA_HOME` / `os.tmpdir()` / `CLV2_HOMUNCULUS_DIR` 解析），与安装位置无关；用 `node install.js --gen-paths` 生成仓库内占位版本。
 
 ### 4.2 覆盖策略：直接覆盖
 

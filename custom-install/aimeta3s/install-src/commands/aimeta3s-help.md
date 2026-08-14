@@ -38,6 +38,7 @@ AIMeta3S 是一套 Claude Code 资源套件，共 5 类资源、150 个条目：
 | agent / 子代理 / spawn / 谁来做 / 委托 / 协作 | `agent-helper.md` |
 | rule / 规则 / 风格 / 安全 / 测试 / 约束 / 激活 | `rules-helper.md` |
 | hook / 钩子 / profile / 提交前阻塞 / 自动检查 / 调优 | `hooks-helper.md` |
+| 产物 / 数据落盘 / 文件存在哪 / 怎么清理 / 临时文件 / session·metrics·instinct 存哪 | `paths.json`（运行时产物索引，见三·「运行时产物查询」） |
 | **横跨多类**或**模糊**（如"怎么做代码审查""怎么开发功能"） | 先读 `command-helper.md`，按其指引扩展到 skill/agent 的 helper |
 
 helper 位置：`<aimeta3sHome>/aimeta3s/docs/<file>.md`（`aimeta3sHome` 默认 `~/.claude`，或读环境变量 `AI_META_3S_HOME`）；开发环境（上者不存在时）回退到仓库内 `install-src/docs/<file>.md`。
@@ -82,6 +83,18 @@ helper 位置：`<aimeta3sHome>/aimeta3s/docs/<file>.md`（`aimeta3sHome` 默认
 4. 若 helper 只点到**类别**未点名（如"审查类 agent"）：在清单里按 `category` 过滤 + 用 `name` 与用户问题做语义匹配，选最相关 1–3 个 Read。
 5. **确实超出覆盖范围**（清单与 helper 都没有）→ 诚实告知"该细节超出 /aimeta3s-help 覆盖范围"，并指向最相关的 helper 章节。
 
+### 运行时产物查询（数据落盘 / 清理）
+
+用户问"数据/产物落盘在哪""临时文件""怎么清理""session/metrics/instinct 存哪"时，读运行时产物索引 `paths.json`（与 `manifest.json` 成对：manifest 管「装了什么」，paths 管「运行时往哪写」）。查找顺序：
+
+- 安装环境：`<aimeta3sHome>/aimeta3s/docs/paths.json`
+- 开发环境（上者不存在）：仓库内 `install-src/docs/aimeta3s/paths.json`
+
+读取后按 `groups` 组织回答：
+1. 先说产物分在哪几处根目录（`${CLAUDE_DIR}` / `${HOMUNCULUS}` / `${TMPDIR}` / `${GATEGUARD_STATE_DIR}` / `<skillDir>` / `<cwd>` / `<external>`），每处给 `resolved` 字面路径（当前机器解析后的真实位置）。
+2. 再按用户问的具体产物给条目的 `resolved` + `cleanup`（清理责任）。
+3. 注意：`paths.json` 的 `resolved` 反映 **ECC 运行时真实根**（由 `ECC_AGENT_DATA_HOME` / `os.tmpdir()` / `CLV2_HOMUNCULUS_DIR` 解析），与安装位置无关；带 `note` 标注「硬拼 homedir」的产物（如 `bash-commands.log`、`mcp-health-cache.json`）不随 `ECC_AGENT_DATA_HOME` 移动。
+
 ### 白名单约束（硬性）
 
 - **只读 `manifest.json` 的 `resources` 内登记的路径**。
@@ -106,3 +119,16 @@ helper 位置：`<aimeta3sHome>/aimeta3s/docs/<file>.md`（`aimeta3sHome` 默认
 - `dirMappings`：源目录→安装目录映射（`rules`→`rules/ecc`、`docs`→`aimeta3s/docs` 等）
 - `hooksConfig`：`hooks.json` 路径
 - `resources[]`：每条 `{ category, name, installPath, sourcePath }`，`category` ∈ `agent | command | skill | rule | script`
+
+---
+
+## 附：运行时产物索引 `paths.json` 结构速查（与 manifest.json 成对）
+
+- `aimeta3sHome`：安装根（`paths.json` 文件所在树的根）
+- `variables`：路径变量解析规则 + `resolved`（本机字面值）：`CLAUDE_DIR` / `HOMUNCULUS` / `TMPDIR` / `GATEGUARD_STATE_DIR` / `PROJECT_DIR`
+- `groups[]`：按根目录分组，每组 `{ root, resolved, note, items[] }`
+- `items[]`：每条 `{ path, resolved, category, source, write, lifecycle, trigger, cleanup, note? }`
+  - `write` ∈ `write | append | atomic | in-place | mv | mkdir | external`
+  - `lifecycle` ∈ `persistent（持久） | session-temp（会话级） | ephemeral（瞬态）`
+  - `cleanup`：清理责任（`无（手动）` · `OS 自动` · `hook 自清理（条件）`）
+  - `source`：来源脚本（相对 `install-src`，可含多个写入者）

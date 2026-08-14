@@ -160,8 +160,8 @@ function planInstall() {
     if (!fs.existsSync(srcAbs)) continue;
     const collected = walkDir(srcAbs, m.src, []);
     for (const f of collected) {
-      // 仓库内 manifest.json 只是开发参考（由 buildManifest 动态生成），安装时跳过源副本
-      if (m.src === 'docs' && f.rel === 'docs/aimeta3s/manifest.json') continue;
+      // 仓库内 manifest.json / paths.json 只是开发参考（由安装器动态生成），安装时跳过源副本
+      if (m.src === 'docs' && (f.rel === 'docs/aimeta3s/manifest.json' || f.rel === 'docs/aimeta3s/paths.json')) continue;
       const sub = f.rel.slice(m.src.length); // 形如 '/common/agents.md'
       const destRel = m.dest + sub;          // 形如 'rules/ecc/common/agents.md'
       files.push({
@@ -228,6 +228,169 @@ function buildManifest(files, homeLabel) {
   };
 }
 
+// --- 运行时产物路径索引 paths.json（manifest.json 的姊妹篇）---
+// manifest.json 管「装了什么」，paths.json 管「运行时往哪写」。只读索引，不移动任何数据。
+// resolved 反映 ECC 运行时真实根（resolveAgentDataHome/os.tmpdir/homunculus），与安装位置 TARGET_ROOT 无关。
+
+const PATH_ROOT_LABEL = {
+  CLAUDE_DIR: '${CLAUDE_DIR}',
+  HOMUNCULUS: '${HOMUNCULUS}',
+  TMPDIR: '${TMPDIR}',
+  GATEGUARD_STATE_DIR: '${GATEGUARD_STATE_DIR}',
+  SKILL_DIR: '<skillDir>',
+  CWD: '<cwd>',
+  EXTERNAL: '<external>',
+};
+
+const PATH_ROOT_NOTE = {
+  CLAUDE_DIR: 'ECC 工具链共享根；session-data/skills/learned 被跨会话协议与 Claude Code skill 发现机制消费，勿移动',
+  HOMUNCULUS: 'XDG 用户数据；continuous-learning 持久记忆（projects/observer/observations/instincts/evolved）',
+  TMPDIR: 'os.tmpdir()；瞬态跨进程 IPC，OS 重启自动清理',
+  GATEGUARD_STATE_DIR: 'gateguard 事实强制状态',
+  SKILL_DIR: 'skill 演进产物；curated(skills/) / learned(~/.claude/skills/learned) / imported(~/.claude/skills/imported) 各自子树',
+  CWD: '当前项目工作区；产物落在项目内',
+  EXTERNAL: '产物落在本机之外（远程仓库、用户指定输出路径）',
+};
+
+// 静态产物定义表。source 为 install-src 相对路径（可含多个来源）。基于主要写入脚本整理。
+const PATHS_SPEC = [
+  // ── ${CLAUDE_DIR} ──
+  { root: 'CLAUDE_DIR', path: 'metrics/costs.jsonl', category: 'hook', source: 'scripts/hooks/cost-tracker.js', write: 'append', lifecycle: 'persistent', trigger: 'Stop', cleanup: '无（累积，手动清空）' },
+  { root: 'CLAUDE_DIR', path: 'metrics/tool-usage.jsonl', category: 'hook', source: 'scripts/hooks/session-activity-tracker.js', write: 'append', lifecycle: 'persistent', trigger: 'PostToolUse', cleanup: '无（累积）' },
+  { root: 'CLAUDE_DIR', path: 'session-data/<date>-<shortId>-session.tmp', category: 'hook', source: 'scripts/hooks/session-end.js (+ scripts/lib/session-manager.js)', write: 'write', lifecycle: 'persistent', trigger: 'Stop / PreCompact', cleanup: 'session-manager 轮转旧格式', note: 'pre-compact.js / session-start.js 读取；跨会话续接协议依赖此目录' },
+  { root: 'CLAUDE_DIR', path: 'session-aliases.json', category: 'command', source: 'commands/sessions (+ scripts/lib/session-aliases.js)', write: 'atomic', lifecycle: 'persistent', trigger: '/sessions', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'mcp-health-cache.json', category: 'hook', source: 'scripts/hooks/mcp-health-check.js', write: 'write', lifecycle: 'persistent', trigger: 'PreToolUse(MCP)', cleanup: '无', note: '硬拼 os.homedir()/.claude，不走 resolveAgentDataHome' },
+  { root: 'CLAUDE_DIR', path: 'state/skill-runs.jsonl', category: 'lib', source: 'scripts/lib/skill-evolution/tracker.js', write: 'append', lifecycle: 'persistent', trigger: 'skill 执行', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'skills/learned/<name>/*.md', category: 'command', source: 'commands/learn (+ commands/skill-create)', write: 'write', lifecycle: 'persistent', trigger: '/learn · /skill-create', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'plan-canvas/sessions.json', category: 'hook', source: 'scripts/hooks/plan-canvas-pending.js (+ scripts/lib/plan-canvas/sessions.js)', write: 'atomic', lifecycle: 'persistent', trigger: 'Stop', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'plan-canvas/server.json', category: 'script', source: 'scripts/plan-canvas.js (+ scripts/lib/plan-canvas/server.js)', write: 'write', lifecycle: 'persistent', trigger: 'plan-canvas server', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'plan-canvas/server.log', category: 'script', source: 'scripts/plan-canvas.js', write: 'append', lifecycle: 'persistent', trigger: 'plan-canvas server', cleanup: '无' },
+  { root: 'CLAUDE_DIR', path: 'observer-last-run.log', category: 'skill-script', source: 'skills/continuous-learning-v2/agents/session-guardian.sh', write: 'atomic', lifecycle: 'persistent', trigger: 'SessionStart', cleanup: '无', note: '硬拼 $HOME/.claude，不走 resolveAgentDataHome' },
+  { root: 'CLAUDE_DIR', path: 'bash-commands.log', category: 'hook', source: 'scripts/hooks/post-bash-command-log.js', write: 'append', lifecycle: 'persistent', trigger: 'PostToolUse(Bash)', cleanup: '无', note: '硬拼 os.homedir()/.claude，不走 resolveAgentDataHome' },
+  { root: 'CLAUDE_DIR', path: 'cost-tracker.log', category: 'hook', source: 'scripts/hooks/post-bash-command-log.js', write: 'append', lifecycle: 'persistent', trigger: 'PostToolUse(Bash)', cleanup: '无', note: '与 bash-commands.log 同源' },
+
+  // ── ${HOMUNCULUS} ──
+  { root: 'HOMUNCULUS', path: 'projects.json', category: 'skill-script', source: 'skills/continuous-learning-v2/scripts/detect-project.sh (+ instinct-cli.py)', write: 'atomic', lifecycle: 'persistent', trigger: 'SessionStart', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/project.json', category: 'skill-script', source: 'skills/continuous-learning-v2/scripts/detect-project.sh', write: 'atomic', lifecycle: 'persistent', trigger: 'SessionStart', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer-sessions/<sid>.json', category: 'hook', source: 'scripts/hooks/session-start.js (+ scripts/lib/observer-sessions.js)', write: 'write', lifecycle: 'session-temp', trigger: 'SessionStart', cleanup: 'session-end-marker 删' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/observations.jsonl', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh', write: 'append', lifecycle: 'persistent', trigger: 'PostToolUse', cleanup: 'observe.sh 归档/轮转' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/observations.archive/*.jsonl', category: 'skill-script', source: 'skills/continuous-learning-v2/agents/observer-loop.sh', write: 'mv', lifecycle: 'persistent', trigger: 'observer 循环', cleanup: 'observe.sh 每日清' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer.pid', category: 'skill-script', source: 'skills/continuous-learning-v2/agents/start-observer.sh', write: 'write', lifecycle: 'session-temp', trigger: 'observer 启动', cleanup: 'observer 停止时删' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/observer.log', category: 'skill-script', source: 'skills/continuous-learning-v2/agents/observer-loop.sh', write: 'append', lifecycle: 'session-temp', trigger: 'observer 循环', cleanup: 'observer 停止时保留' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/observer-start.log', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh', write: 'write', lifecycle: 'session-temp', trigger: 'observer 启动', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer.lock', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh', write: 'write', lifecycle: 'ephemeral', trigger: 'observer 启动', cleanup: 'observer 停止时删' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer-start.lock', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh', write: 'write', lifecycle: 'ephemeral', trigger: 'lazy observer 启动', cleanup: '启动后删' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer-signal-counter', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh (+ scripts/lib/observer-sessions.js)', write: 'write', lifecycle: 'session-temp', trigger: 'observe 信号', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer-last-activity', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh (+ agents/observer-loop.sh)', write: 'write', lifecycle: 'session-temp', trigger: 'observer 活动', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.last-purge', category: 'skill-script', source: 'skills/continuous-learning-v2/hooks/observe.sh', write: 'write', lifecycle: 'persistent', trigger: 'observe 清理', cleanup: '无（时间戳）' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/.observer-tmp/ecc-observer-analysis.*.jsonl', category: 'skill-script', source: 'skills/continuous-learning-v2/agents/observer-loop.sh', write: 'write', lifecycle: 'ephemeral', trigger: 'observer 分析', cleanup: '循环内删' },
+  { root: 'HOMUNCULUS', path: 'projects/<pid>/instincts/{personal,inherited}/<id>.yaml', category: 'skill-script', source: 'skills/continuous-learning-v2/scripts/instinct-cli.py', write: 'write', lifecycle: 'persistent', trigger: 'observer 提炼 / /learn', cleanup: '无' },
+  { root: 'HOMUNCULUS', path: 'instincts/{personal,inherited,pending}/<id>.yaml', category: 'command', source: 'commands/promote · import (instinct-cli.py)', write: 'write', lifecycle: 'persistent', trigger: 'promote / import', cleanup: '无', note: '全局 instinct（跨项目），与 project 级并存' },
+  { root: 'HOMUNCULUS', path: 'evolved/{skills,commands,agents}/*.md', category: 'command', source: 'commands/evolve (instinct-cli.py)', write: 'write', lifecycle: 'persistent', trigger: '/evolve', cleanup: '无', note: '全局 evolved；project 级在 projects/<pid>/evolved/' },
+
+  // ── ${TMPDIR} ──
+  { root: 'TMPDIR', path: 'ecc-edited-<sid>.txt', category: 'hook', source: 'scripts/hooks/post-edit-accumulator.js', write: 'append', lifecycle: 'session-temp', trigger: 'PostToolUse(Edit)', cleanup: 'stop-format-typecheck 删 / OS' },
+  { root: 'TMPDIR', path: 'ecc-metrics-<sid>.json', category: 'hook', source: 'scripts/hooks/ecc-metrics-bridge.js (+ scripts/lib/session-bridge.js)', write: 'atomic', lifecycle: 'session-temp', trigger: 'PostToolUse', cleanup: 'OS' },
+  { root: 'TMPDIR', path: 'ecc-metrics-cost-warnings-<sha>.json', category: 'hook', source: 'scripts/hooks/ecc-metrics-bridge.js', write: 'atomic', lifecycle: 'session-temp', trigger: 'PostToolUse', cleanup: 'OS' },
+  { root: 'TMPDIR', path: 'ecc-ctx-warn-<sid>.json', category: 'hook', source: 'scripts/hooks/ecc-context-monitor.js', write: 'write', lifecycle: 'session-temp', trigger: 'PostToolUse', cleanup: 'OS' },
+  { root: 'TMPDIR', path: 'claude-tool-count-<sid>', category: 'hook', source: 'scripts/hooks/suggest-compact.js', write: 'write', lifecycle: 'session-temp', trigger: 'PreToolUse', cleanup: 'suggest-compact 清 >14天 / OS' },
+  { root: 'TMPDIR', path: 'claude-context-bucket-<sid>', category: 'hook', source: 'scripts/hooks/suggest-compact.js', write: 'write', lifecycle: 'session-temp', trigger: 'PreToolUse', cleanup: 'OS' },
+
+  // ── ${GATEGUARD_STATE_DIR} ──
+  { root: 'GATEGUARD_STATE_DIR', path: 'state-<sessionKey>.json', category: 'hook', source: 'scripts/hooks/gateguard-fact-force.js', write: 'atomic', lifecycle: 'session-temp', trigger: 'PreToolUse', cleanup: 'gateguard 清 >30min（启动自清）' },
+
+  // ── ${SKILL_DIR} ──
+  { root: 'SKILL_DIR', path: '.versions/v<N>.md', category: 'lib', source: 'scripts/lib/skill-evolution/versioning.js', write: 'write', lifecycle: 'persistent', trigger: 'skill 演进', cleanup: '无' },
+  { root: 'SKILL_DIR', path: '.evolution/{observations,inspections,amendments}.jsonl', category: 'lib', source: 'scripts/lib/skill-evolution/versioning.js', write: 'append', lifecycle: 'persistent', trigger: 'skill 演进', cleanup: '无' },
+  { root: 'SKILL_DIR', path: '.provenance.json', category: 'lib', source: 'scripts/lib/skill-evolution/provenance.js', write: 'write', lifecycle: 'persistent', trigger: 'skill 演进', cleanup: '无' },
+
+  // ── ${CWD} ──
+  { root: 'CWD', path: 'docs/CODEMAPS/*.md', category: 'script', source: 'scripts/codemaps/generate.ts (+ commands/update-codemaps)', write: 'write', lifecycle: 'persistent', trigger: '/update-codemaps', cleanup: '无（项目内）' },
+  { root: 'CWD', path: '.claude/package-manager.json', category: 'lib', source: 'scripts/lib/package-manager.js (+ scripts/setup-package-manager.js)', write: 'write', lifecycle: 'persistent', trigger: 'setup', cleanup: '无' },
+  { root: 'CWD', path: '<被就地修改的源文件>', category: 'hook', source: 'scripts/hooks/quality-gate.js · stop-format-typecheck.js · pre-bash-commit-quality.js', write: 'in-place', lifecycle: 'persistent', trigger: 'PostToolUse / Stop', cleanup: '无（改的就是源文件本身）' },
+  { root: 'CWD', path: 'PRD / 流程文档（plan-prd · orch-* · prp-*）', category: 'command', source: 'commands/plan-prd · orch-* · prp-*', write: 'write', lifecycle: 'persistent', trigger: '对应命令', cleanup: '无（项目内）' },
+
+  // ── ${EXTERNAL} ──
+  { root: 'EXTERNAL', path: 'GitHub PR', category: 'command', source: 'commands/pr · prp-pr (gh pr create)', write: 'external', lifecycle: 'persistent', trigger: '/pr · /prp-pr', cleanup: '外部仓库' },
+  { root: 'EXTERNAL', path: 'instinct 导出文件（--output 路径）', category: 'command', source: 'commands/instinct-export (instinct-cli.py)', write: 'write', lifecycle: 'persistent', trigger: '/instinct-export', cleanup: '由 --output 指定' },
+];
+
+const RESOLVED_ROOTS = ['CLAUDE_DIR', 'HOMUNCULUS', 'TMPDIR', 'GATEGUARD_STATE_DIR'];
+
+// 复刻 homunculus-dir.sh：CLV2_HOMUNCULUS_DIR(abs) → XDG_DATA_HOME/ecc-homunculus(abs) → ~/.local/share/ecc-homunculus
+function resolveHomunculusDir() {
+  const clv2 = process.env.CLV2_HOMUNCULUS_DIR;
+  if (clv2 && path.isAbsolute(clv2)) return path.resolve(clv2);
+  const xdg = process.env.XDG_DATA_HOME;
+  if (xdg && path.isAbsolute(xdg)) return path.join(xdg, 'ecc-homunculus');
+  const home = process.env.HOME || process.env.USERPROFILE || os.homedir();
+  return path.join(home, '.local', 'share', 'ecc-homunculus');
+}
+
+// 解析运行时真实根（与安装位置无关）。lazy require 避免加载时序问题。
+function resolvePathVars() {
+  const { resolveAgentDataHome } = require(path.join(SOURCE_ROOT, 'scripts/lib/agent-data-home.js'));
+  return {
+    CLAUDE_DIR: toPosix(resolveAgentDataHome()),
+    HOMUNCULUS: toPosix(resolveHomunculusDir()),
+    TMPDIR: toPosix(os.tmpdir()),
+    GATEGUARD_STATE_DIR: toPosix(process.env.GATEGUARD_STATE_DIR || path.join(os.homedir(), '.gateguard')),
+  };
+}
+
+// 组装 paths.json。isTemplate=true（--gen-paths）用占位 resolved；false（applyInstall）用本机真实值。
+function buildPathsIndex(isTemplate) {
+  const real = resolvePathVars();
+  const resolved = isTemplate
+    ? { CLAUDE_DIR: '~/.claude', HOMUNCULUS: '~/.local/share/ecc-homunculus', TMPDIR: '$TMPDIR', GATEGUARD_STATE_DIR: '~/.gateguard' }
+    : real;
+  const PROJECT_DIR = (isTemplate ? '~/.local/share/ecc-homunculus' : real.HOMUNCULUS) + '/projects/<projectId>';
+
+  const variables = {
+    CLAUDE_DIR: { env: 'ECC_AGENT_DATA_HOME', default: '~/.claude', resolve: 'ECC_AGENT_DATA_HOME → 项目 .cursor/ecc-agent-data.json → Cursor(~/.cursor/ecc) → ~/.claude', resolved: resolved.CLAUDE_DIR },
+    HOMUNCULUS: { env: 'CLV2_HOMUNCULUS_DIR', default: '~/.local/share/ecc-homunculus', resolve: 'CLV2_HOMUNCULUS_DIR(abs) → XDG_DATA_HOME/ecc-homunculus → ~/.local/share/ecc-homunculus', resolved: resolved.HOMUNCULUS },
+    TMPDIR: { env: null, default: 'os.tmpdir()', resolve: 'Node os.tmpdir()（macOS = DARWIN_USER_TEMP_DIR，非 /tmp）', resolved: resolved.TMPDIR },
+    GATEGUARD_STATE_DIR: { env: 'GATEGUARD_STATE_DIR', default: '~/.gateguard', resolved: resolved.GATEGUARD_STATE_DIR },
+    PROJECT_DIR: { resolve: '$HOMUNCULUS/projects/<projectId>', note: 'projectId = git remote/path 的 12 字符哈希；无单值', resolved: PROJECT_DIR },
+  };
+
+  const order = ['CLAUDE_DIR', 'HOMUNCULUS', 'TMPDIR', 'GATEGUARD_STATE_DIR', 'SKILL_DIR', 'CWD', 'EXTERNAL'];
+  const groups = order
+    .filter((root) => PATHS_SPEC.some((s) => s.root === root))
+    .map((root) => {
+      const hasReal = RESOLVED_ROOTS.includes(root);
+      const rootResolved = hasReal ? resolved[root] : PATH_ROOT_LABEL[root];
+      const items = PATHS_SPEC
+        .filter((s) => s.root === root)
+        .map((s) => {
+          const item = {
+            path: s.path,
+            resolved: root === 'EXTERNAL' ? s.path : rootResolved + '/' + s.path,
+            category: s.category,
+            source: s.source,
+            write: s.write,
+            lifecycle: s.lifecycle,
+            trigger: s.trigger,
+            cleanup: s.cleanup,
+          };
+          if (s.note) item.note = s.note;
+          return item;
+        });
+      const g = { root: PATH_ROOT_LABEL[root], resolved: rootResolved, items };
+      if (PATH_ROOT_NOTE[root]) g.note = PATH_ROOT_NOTE[root];
+      return g;
+    });
+
+  return {
+    version: 1,
+    generated: new Date().toISOString().slice(0, 10),
+    aimeta3sHome: isTemplate ? '~/.claude' : toPosix(TARGET_ROOT),
+    purpose: '运行时落盘产物路径索引（只读；不移动任何数据）。基于主要写入脚本整理，偶有次要写入者未列。',
+    variables,
+    groups,
+  };
+}
+
 function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
 }
@@ -273,6 +436,20 @@ function applyInstall(dryRun) {
     fs.writeFileSync(manifestDestAbs, manifestBuf);
   }
   operations.push({ sourceRelativePath: '<generated>/' + manifestDestRel, destinationPath: manifestDestAbs, contentSha256: sha256(manifestBuf) });
+
+  // 动态生成运行时产物路径索引 paths.json（manifest.json 的姊妹篇；resolved 为本机真实值）
+  const pathsIndex = buildPathsIndex(false);
+  const pathsDestRel = 'aimeta3s/docs/paths.json';
+  const pathsDestAbs = path.join(TARGET_ROOT, pathsDestRel);
+  const pathsBuf = Buffer.from(JSON.stringify(pathsIndex, null, 2) + '\n', 'utf8');
+  assertSafeDest(pathsDestAbs, TARGET_ROOT);
+  if (dryRun) {
+    console.log(`  <生成> ${pathsDestRel}  →  ${toPosix(path.relative(TARGET_ROOT, pathsDestAbs))}  (运行时产物路径索引)`);
+  } else {
+    fs.mkdirSync(path.dirname(pathsDestAbs), { recursive: true });
+    fs.writeFileSync(pathsDestAbs, pathsBuf);
+  }
+  operations.push({ sourceRelativePath: '<generated>/' + pathsDestRel, destinationPath: pathsDestAbs, contentSha256: sha256(pathsBuf) });
 
   return operations;
 }
@@ -360,6 +537,7 @@ function showHelp() {
   node install.js --dry-run      只打印安装计划，不写盘
   node install.js --uninstall    按状态文件卸载（内容被改过的文件会跳过）
   node install.js --gen-manifest 生成 /aimeta3s-help 资源清单到仓库 install-src/docs/aimeta3s/
+  node install.js --gen-paths   生成运行时产物路径索引到仓库 install-src/docs/aimeta3s/
   node install.js --help         显示本帮助
 
 环境变量:
@@ -378,6 +556,7 @@ function main() {
   const dryRun = args.includes('--dry-run');
   const doUninstall = args.includes('--uninstall');
   const genManifest = args.includes('--gen-manifest');
+  const genPaths = args.includes('--gen-paths');
 
   if (genManifest) {
     if (!fs.existsSync(SOURCE_ROOT)) {
@@ -390,6 +569,20 @@ function main() {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, JSON.stringify(manifest, null, 2) + '\n');
     console.log(`已生成仓库内清单: ${outPath}（${manifest.resources.length} 个资源，aimeta3sHome=~/.claude 占位）`);
+    return;
+  }
+
+  if (genPaths) {
+    if (!fs.existsSync(SOURCE_ROOT)) {
+      console.error(`错误: 找不到源目录 ${SOURCE_ROOT}`);
+      process.exit(1);
+    }
+    const pathsIndex = buildPathsIndex(true);
+    const outPath = path.join(SOURCE_ROOT, 'docs', 'aimeta3s', 'paths.json');
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, JSON.stringify(pathsIndex, null, 2) + '\n');
+    const total = pathsIndex.groups.reduce((n, g) => n + g.items.length, 0);
+    console.log(`已生成仓库内产物索引: ${outPath}（${pathsIndex.groups.length} 组 / ${total} 条，resolved 为占位）`);
     return;
   }
 

@@ -1,0 +1,554 @@
+{
+  "version": 1,
+  "generated": "2026-08-14",
+  "aimeta3sHome": "~/.claude",
+  "purpose": "运行时落盘产物路径索引（只读；不移动任何数据）。基于主要写入脚本整理，偶有次要写入者未列。",
+  "variables": {
+    "CLAUDE_DIR": {
+      "env": "ECC_AGENT_DATA_HOME",
+      "default": "~/.claude",
+      "resolve": "ECC_AGENT_DATA_HOME → 项目 .cursor/ecc-agent-data.json → Cursor(~/.cursor/ecc) → ~/.claude",
+      "resolved": "~/.claude"
+    },
+    "HOMUNCULUS": {
+      "env": "CLV2_HOMUNCULUS_DIR",
+      "default": "~/.local/share/ecc-homunculus",
+      "resolve": "CLV2_HOMUNCULUS_DIR(abs) → XDG_DATA_HOME/ecc-homunculus → ~/.local/share/ecc-homunculus",
+      "resolved": "~/.local/share/ecc-homunculus"
+    },
+    "TMPDIR": {
+      "env": null,
+      "default": "os.tmpdir()",
+      "resolve": "Node os.tmpdir()（macOS = DARWIN_USER_TEMP_DIR，非 /tmp）",
+      "resolved": "$TMPDIR"
+    },
+    "GATEGUARD_STATE_DIR": {
+      "env": "GATEGUARD_STATE_DIR",
+      "default": "~/.gateguard",
+      "resolved": "~/.gateguard"
+    },
+    "PROJECT_DIR": {
+      "resolve": "$HOMUNCULUS/projects/<projectId>",
+      "note": "projectId = git remote/path 的 12 字符哈希；无单值",
+      "resolved": "~/.local/share/ecc-homunculus/projects/<projectId>"
+    }
+  },
+  "groups": [
+    {
+      "root": "${CLAUDE_DIR}",
+      "resolved": "~/.claude",
+      "items": [
+        {
+          "path": "metrics/costs.jsonl",
+          "resolved": "~/.claude/metrics/costs.jsonl",
+          "category": "hook",
+          "source": "scripts/hooks/cost-tracker.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "Stop",
+          "cleanup": "无（累积，手动清空）"
+        },
+        {
+          "path": "metrics/tool-usage.jsonl",
+          "resolved": "~/.claude/metrics/tool-usage.jsonl",
+          "category": "hook",
+          "source": "scripts/hooks/session-activity-tracker.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "PostToolUse",
+          "cleanup": "无（累积）"
+        },
+        {
+          "path": "session-data/<date>-<shortId>-session.tmp",
+          "resolved": "~/.claude/session-data/<date>-<shortId>-session.tmp",
+          "category": "hook",
+          "source": "scripts/hooks/session-end.js (+ scripts/lib/session-manager.js)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "Stop / PreCompact",
+          "cleanup": "session-manager 轮转旧格式",
+          "note": "pre-compact.js / session-start.js 读取；跨会话续接协议依赖此目录"
+        },
+        {
+          "path": "session-aliases.json",
+          "resolved": "~/.claude/session-aliases.json",
+          "category": "command",
+          "source": "commands/sessions (+ scripts/lib/session-aliases.js)",
+          "write": "atomic",
+          "lifecycle": "persistent",
+          "trigger": "/sessions",
+          "cleanup": "无"
+        },
+        {
+          "path": "mcp-health-cache.json",
+          "resolved": "~/.claude/mcp-health-cache.json",
+          "category": "hook",
+          "source": "scripts/hooks/mcp-health-check.js",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "PreToolUse(MCP)",
+          "cleanup": "无",
+          "note": "硬拼 os.homedir()/.claude，不走 resolveAgentDataHome"
+        },
+        {
+          "path": "state/skill-runs.jsonl",
+          "resolved": "~/.claude/state/skill-runs.jsonl",
+          "category": "lib",
+          "source": "scripts/lib/skill-evolution/tracker.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "skill 执行",
+          "cleanup": "无"
+        },
+        {
+          "path": "skills/learned/<name>/*.md",
+          "resolved": "~/.claude/skills/learned/<name>/*.md",
+          "category": "command",
+          "source": "commands/learn (+ commands/skill-create)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/learn · /skill-create",
+          "cleanup": "无"
+        },
+        {
+          "path": "plan-canvas/sessions.json",
+          "resolved": "~/.claude/plan-canvas/sessions.json",
+          "category": "hook",
+          "source": "scripts/hooks/plan-canvas-pending.js (+ scripts/lib/plan-canvas/sessions.js)",
+          "write": "atomic",
+          "lifecycle": "persistent",
+          "trigger": "Stop",
+          "cleanup": "无"
+        },
+        {
+          "path": "plan-canvas/server.json",
+          "resolved": "~/.claude/plan-canvas/server.json",
+          "category": "script",
+          "source": "scripts/plan-canvas.js (+ scripts/lib/plan-canvas/server.js)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "plan-canvas server",
+          "cleanup": "无"
+        },
+        {
+          "path": "plan-canvas/server.log",
+          "resolved": "~/.claude/plan-canvas/server.log",
+          "category": "script",
+          "source": "scripts/plan-canvas.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "plan-canvas server",
+          "cleanup": "无"
+        },
+        {
+          "path": "observer-last-run.log",
+          "resolved": "~/.claude/observer-last-run.log",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/agents/session-guardian.sh",
+          "write": "atomic",
+          "lifecycle": "persistent",
+          "trigger": "SessionStart",
+          "cleanup": "无",
+          "note": "硬拼 $HOME/.claude，不走 resolveAgentDataHome"
+        },
+        {
+          "path": "bash-commands.log",
+          "resolved": "~/.claude/bash-commands.log",
+          "category": "hook",
+          "source": "scripts/hooks/post-bash-command-log.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "PostToolUse(Bash)",
+          "cleanup": "无",
+          "note": "硬拼 os.homedir()/.claude，不走 resolveAgentDataHome"
+        },
+        {
+          "path": "cost-tracker.log",
+          "resolved": "~/.claude/cost-tracker.log",
+          "category": "hook",
+          "source": "scripts/hooks/post-bash-command-log.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "PostToolUse(Bash)",
+          "cleanup": "无",
+          "note": "与 bash-commands.log 同源"
+        }
+      ],
+      "note": "ECC 工具链共享根；session-data/skills/learned 被跨会话协议与 Claude Code skill 发现机制消费，勿移动"
+    },
+    {
+      "root": "${HOMUNCULUS}",
+      "resolved": "~/.local/share/ecc-homunculus",
+      "items": [
+        {
+          "path": "projects.json",
+          "resolved": "~/.local/share/ecc-homunculus/projects.json",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/scripts/detect-project.sh (+ instinct-cli.py)",
+          "write": "atomic",
+          "lifecycle": "persistent",
+          "trigger": "SessionStart",
+          "cleanup": "无"
+        },
+        {
+          "path": "projects/<pid>/project.json",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/project.json",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/scripts/detect-project.sh",
+          "write": "atomic",
+          "lifecycle": "persistent",
+          "trigger": "SessionStart",
+          "cleanup": "无"
+        },
+        {
+          "path": "projects/<pid>/.observer-sessions/<sid>.json",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer-sessions/<sid>.json",
+          "category": "hook",
+          "source": "scripts/hooks/session-start.js (+ scripts/lib/observer-sessions.js)",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "SessionStart",
+          "cleanup": "session-end-marker 删"
+        },
+        {
+          "path": "projects/<pid>/observations.jsonl",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/observations.jsonl",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "PostToolUse",
+          "cleanup": "observe.sh 归档/轮转"
+        },
+        {
+          "path": "projects/<pid>/observations.archive/*.jsonl",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/observations.archive/*.jsonl",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/agents/observer-loop.sh",
+          "write": "mv",
+          "lifecycle": "persistent",
+          "trigger": "observer 循环",
+          "cleanup": "observe.sh 每日清"
+        },
+        {
+          "path": "projects/<pid>/.observer.pid",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer.pid",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/agents/start-observer.sh",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "observer 启动",
+          "cleanup": "observer 停止时删"
+        },
+        {
+          "path": "projects/<pid>/observer.log",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/observer.log",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/agents/observer-loop.sh",
+          "write": "append",
+          "lifecycle": "session-temp",
+          "trigger": "observer 循环",
+          "cleanup": "observer 停止时保留"
+        },
+        {
+          "path": "projects/<pid>/observer-start.log",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/observer-start.log",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "observer 启动",
+          "cleanup": "无"
+        },
+        {
+          "path": "projects/<pid>/.observer.lock",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer.lock",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh",
+          "write": "write",
+          "lifecycle": "ephemeral",
+          "trigger": "observer 启动",
+          "cleanup": "observer 停止时删"
+        },
+        {
+          "path": "projects/<pid>/.observer-start.lock",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer-start.lock",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh",
+          "write": "write",
+          "lifecycle": "ephemeral",
+          "trigger": "lazy observer 启动",
+          "cleanup": "启动后删"
+        },
+        {
+          "path": "projects/<pid>/.observer-signal-counter",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer-signal-counter",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh (+ scripts/lib/observer-sessions.js)",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "observe 信号",
+          "cleanup": "无"
+        },
+        {
+          "path": "projects/<pid>/.observer-last-activity",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer-last-activity",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh (+ agents/observer-loop.sh)",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "observer 活动",
+          "cleanup": "无"
+        },
+        {
+          "path": "projects/<pid>/.last-purge",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.last-purge",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/hooks/observe.sh",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "observe 清理",
+          "cleanup": "无（时间戳）"
+        },
+        {
+          "path": "projects/<pid>/.observer-tmp/ecc-observer-analysis.*.jsonl",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/.observer-tmp/ecc-observer-analysis.*.jsonl",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/agents/observer-loop.sh",
+          "write": "write",
+          "lifecycle": "ephemeral",
+          "trigger": "observer 分析",
+          "cleanup": "循环内删"
+        },
+        {
+          "path": "projects/<pid>/instincts/{personal,inherited}/<id>.yaml",
+          "resolved": "~/.local/share/ecc-homunculus/projects/<pid>/instincts/{personal,inherited}/<id>.yaml",
+          "category": "skill-script",
+          "source": "skills/continuous-learning-v2/scripts/instinct-cli.py",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "observer 提炼 / /learn",
+          "cleanup": "无"
+        },
+        {
+          "path": "instincts/{personal,inherited,pending}/<id>.yaml",
+          "resolved": "~/.local/share/ecc-homunculus/instincts/{personal,inherited,pending}/<id>.yaml",
+          "category": "command",
+          "source": "commands/promote · import (instinct-cli.py)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "promote / import",
+          "cleanup": "无",
+          "note": "全局 instinct（跨项目），与 project 级并存"
+        },
+        {
+          "path": "evolved/{skills,commands,agents}/*.md",
+          "resolved": "~/.local/share/ecc-homunculus/evolved/{skills,commands,agents}/*.md",
+          "category": "command",
+          "source": "commands/evolve (instinct-cli.py)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/evolve",
+          "cleanup": "无",
+          "note": "全局 evolved；project 级在 projects/<pid>/evolved/"
+        }
+      ],
+      "note": "XDG 用户数据；continuous-learning 持久记忆（projects/observer/observations/instincts/evolved）"
+    },
+    {
+      "root": "${TMPDIR}",
+      "resolved": "$TMPDIR",
+      "items": [
+        {
+          "path": "ecc-edited-<sid>.txt",
+          "resolved": "$TMPDIR/ecc-edited-<sid>.txt",
+          "category": "hook",
+          "source": "scripts/hooks/post-edit-accumulator.js",
+          "write": "append",
+          "lifecycle": "session-temp",
+          "trigger": "PostToolUse(Edit)",
+          "cleanup": "stop-format-typecheck 删 / OS"
+        },
+        {
+          "path": "ecc-metrics-<sid>.json",
+          "resolved": "$TMPDIR/ecc-metrics-<sid>.json",
+          "category": "hook",
+          "source": "scripts/hooks/ecc-metrics-bridge.js (+ scripts/lib/session-bridge.js)",
+          "write": "atomic",
+          "lifecycle": "session-temp",
+          "trigger": "PostToolUse",
+          "cleanup": "OS"
+        },
+        {
+          "path": "ecc-metrics-cost-warnings-<sha>.json",
+          "resolved": "$TMPDIR/ecc-metrics-cost-warnings-<sha>.json",
+          "category": "hook",
+          "source": "scripts/hooks/ecc-metrics-bridge.js",
+          "write": "atomic",
+          "lifecycle": "session-temp",
+          "trigger": "PostToolUse",
+          "cleanup": "OS"
+        },
+        {
+          "path": "ecc-ctx-warn-<sid>.json",
+          "resolved": "$TMPDIR/ecc-ctx-warn-<sid>.json",
+          "category": "hook",
+          "source": "scripts/hooks/ecc-context-monitor.js",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "PostToolUse",
+          "cleanup": "OS"
+        },
+        {
+          "path": "claude-tool-count-<sid>",
+          "resolved": "$TMPDIR/claude-tool-count-<sid>",
+          "category": "hook",
+          "source": "scripts/hooks/suggest-compact.js",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "PreToolUse",
+          "cleanup": "suggest-compact 清 >14天 / OS"
+        },
+        {
+          "path": "claude-context-bucket-<sid>",
+          "resolved": "$TMPDIR/claude-context-bucket-<sid>",
+          "category": "hook",
+          "source": "scripts/hooks/suggest-compact.js",
+          "write": "write",
+          "lifecycle": "session-temp",
+          "trigger": "PreToolUse",
+          "cleanup": "OS"
+        }
+      ],
+      "note": "os.tmpdir()；瞬态跨进程 IPC，OS 重启自动清理"
+    },
+    {
+      "root": "${GATEGUARD_STATE_DIR}",
+      "resolved": "~/.gateguard",
+      "items": [
+        {
+          "path": "state-<sessionKey>.json",
+          "resolved": "~/.gateguard/state-<sessionKey>.json",
+          "category": "hook",
+          "source": "scripts/hooks/gateguard-fact-force.js",
+          "write": "atomic",
+          "lifecycle": "session-temp",
+          "trigger": "PreToolUse",
+          "cleanup": "gateguard 清 >30min（启动自清）"
+        }
+      ],
+      "note": "gateguard 事实强制状态"
+    },
+    {
+      "root": "<skillDir>",
+      "resolved": "<skillDir>",
+      "items": [
+        {
+          "path": ".versions/v<N>.md",
+          "resolved": "<skillDir>/.versions/v<N>.md",
+          "category": "lib",
+          "source": "scripts/lib/skill-evolution/versioning.js",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "skill 演进",
+          "cleanup": "无"
+        },
+        {
+          "path": ".evolution/{observations,inspections,amendments}.jsonl",
+          "resolved": "<skillDir>/.evolution/{observations,inspections,amendments}.jsonl",
+          "category": "lib",
+          "source": "scripts/lib/skill-evolution/versioning.js",
+          "write": "append",
+          "lifecycle": "persistent",
+          "trigger": "skill 演进",
+          "cleanup": "无"
+        },
+        {
+          "path": ".provenance.json",
+          "resolved": "<skillDir>/.provenance.json",
+          "category": "lib",
+          "source": "scripts/lib/skill-evolution/provenance.js",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "skill 演进",
+          "cleanup": "无"
+        }
+      ],
+      "note": "skill 演进产物；curated(skills/) / learned(~/.claude/skills/learned) / imported(~/.claude/skills/imported) 各自子树"
+    },
+    {
+      "root": "<cwd>",
+      "resolved": "<cwd>",
+      "items": [
+        {
+          "path": "docs/CODEMAPS/*.md",
+          "resolved": "<cwd>/docs/CODEMAPS/*.md",
+          "category": "script",
+          "source": "scripts/codemaps/generate.ts (+ commands/update-codemaps)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/update-codemaps",
+          "cleanup": "无（项目内）"
+        },
+        {
+          "path": ".claude/package-manager.json",
+          "resolved": "<cwd>/.claude/package-manager.json",
+          "category": "lib",
+          "source": "scripts/lib/package-manager.js (+ scripts/setup-package-manager.js)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "setup",
+          "cleanup": "无"
+        },
+        {
+          "path": "<被就地修改的源文件>",
+          "resolved": "<cwd>/<被就地修改的源文件>",
+          "category": "hook",
+          "source": "scripts/hooks/quality-gate.js · stop-format-typecheck.js · pre-bash-commit-quality.js",
+          "write": "in-place",
+          "lifecycle": "persistent",
+          "trigger": "PostToolUse / Stop",
+          "cleanup": "无（改的就是源文件本身）"
+        },
+        {
+          "path": "PRD / 流程文档（plan-prd · orch-* · prp-*）",
+          "resolved": "<cwd>/PRD / 流程文档（plan-prd · orch-* · prp-*）",
+          "category": "command",
+          "source": "commands/plan-prd · orch-* · prp-*",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "对应命令",
+          "cleanup": "无（项目内）"
+        }
+      ],
+      "note": "当前项目工作区；产物落在项目内"
+    },
+    {
+      "root": "<external>",
+      "resolved": "<external>",
+      "items": [
+        {
+          "path": "GitHub PR",
+          "resolved": "GitHub PR",
+          "category": "command",
+          "source": "commands/pr · prp-pr (gh pr create)",
+          "write": "external",
+          "lifecycle": "persistent",
+          "trigger": "/pr · /prp-pr",
+          "cleanup": "外部仓库"
+        },
+        {
+          "path": "instinct 导出文件（--output 路径）",
+          "resolved": "instinct 导出文件（--output 路径）",
+          "category": "command",
+          "source": "commands/instinct-export (instinct-cli.py)",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/instinct-export",
+          "cleanup": "由 --output 指定"
+        }
+      ],
+      "note": "产物落在本机之外（远程仓库、用户指定输出路径）"
+    }
+  ]
+}

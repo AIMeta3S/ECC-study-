@@ -5,7 +5,7 @@ argument-hint: "[功能/产品创意]（留空 = 从提问开始）"
 
 # 产品需求文档生成器
 
-> 改编自 Wirasm 的 PRPs-agentic-eng。属于 PRP 工作流程系列。
+> 属于 PRP 工作流系列的一部分。
 
 **输入**：$ARGUMENTS
 
@@ -106,7 +106,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ## 阶段 4：DEEP DIVE - Vision & Users
 
-基于 foundation（阶段2） + research（阶段3），请问：
+基于 FOUNDATION（阶段2） + GROUNDING（阶段3），请问：
 
 > **愿景与用户：**
 >
@@ -266,9 +266,9 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 {验证假设所需的最小功能集}
 
-### 用户流程
+### User Flow
 
-{关键路径——实现价值的最短路径}
+{关键路径 - shortest journey to value}
 
 ---
 

@@ -93,9 +93,8 @@ git commit -m "{type}: {description}"
 文件数:     {count} 文件已变更
 
 后续步骤:
-  - git push           → 推送到远端仓库
-  - /prp-pr            → 进行 PR 操作
-  - /code-review       → 进行代码审查
+  - /prp-plan <PRD路径> → 如果 PRD 还有「待开始」的 phase 时，进入下一 phase
+  - /prp-pr            → 如果所有 phase 完成后，创建 PR（自动 push）
 ```
 
 ---

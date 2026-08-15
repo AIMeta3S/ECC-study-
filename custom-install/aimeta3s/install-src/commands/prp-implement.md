@@ -3,7 +3,7 @@ description: 执行实现计划，并进行严格的循环验证
 argument-hint: <path/to/plan.md>
 ---
 
-> PRP 工作流系列的一部分。
+> 属于 PRP 工作流系列的一部分。
 
 # PRP Implement
 
@@ -267,8 +267,10 @@ mkdir -p .claude/PRPs/reports
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- [ ] 通过 `/code-review` 进行 code review
-- [ ] 通过 `/prp-pr` 创建 PR
+- [ ] 通过 `/code-review` 审查本 phase 变更
+- [ ] 通过 `/prp-commit` 提交
+- [ ] 如果 PRD 还有「待开始」的 phase 时，运行 `/prp-plan <PRD路径>` 进入下一 phase
+- [ ] 如果所有 phase 完成后，通过 `/prp-pr` 创建 PR
 ```
 
 ### 更新 PRD（如适用）
@@ -326,7 +328,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Phase 2 | [next] |
 | ... | ... |
 
-> 下一步：运行 `/code-review` 审查变更，或运行 `/prp-pr` 创建 pull request。
+> 下一步：运行 `/code-review` 审查本 phase 变更，再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
 ```
 
 ---
@@ -379,7 +381,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 
 ## 后续步骤
 
-- 运行 `/code-review` 在提交前审查变更
-- 运行 `/prp-commit` 用描述性信息提交
-- 运行 `/prp-pr` 创建 pull request
-- 如果 PRD 还有更多 phase，运行 `/prp-plan <next-phase>`
+- 运行 `/code-review` 审查本 phase 变更
+- 运行 `/prp-commit` 用描述性信息提交本 phase 变更
+- 如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md`（会自动定位下一个待开始 phase）进入下一 phase
+- 所有 phase 完成后，运行 `/prp-pr` 创建 pull request

@@ -16,27 +16,46 @@
 
 按族归类的 41 个命令，每个一句话用途；带 commit 前缀的标注前缀。
 
-### 规划与实施族
+### 规划与实施类
 
-| 命令 | 族 | 一句话用途 | commit 前缀 |
+/prp-prd 功能/创意描述
+/prp-plan .claude/PRPs/prds/{name}.prd.md
+/prp-implement .claude/PRPs/plans/{name}.plan.md
+/prp-commit 提交内容描述
+/prp-pr base-branch（默认 main）
+
+#### PRP 族
+| 命令 | 一句话用途 | 输入 | 输出 |
 |---|---|---|---|
-| `prp-prd` | PRP | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | — |
-| `prp-plan` | PRP | 深度代码库分析 + 模式提取，生成自包含实施计划 | — |
-| `prp-implement` | PRP | 按计划落地，每改即验，跑 5 级验证 | — |
-| `prp-commit` | PRP | 自然语言驱动的快速提交（中文描述要提交什么） | type: 前缀 |
-| `prp-pr` | PRP | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | — |
-| `plan-prd` | 精简 | 4 阶段精简 PRD 生成器，只定 what/why，交接给 plan | — |
-| `plan` | 精简 | 重申需求 + 风险评估，产出分步计划，等用户确认才动代码 | — |
-| `orch-add-feature` | orch | 端到端编排：新增全新能力（Research→Plan→TDD→Review→Commit） | `feat:` |
-| `orch-build-mvp` | orch | 从设计/规格文档构建可运行 MVP 垂直切片（含 GAN harness） | `feat:` |
-| `orch-change-feature` | orch | 把已工作的行为改为新规范（测试先行） | `feat:` |
-| `orch-fix-defect` | orch | 用 red test 复现 bug 再修到 green | `fix:` |
-| `orch-refine-code` | orch | 保行为重构（以现有测试为安全网） | `refactor:` |
-| `feature-dev` | 引导式 | 手动引导式开发：探索→澄清→架构→实现→评审 | — |
-| `build-fix` | 横切 | 检测构建系统，逐个最小修复构建/类型错误 | — |
-| `plan-canvas` | 评审 | 浏览器画布评审 plan/HTML artifact：标注元素+聊天+approve/request-changes | — |
+| `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） |
+| `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） |
+| `prp-implement` | 按计划落地，每改即验，跑 5 级验证 | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/reports/{plan-name}-report.md`，计划完成后归档到 `plans/completed/`） |
+| `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
+| `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
 
-### 审查与质量族
+#### 精简族
+| 命令 | 一句话用途 | 输入 | 输出 |
+|---|---|---|---|
+| `plan-prd` | 精简 | 4 阶段精简 PRD 生成器，只定 what/why，交接给 plan | 功能/创意描述 | PRD 文件（`.claude/prds/{kebab-case-name}.prd.md`） |
+| `plan` | 精简 | 重申需求 + 风险评估，产出分步计划，等用户确认才动代码 | 文本（功能/创意描述）/ 计划文件（`.claude/prds/{kebab-case-name}.prd.md`） / 类似prd或自定义格式的md文件 | 输入为`*.prd.md`时，输出`.claude/plans/{kebab-case-name}.plan.md`；其他情况会话中直接输出 |
+
+#### orch 族
+| 命令 | 一句话用途 | commit 前缀 |
+|---|---|---|
+| `orch-add-feature` | 端到端编排：新增全新能力（Research→Plan→TDD→Review→Commit） | `feat:` |
+| `orch-build-mvp` | 从设计/规格文档构建可运行 MVP 垂直切片（含 GAN harness） | `feat:` |
+| `orch-change-feature` | 把已工作的行为改为新规范（测试先行） | `feat:` |
+| `orch-fix-defect` | 用 red test 复现 bug 再修到 green | `fix:` |
+| `orch-refine-code` | 保行为重构（以现有测试为安全网） | `refactor:` |
+
+#### 其他
+| 命令 | 一句话用途 |
+|---|---|
+| `feature-dev` | 手动引导式开发：探索→澄清→架构→实现→评审 |
+| `build-fix` | 检测构建系统，逐个最小修复构建/类型错误 |
+| `plan-canvas` | 浏览器画布评审 plan/HTML artifact：标注元素+聊天+approve/request-changes |
+
+### 审查与质量类
 
 | 命令 | 一句话用途 |
 |---|---|
@@ -48,7 +67,7 @@
 | `test-coverage` | 分析覆盖率差距，生成缺失测试到 80%+ |
 | `refactor-clean` | 安全识别并移除死代码，每步删后跑测试 |
 
-### 学习-本能-技能闭环族
+### 学习-本能-技能闭环类
 
 | 命令 | 一句话用途 |
 |---|---|
@@ -62,7 +81,7 @@
 | `skill-create` | 分析 git 历史，提取仓库级团队模式生成 SKILL.md |
 | `skill-health` | skill 组合健康 dashboard（成功率/失败聚类/版本） |
 
-### 会话、项目与文档族
+### 会话、项目与文档类
 
 | 命令 | 一句话用途 |
 |---|---|
@@ -74,7 +93,7 @@
 | `update-docs` | 从代码真相源反向同步文档（scripts/env/CONTRIBUTING/RUNBOOK） |
 | `pr` | 从当前分支未推送 commits 创建 PR，引用 plan/prd 产物 |
 
-### GAN 自动生产族
+### GAN 自动生产类
 
 | 命令 | 一句话用途 |
 |---|---|
@@ -89,14 +108,28 @@
 
 #### P1. PRP 深度流水线（重型 / 多阶段大功能）
 
-```text
-prp-prd ──▶ prp-plan ──▶ prp-implement ──▶ prp-commit ──▶ prp-pr ──▶ code-review
- 需求       计划          实施+5级验证       提交          PR        审查
+- **何时用**：大型功能、需要深度代码库调研、需要严格 5 级验证、需求需要多轮交互澄清。
+- **流水线流程**：
+```mermaid
+flowchart TD
+    A["prp-prd"] -->|"*.prd.md"| B["prp-plan"]
+    B -->|"*.plan.md"| C["prp-implement"]
+    C --> G["code-review"]
+    G --> E["prp-commit"]
+    E --> D{"PRD 中还有<br/>「待开始」的 phase？"}
+    D -->|是，继续下一个 phase 的 plan| B
+    D -->|否，全部完成| F["prp-pr"]
 ```
 
-- **产物路径**：`.claude/PRPs/prds/` → `.claude/PRPs/plans/` → `.claude/PRPs/reports/`（计划完成后归档到 `plans/completed/`）。
-- **多阶段循环**：PRD 有多个 phase 时，`prp-implement` 完成一个 phase 后回到 `prp-plan <next-phase>`，直到所有 phase 完成。
-- **何时用**：大型功能、需要深度代码库调研、需要严格 5 级验证、需求需要多轮交互澄清。
+- **流水线各命令示例**：
+/prp-prd 功能/创意描述
+/prp-plan .claude/PRPs/prds/{name}.prd.md
+/prp-implement .claude/PRPs/plans/{name}.plan.md
+/code-review 
+/prp-commit [提交内容的描述]
+/prp-pr base-branch（默认 main）
+
+- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review → commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。
 
 #### P2. 精简流水线（轻型 / 中小功能）
 

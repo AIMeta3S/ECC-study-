@@ -267,7 +267,7 @@ mkdir -p .claude/PRPs/plans
 
 ---
 
-## 应遵循的模式
+## Patterns to Mirror
 
 在代码库中发现的代码模式。严格遵循。
 
@@ -317,16 +317,16 @@ mkdir -p .claude/PRPs/plans
 
 ### 任务1：[名称]
 - **ACTION**：[What to do]
-- **实现**：[要编写的 Specific code/logic]
-- **参照模式**：[参考的模式，来自“应遵循的模式”章节]
+- **IMPLEMENT**：[要编写的 Specific code/logic]
+- **MIRROR**：[“Patterns to Mirror”章节中需要 follow 的 pattern]
 - **IMPORTS**：[必须的 imports]
 - **GOTCHA**：[需要避免的已知的 pitfall]
 - **验证**：[如何验证此任务是 correct]
 
 ### 任务2：[名称]
 - **ACTION**：[What to do]
-- **实现**：[要编写的 Specific code/logic]
-- **参照模式**：[参考的模式，来自“应遵循的模式”章节]
+- **IMPLEMENT**：[要编写的 Specific code/logic]
+- **MIRROR**：[“Patterns to Mirror”章节中需要 follow 的 pattern]
 - **IMPORTS**：[必须的 imports]
 - **GOTCHA**：[需要避免的已知的 pitfall]
 - **验证**：[如何验证此任务是 correct]
@@ -339,9 +339,15 @@ mkdir -p .claude/PRPs/plans
 
 ### 单元测试
 
-| 测试 | 输入 | 预期输出 | Edge Case？ |
-|---|---|---|---|
-| ... | ... | ... | ... |
+对每行测试标注“先行验证”（test-first）。判定规则：
+
+- **是**：高逻辑密度行为——算法、解析、计价、状态转换、边界条件丰富的纯逻辑。此类测试必须在实现之前编写并确认失败（red 证明）
+- **否**：CRUD、UI、配置、胶水代码。实现后按常规流程编写测试
+- 不允许留空——每行必须有明确标注
+
+| 测试 | 输入 | 预期输出 | Edge Case？ | 先行验证 |
+|---|---|---|---|---|
+| ... | ... | ... | ... | 是/否 |
 
 ### Edge Cases 检查清单
 - [ ] 空输入
@@ -472,7 +478,7 @@ mkdir -p .claude/PRPs/plans
 - [ ] 依赖项已列出
 
 ### 实施准备情况
-- [ ] 每个任务都有操作、实现、参照模式和验证
+- [ ] 每个任务都有 ACTION、IMPLEMENT、MIRROR 和 VALIDATE
 - [ ] 没有任务需要额外的代码库搜索
 - [ ] Import 路径已指定
 - [ ] 在适用的位置都记录注意事项

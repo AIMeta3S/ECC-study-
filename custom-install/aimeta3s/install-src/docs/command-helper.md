@@ -114,7 +114,7 @@
 flowchart TD
     A["prp-prd"] -->|"*.prd.md"| B["prp-plan"]
     B -->|"*.plan.md"| C["prp-implement"]
-    C --> G["code-review"]
+    C --> G["code-review --prp"]
     G --> E["prp-commit"]
     E --> D{"PRD 中还有<br/>「待开始」的 phase？"}
     D -->|是，继续下一个 phase 的 plan| B
@@ -125,7 +125,7 @@ flowchart TD
 /prp-prd 功能/创意描述
 /prp-plan .claude/PRPs/prds/{name}.prd.md
 /prp-implement .claude/PRPs/plans/{name}.plan.md
-/code-review 
+/code-review --prp {plan-name}
 /prp-commit [提交内容的描述]
 /prp-pr base-branch（默认 main）
 

@@ -257,8 +257,8 @@ mkdir -p .claude/PRPs/reports
 | 静态分析 | [done] 通过 | |
 | 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
 | 构建 | [done] 通过 | |
-| 集成 | [done] 通过 | 或 N/A |
-| Edge Case | [done] 通过 | |
+| 集成测试 | [done] 通过 | 或 N/A |
+| Edge Case 测试 | [done] 通过 | |
 | 全量回归 | [done] 通过 | 零回归 |
 
 ## 变更文件
@@ -281,7 +281,7 @@ mkdir -p .claude/PRPs/reports
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- [ ] 通过 `/code-review` 审查本 phase 变更
+- [ ] 通过 `/code-review --prp {plan-name}` 审查本 phase 变更
 - [ ] 通过 `/prp-commit` 提交
 - [ ] 如果 PRD 还有「待开始」的 phase 时，运行 `/prp-plan <PRD路径>` 进入下一 phase
 - [ ] 如果所有 phase 完成后，通过 `/prp-pr` 创建 PR
@@ -323,8 +323,8 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Lint | [done] |
 | 单元测试 | [done]（编写了 N 个，M 个 red-proven） |
 | 构建 | [done] |
-| 集成 | [done] 或 N/A |
-| Edge Case | [done] |
+| 集成测试 | [done] 或 N/A |
+| Edge Case 测试 | [done] |
 | 全量回归 | [done] 零回归 |
 
 ### 变更文件
@@ -344,7 +344,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Phase 2 | [next] |
 | ... | ... |
 
-> 下一步：运行 `/code-review` 审查本 phase 变更，再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
+> 下一步：运行 `/code-review --prp {plan-name}` 审查本 phase 变更，再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
 ```
 
 ---

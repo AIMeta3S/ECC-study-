@@ -1,6 +1,6 @@
 ---
-description: 代码审查 —— 本地未提交的变更或 GitHub PR（PR 模式请传入 PR number/URL；本地模式可加 --full 全量验证）
-argument-hint: [pr-number | pr-url | --full | 空 进行本地审查]
+description: 代码审查 —— 本地未提交变更或 GitHub PR（--prp 核验 implement 结果、--full 全量验证，默认快速档）
+argument-hint: [--pr <number|url> | --prp <plan-name> | --full | 空 进行本地快速审查]
 ---
 
 # 代码审查
@@ -11,13 +11,16 @@ argument-hint: [pr-number | pr-url | --full | 空 进行本地审查]
 
 ---
 
-## 模式选择
+## 模式与档位选择
 
-如果 `$ARGUMENTS` 包含 PR number、PR URL 或 `--pr`：
-→ 跳转到下方的 **PR 审核模式**。
+| 输入 | 模式 | 验证档位 |
+|---|---|---|
+| `--pr <number\|url>`、裸 PR number 或 PR URL | PR 审核模式 | Tier 1 + Tier 2 |
+| 空 | 本地审查模式 | 仅 Tier 1 |
+| `--full` | 本地审查模式 | Tier 1 + Tier 2 |
+| `--prp <plan-name>` | 本地审查模式 | Tier 1 + implement 结果核验 |
 
-否则：
-→ 使用 **本地审查模式**（`--full` 是本地模式 flag，不触发 PR 模式）。
+裸 number/URL 保留兼容。`--full` 与 `--prp` 同给时以 `--prp` 为准（核验不足可复跑 `--full`）。
 
 ---
 
@@ -73,7 +76,9 @@ argument-hint: [pr-number | pr-url | --full | 空 进行本地审查]
 | Go | `go.mod` | — | `go vet ./...` | `go test ./...` | `go build ./...` |
 | Python | `pyproject.toml` / `setup.py` | — | — | `pytest` | — |
 
-**Tier 语义**：Tier 1（秒级）两种模式必跑；Tier 2（分钟级）本地审查模式默认跳过（`--full` 启用），PR 审核模式必跑。"—"表示该语言不适用，报告中标注"跳过"。
+**命令语义**：Tier 2 的 Test 列是**项目测试入口**，实际范围由项目 `scripts` 定义（可能仅单元测试、也可能含集成测试），不假定等价于全量。处于 PRP 流水线时，优先使用计划文件「验证命令 → 完整测试套件」中记录的命令（与 prp-implement Level 6 同源），无计划产物时才使用矩阵默认命令。
+
+**Tier 语义**：Tier 1（秒级）所有档位必跑；Tier 2（分钟级）由档位决定——PR 模式与 `--full` 必跑，本地默认档跳过，`--prp` 档以 implement 结果核验替代（不重跑测试）。"—"表示该语言不适用，报告中标注"跳过"。
 
 ---
 
@@ -93,23 +98,51 @@ git diff --name-only HEAD
 
 完整阅读每个变更文件，按 **共享审查标准** 的 8 维度清单逐项检查，并按严重度评级体系对每项发现独立评级。
 
-### Phase 3 — 验证
+### Phase 3 — 验证（按档位执行）
 
-按 **共享审查标准** 的验证命令矩阵执行：
-
-- **必跑**：Tier 1（Type check + Lint，不适用的语言标注"跳过"）
-- **默认跳过**：Tier 2（Test + Build）
-- `$ARGUMENTS` 包含 `--full` 时：Tier 1 + Tier 2 全部执行
+| 档位 | 执行内容 |
+|---|---|
+| 默认（空参数） | 仅 Tier 1（快速静态门禁） |
+| `--full` | Tier 1 + Tier 2 |
+| `--prp <plan-name>` | Tier 1 + implement 结果核验（见下） |
 
 记录每条命令的 pass/fail。
+
+#### implement 结果核验（`--prp` 档）
+
+读取 `.claude/PRPs/reports/{plan-name}-report.md`，核对以下两项。文件不存在或无「验证结果」小节 → 停止并提示："未找到 `{plan-name}` 的实现报告，请确认 plan-name 或改用 `--full`。"
+
+**① 验证结果完整性** —— 以下 6 项须全部通过：
+
+| 核验项 | 通过条件 |
+|---|---|
+| 静态分析 | 通过 |
+| 单元测试 | 通过 |
+| 构建 | 通过或 N/A |
+| 集成测试 | 通过或 N/A |
+| Edge Case 测试 | 通过 |
+| 全量回归 | 通过，零回归 |
+
+标注 N/A 的项须对照报告「变更文件」确认合理（如纯文档变更无集成测试）；有代码变更却标 N/A → 视为未通过。
+
+**② 覆盖完整性** —— 「编写的测试」须覆盖「变更文件」的全部实质内容：
+
+- 两张清单逐项对照；排除不需测试的变更：配置文件、`*.md` 文档、纯类型定义（`*.d.ts`、`types/`）、构建/CI 脚本
+- 源码文件无对应测试且无排除理由 → 记为覆盖缺失
+
+**核验结果映射**（并入 Phase 4）：
+
+- 6 项全通过 + 覆盖完整 → 视同 Tier 2 通过
+- 任一验证项未通过 → 记 HIGH 问题
+- 覆盖缺失 → 记 MEDIUM（核心逻辑无测试 → 升 HIGH）
 
 ### Phase 4 — 决定
 
 | 条件 | 决策 |
 |---|---|
-| 没有 CRITICAL 或 HIGH 问题，Tier 1 验证通过 | **PASS** |
-| 仅有 MEDIUM 或 LOW 问题，Tier 1 验证通过 | **PASS**（附提示） |
-| 存在任何 HIGH 问题或 Tier 1 验证失败 | **BLOCK COMMIT** |
+| 没有 CRITICAL 或 HIGH 问题，本档位验证通过 | **PASS** |
+| 仅有 MEDIUM 或 LOW 问题，本档位验证通过 | **PASS**（附提示） |
+| 存在任何 HIGH 问题，或 Tier 1 失败，或 `--full` 的 Tier 2 失败，或 `--prp` 核验存在未通过项 | **BLOCK COMMIT** |
 | 存在任何 CRITICAL 问题 | **BLOCK COMMIT** |
 
 绝不放行包含安全漏洞的代码。
@@ -148,8 +181,23 @@ git diff --name-only HEAD
 |---|---|
 | Type check | 通过 / 失败 / 跳过 |
 | Lint | 通过 / 失败 / 跳过 |
-| Tests | 跳过（本地快速模式，--full 启用） / 通过 / 失败 |
-| Build | 跳过（本地快速模式，--full 启用） / 通过 / 失败 |
+| Tests | 通过 / 失败（--full） / 上游已验证（--prp） / 跳过（默认档） |
+| Build | 通过 / 失败（--full） / 上游已验证（--prp） / 跳过（默认档） |
+
+## implement 结果核验（仅 `--prp` 档写入本节）
+
+**实现报告**：`.claude/PRPs/reports/{plan-name}-report.md`
+
+| 核验项 | 结果 |
+|---|---|
+| 静态分析 | 通过 / 失败 |
+| 单元测试 | 通过 / 失败 |
+| 构建 | 通过 / 失败 / N/A |
+| 集成测试 | 通过 / 失败 / N/A |
+| Edge Case 测试 | 通过 / 失败 |
+| 全量回归 | 通过（零回归） / 失败 |
+
+**覆盖对照**：完整 / 缺失（<未覆盖的源码文件清单>）
 
 ## 已审查文件
 <list of files with change type: 添加/修改/删除>
@@ -164,7 +212,8 @@ git diff --name-only HEAD
 决策：PASS | BLOCK COMMIT
 
 问题：<critical_count> 个 CRITICAL，<high_count> 个 HIGH，<medium_count> 个 MEDIUM，<low_count> 个 LOW
-验证：<pass_count>/<total_count> 项通过（Tier 2 跳过时注明）
+验证：<pass_count>/<total_count> 项通过（档位：Tier 1 / Tier 1+2 / Tier 1+implement 核验）
+implement 核验：<6 项全通过 | 失败项：...>，覆盖：<完整 | 缺失 N 个文件>（仅 --prp 档输出此行）
 
 产物：
   审查：.claude/reviews/local-<yyyymmdd-HHMM>-review.md

@@ -1,6 +1,6 @@
 ---
-description: 代码审查 —— 本地未提交的变更或 GitHub PR（PR 模式请传入 PR number/URL）
-argument-hint: [pr-number | pr-url | 空 进行本地审查]
+description: 代码审查 —— 本地未提交的变更或 GitHub PR（PR 模式请传入 PR number/URL；本地模式可加 --full 全量验证）
+argument-hint: [pr-number | pr-url | --full | 空 进行本地审查]
 ---
 
 # 代码审查
@@ -17,7 +17,63 @@ argument-hint: [pr-number | pr-url | 空 进行本地审查]
 → 跳转到下方的 **PR 审核模式**。
 
 否则：
-→ 使用 **本地审查模式**。
+→ 使用 **本地审查模式**（`--full` 是本地模式 flag，不触发 PR 模式）。
+
+---
+
+## 共享审查标准
+
+以下标准对本地审查模式与 PR 审核模式同等生效。
+
+### 审查维度清单
+
+对每个变更文件按 8 个维度检查：
+
+| 维度 | 检查内容 |
+|---|---|
+| **Correctness** | 逻辑错误、off-by-one、null 处理、边界情况、竞态条件 |
+| **Type Safety** | 类型不匹配、不安全转换、`any` 使用、缺失泛型 |
+| **Pattern Compliance** | 项目约定（命名、文件结构、错误处理、imports）+ 规约项：console.log/debug 语句、代码/注释中的 emoji、mutation 模式、函数超 50 行、文件超 800 行、嵌套超 4 层 |
+| **Security** | 注入、auth 缺口、secret 暴露、SSRF、path traversal、XSS、不安全的依赖项、缺少输入校验 |
+| **Performance** | N+1 查询、缺失索引、无界循环、内存泄漏、大 payload |
+| **Completeness** | 缺测试、缺错误处理、不完整迁移、缺失文档（含 public API 的 JSDoc） |
+| **Maintainability** | 死代码、magic number、深嵌套、命名不清、缺失类型、TODO/FIXME 注释 |
+| **Accessibility** | 对比度、键盘导航、ARIA、reduced motion |
+
+**Pattern Compliance 的检查依据优先级**：仓库 `CLAUDE.md` / `.claude/rules/` > 用户级规则 > 内置默认。内置默认值：函数 50 行、文件 800 行、嵌套 4 层、禁 console.log/debug、禁 emoji、immutable 优先。仓库未定义规约时使用内置默认，仓库有规约时以仓库为准。
+
+### 严重度评级
+
+对每项发现独立评级，维度仅提供默认锚点：
+
+| 维度 | 默认锚点 | 浮动规则 |
+|---|---|---|
+| Security | CRITICAL | 实际影响有限（如仅影响 dev 脚本）可降 HIGH，需说明理由 |
+| Correctness（确认缺陷） | HIGH | 涉及数据丢失或安全时升 CRITICAL |
+| Type Safety / Performance / Completeness | MEDIUM | 确认会引发故障时升 HIGH |
+| Pattern Compliance / Maintainability / Accessibility | MEDIUM | 纯风格问题降 LOW |
+
+等级动作：
+
+| 严重等级 | 含义 | 本地审查模式动作 | PR 审核模式动作 |
+|---|---|---|---|
+| **CRITICAL** | 安全漏洞或数据丢失风险 | BLOCK COMMIT | merge 前必须修复 |
+| **HIGH** | 可能导致问题的缺陷或逻辑错误 | BLOCK COMMIT | merge 前应修复 |
+| **MEDIUM** | 代码质量问题或缺少最佳实践 | 警告 | 建议修复 |
+| **LOW** | 风格小问题或次要建议 | 提示 | 可选 |
+
+### 验证命令矩阵
+
+从配置文件（`package.json`、`Cargo.toml`、`go.mod`、`pyproject.toml` 等）检测项目类型，仅运行适用的命令：
+
+| 项目类型 | 检测文件 | Tier 1：Type check | Tier 1：Lint | Tier 2：Test | Tier 2：Build |
+|---|---|---|---|---|---|
+| Node.js / TypeScript | `package.json` | `npm run typecheck 2>/dev/null \|\| npx tsc --noEmit 2>/dev/null` | `npm run lint` | `npm test` | `npm run build` |
+| Rust | `Cargo.toml` | — | `cargo clippy -- -D warnings` | `cargo test` | `cargo build` |
+| Go | `go.mod` | — | `go vet ./...` | `go test ./...` | `go build ./...` |
+| Python | `pyproject.toml` / `setup.py` | — | — | `pytest` | — |
+
+**Tier 语义**：Tier 1（秒级）两种模式必跑；Tier 2（分钟级）本地审查模式默认跳过（`--full` 启用），PR 审核模式必跑。"—"表示该语言不适用，报告中标注"跳过"。
 
 ---
 
@@ -35,41 +91,88 @@ git diff --name-only HEAD
 
 ### Phase 2 — 审查
 
-完整阅读每个变更文件。检查以下内容：
+完整阅读每个变更文件，按 **共享审查标准** 的 8 维度清单逐项检查，并按严重度评级体系对每项发现独立评级。
 
-**安全问题 (CRITICAL)：**
-- 硬编码的 credentials、API keys、tokens
-- SQL injection 漏洞
-- XSS 漏洞
-- 缺少 input validation
-- 不安全的依赖项
-- path traversal 风险
+### Phase 3 — 验证
 
-**代码质量 (HIGH)：**
-- 函数超过 50 行
-- 文件超过 800 行
-- 嵌套深度超过 4 层
-- 缺少错误处理
-- console.log 语句
-- TODO/FIXME 注释
-- public APIs 缺少 JSDoc
+按 **共享审查标准** 的验证命令矩阵执行：
 
-**最佳实践 (MEDIUM)：**
-- mutation 模式（应改用 immutable）
-- 在代码/注释中使用 emoji
-- 新代码缺少测试
-- 无障碍问题 (a11y)
+- **必跑**：Tier 1（Type check + Lint，不适用的语言标注"跳过"）
+- **默认跳过**：Tier 2（Test + Build）
+- `$ARGUMENTS` 包含 `--full` 时：Tier 1 + Tier 2 全部执行
 
-### Phase 3 — 报告
+记录每条命令的 pass/fail。
 
-生成包含以下内容的报告：
-- 严重等级：CRITICAL, HIGH, MEDIUM, LOW
-- 文件位置和行号
-- 问题描述
-- 建议的修复方案
+### Phase 4 — 决定
 
-如果发现 CRITICAL 或 HIGH 问题，则阻止 commit。
-绝不批准包含安全漏洞的代码。
+| 条件 | 决策 |
+|---|---|
+| 没有 CRITICAL 或 HIGH 问题，Tier 1 验证通过 | **PASS** |
+| 仅有 MEDIUM 或 LOW 问题，Tier 1 验证通过 | **PASS**（附提示） |
+| 存在任何 HIGH 问题或 Tier 1 验证失败 | **BLOCK COMMIT** |
+| 存在任何 CRITICAL 问题 | **BLOCK COMMIT** |
+
+绝不放行包含安全漏洞的代码。
+
+### Phase 5 — 报告落盘
+
+在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物（若仓库已使用遗留的 `.claude/PRPs/reviews/`，则写入该处）：
+
+```markdown
+# 本地审查: <branch>
+
+**审查时间**: <date>
+**分支**: <branch>
+**决策**: PASS | BLOCK COMMIT
+
+## 概括
+<1-2 句整体评估>
+
+## 发现
+
+### CRITICAL
+<findings or "None">
+
+### HIGH
+<findings or "None">
+
+### MEDIUM
+<findings or "None">
+
+### LOW
+<findings or "None">
+
+## 验证结果
+
+| 校验项 | 结果 |
+|---|---|
+| Type check | 通过 / 失败 / 跳过 |
+| Lint | 通过 / 失败 / 跳过 |
+| Tests | 跳过（本地快速模式，--full 启用） / 通过 / 失败 |
+| Build | 跳过（本地快速模式，--full 启用） / 通过 / 失败 |
+
+## 已审查文件
+<list of files with change type: 添加/修改/删除>
+```
+
+### Phase 6 — 输出
+
+向用户报告：
+
+```
+本地审查: <branch>，<n> 个文件
+决策：PASS | BLOCK COMMIT
+
+问题：<critical_count> 个 CRITICAL，<high_count> 个 HIGH，<medium_count> 个 MEDIUM，<low_count> 个 LOW
+验证：<pass_count>/<total_count> 项通过（Tier 2 跳过时注明）
+
+产物：
+  审查：.claude/reviews/local-<yyyymmdd-HHMM>-review.md
+
+后续步骤：
+  - PASS → /prp-commit 提交变更
+  - BLOCK COMMIT → 修复 CRITICAL/HIGH 问题后重新运行 /code-review
+```
 
 ---
 
@@ -114,61 +217,11 @@ gh pr diff <NUMBER>
 done
 ```
 
-请按照以下7个类别应用审核清单：
-
-| Category | What to Check |
-|---|---|
-| **Correctness** | Logic errors, off-by-ones, null handling, edge cases, race conditions |
-| **Type Safety** | Type mismatches, unsafe casts, `any` usage, missing generics |
-| **Pattern Compliance** | Matches project conventions (naming, file structure, error handling, imports) |
-| **Security** | Injection, auth gaps, secret exposure, SSRF, path traversal, XSS |
-| **Performance** | N+1 queries, missing indexes, unbounded loops, memory leaks, large payloads |
-| **Completeness** | Missing tests, missing error handling, incomplete migrations, missing docs |
-| **Maintainability** | Dead code, magic numbers, deep nesting, unclear naming, missing types |
-
-对每项发现进行严重程度评级：
-
-| 严重等级 | 含义 | 操作 |
-|---|---|---|
-| **CRITICAL** | 安全漏洞或数据丢失风险 | merge 前必须修复 |
-| **HIGH** | 可能导致问题的程序错误或逻辑错误 | merge 前应修复 |
-| **MEDIUM** | 代码质量问题或缺少最佳实践 | 建议修复 |
-| **LOW** | 风格小问题或次要建议 | 可选 |
+按 **共享审查标准** 的 8 维度清单逐项检查，并按严重度评级体系对每项发现独立评级。
 
 ### Phase 4 — 验证
 
-运行可用的校验命令：
-
-从配置文件（`package.json`、`Cargo.toml`、`go.mod`、`pyproject.toml` 等）检测项目类型，然后运行相应的命令：
-
-**Node.js / TypeScript**（存在 `package.json`）：
-```bash
-npm run typecheck 2>/dev/null || npx tsc --noEmit 2>/dev/null  # 类型检查
-npm run lint                                                    # Lint
-npm test                                                        # 测试
-npm run build                                                   # 构建
-```
-
-**Rust**（存在 `Cargo.toml`）：
-```bash
-cargo clippy -- -D warnings  # Lint
-cargo test                   # 测试
-cargo build                  # 构建
-```
-
-**Go**（存在 `go.mod`）：
-```bash
-go vet ./...    # Lint
-go test ./...   # 测试
-go build ./...  # 构建
-```
-
-**Python**（存在 `pyproject.toml` / `setup.py`）：
-```bash
-pytest  # 测试
-```
-
-仅运行适用于所检测项目类型的命令。记录每条命令的 pass/fail。
+按 **共享审查标准** 的验证命令矩阵执行 Tier 1 + Tier 2 全部适用命令，记录每条命令的 pass/fail。
 
 ### Phase 5 — 决定
 
@@ -188,8 +241,7 @@ pytest  # 测试
 
 ### Phase 6 — 报告
 
-在  处创建审查产物，除非仓库已为此 workstream 使用遗留的 ：
-除非仓库已为此工作流使用旧版 `.claude/PRPs/reviews/` 否则请在 `.claude/reviews/pr-<NUMBER>-review.md` 创建 review artifact：
+在 `.claude/reviews/pr-<NUMBER>-review.md` 创建审查产物，除非仓库已为此工作流使用旧版 `.claude/PRPs/reviews/`：
 
 ```markdown
 # PR 审查: #<NUMBER> — <TITLE>

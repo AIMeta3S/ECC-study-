@@ -59,7 +59,7 @@
 
 | 命令 | 一句话用途 |
 |---|---|
-| `code-review` | 总枢：本地未提交变更或 GitHub PR 的全面审查（7 类清单） |
+| `code-review` | 总枢：本地未提交变更或 GitHub PR 的全面审查（两模式共用 8 维度清单与统一评级，本地含验证与落盘） |
 | `python-review` | Python 专项（PEP 8 / 类型 / 安全 / Pythonic），调 python-reviewer |
 | `fastapi-review` | FastAPI 专项（架构/异步/DI/Pydantic/安全），调 fastapi-reviewer |
 | `vue-review` | Vue 专项（reactivity/composables/template 安全），调 vue-reviewer + typescript-reviewer |

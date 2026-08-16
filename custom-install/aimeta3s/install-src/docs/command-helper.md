@@ -29,7 +29,7 @@
 |---|---|---|---|
 | `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） |
 | `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） |
-| `prp-implement` | 按计划落地，每改即验，跑 5 级验证 | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/reports/{plan-name}-report.md`，计划完成后归档到 `plans/completed/`） |
+| `prp-implement` | 按计划落地，每改即验，跑 6 级验证 | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/reports/{plan-name}-report.md`，计划完成后归档到 `plans/completed/`） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
 
@@ -108,7 +108,7 @@
 
 #### P1. PRP 深度流水线（重型 / 多阶段大功能）
 
-- **何时用**：大型功能、需要深度代码库调研、需要严格 5 级验证、需求需要多轮交互澄清。
+- **何时用**：大型功能、需要深度代码库调研、需要严格 6 级验证、需求需要多轮交互澄清。
 - **流水线流程**：
 ```mermaid
 flowchart TD
@@ -244,7 +244,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 | 流水线 | 适合规模 | 含审查 | 含提交 | 含门禁 | 典型场景 |
 |---|---|---|---|---|---|
-| P1 PRP 深度 | 大 / 多阶段 | 否（后接 code-review） | 是（prp-commit） | 否 | 大型功能、需 5 级验证 |
+| P1 PRP 深度 | 大 / 多阶段 | 否（后接 code-review） | 是（prp-commit） | 否 | 大型功能、需 6 级验证 |
 | P2 精简 | 中 / 小 | 否（后接 code-review） | 否（接 pr/prp-pr） | 否 | 中小功能、需求较清楚 |
 | P3 orch 编排 | 单次改动 | 是（code-reviewer） | 是（gated） | 是（GATE 1/2） | 明确改动类型、要门禁 |
 | P4 会话闭环 | 任意 | — | — | — | 跨会话连续性 |

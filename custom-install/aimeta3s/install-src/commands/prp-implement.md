@@ -148,22 +148,17 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 如果 auto-fix 后仍有 lint 错误，手动修复。
 
-### Level 2：测试（新增 + 全量回归）
+### Level 2：单元测试
 
 按计划中 测试策略 的规定编写行为级测试。
 
 ```bash
-# 受影响区域的新测试 — 必须全绿
-[project test command for affected area]
-
-# 计划「验证命令 → 完整测试套件」中的命令 — 零回归
-[project full test suite command]
+[受影响区域的测试命令]
 ```
 
 - 每个标注 **先行验证** 的行为至少有一个测试，且该测试在 Phase 3 已见证过失败（red 证明在案）
 - 其余测试覆盖计划 测试策略 表与 Edge Cases 检查清单所列的行为
 - 断言**可观察行为**（输入 → 输出、状态变化），不断言实现细节
-- 新测试通过后运行完整测试套件 — 要求零回归
 - 如果测试失败 → 修复实现（而不是测试，除非测试本身有误）
 
 ### Level 3：构建检查
@@ -210,7 +205,17 @@ exit "$TEST_EXIT"
 
 遍历计划中 测试策略 检查清单上的 edge cases
 
-**检查点**：全部 5 个验证级别通过。零错误。
+### Level 6：全量回归
+
+所有新测试（含 Level 5 的 edge case 测试）编写完毕后，运行计划「验证命令 → 完整测试套件」中的命令：
+
+```bash
+[计划中的完整测试套件命令]
+```
+
+要求零回归——任何既有测试失败都必须修复后重跑本级别。
+
+**检查点**：全部 6 个验证级别通过。零错误。
 
 ---
 
@@ -250,10 +255,11 @@ mkdir -p .claude/PRPs/reports
 | 级别 | 状态 | 备注 |
 |---|---|---|
 | 静态分析 | [done] 通过 | |
-| 测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
+| 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
 | 构建 | [done] 通过 | |
 | 集成 | [done] 通过 | 或 N/A |
 | Edge Case | [done] 通过 | |
+| 全量回归 | [done] 通过 | 零回归 |
 
 ## 变更文件
 
@@ -315,9 +321,11 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 |---|---|
 | 类型检查 | [done] |
 | Lint | [done] |
-| 测试 | [done]（编写了 N 个，M 个 red-proven） |
+| 单元测试 | [done]（编写了 N 个，M 个 red-proven） |
 | 构建 | [done] |
 | 集成 | [done] 或 N/A |
+| Edge Case | [done] |
+| 全量回归 | [done] 零回归 |
 
 ### 变更文件
 - 创建了 [N] 个文件，更新了 [M] 个文件
@@ -373,6 +381,12 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 3. 检查请求格式是否符合预期
 4. 修复并重新运行
 
+### 全量回归失败
+1. 确认失败的是既有测试（回归）还是新测试遗漏
+2. 若是回归 → 定位本次变更引入的破坏并修复实现
+3. 重跑完整测试套件
+4. 仅在零回归后继续
+
 ---
 
 ## 成功标准
@@ -381,6 +395,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 - **TYPES_PASS**：零类型错误
 - **LINT_PASS**：零 lint 错误
 - **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明
+- **REGRESSION_PASS**：完整测试套件零回归
 - **BUILD_PASS**：构建成功
 - **REPORT_CREATED**：实现报告已保存
 - **PLAN_ARCHIVED**：计划已移至 `completed/`

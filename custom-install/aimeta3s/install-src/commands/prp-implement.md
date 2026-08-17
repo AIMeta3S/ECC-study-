@@ -68,7 +68,7 @@ cat "$ARGUMENTS"
 | 测试策略（含 单元测试 / 集成测试 / Edge Cases 检查清单 小节） | Phase 3 先行测试判定、Phase 4 Level 2 / 4 / 5 |
 | 验证命令（含 静态分析 / 单元测试 / 集成测试 / 完整测试套件 小节） | Phase 4 Level 1–4、Level 6 |
 
-「测试策略 → 集成测试」声明豁免（含类别与理由）时不视为缺失，但需核对计划「手动验证」清单已包含该集成验证。「数据库验证」「浏览器验证」为可选小节，不列入校验。
+「测试策略 → 集成测试」声明豁免（含类别与理由）时不视为缺失，其下游「验证命令 → 集成测试」因此标 N/A 同样不视为缺失，但需核对计划「手动验证」清单已包含该集成验证。未豁免时，「验证命令 → 集成测试」内的 **运行形态** 与 **与完整测试套件的关系** 为必填勾选项，任一未勾选视同该小节未填写。「数据库验证」「浏览器验证」为可选小节，不列入校验。
 
 校验不通过 → 停止，向用户列出缺失或未填写的内容清单：
 
@@ -197,13 +197,20 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 本级别默认必须执行。判定与执行：
 
-1. **豁免判定** — 计划「测试策略 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A，并核对该集成验证已写入计划「手动验证」清单。
-2. **编写用例** — 读取计划「测试策略 → 集成测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明“无变化” → 跳过编写。执行后核对新用例已被命令实际运行（防止文件不在收集范围内被静默跳过）。
-3. **按运行形态执行**（计划勾选多种形态时，各形态的命令分别执行）：
+1. **豁免判定** — 计划「测试策略 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A（注明豁免类别，供 /code-review --prp 核验），并核对该集成验证已写入计划「手动验证」清单。
+2. **编写用例** — 读取计划「测试策略 → 集成测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明“无变化” → 跳过编写，仍须运行既有集成测试防回归。执行后核对新用例已被命令实际运行——以用例名过滤器运行集成测试命令，确认输出中出现新增用例的标识；若输出显示 0 个匹配，视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。
+3. **按运行形态执行** — 每个已勾选形态，执行计划命令块中以该形态标注的命令行（勾选多种形态时，各形态的命令分别执行）：
 
 **HTTP 服务形态** — 用计划中的值替换占位符，走服务器脚手架：
 
 ```bash
+# Pre-flight: the port must be FREE. A leftover server from a previous run
+# would answer the health check below while serving STALE code (false green)
+if nc -z localhost [计划中的端口] 2>/dev/null; then
+  echo "ERROR: Port [计划中的端口] already in use (leftover server from a previous run?). Clean it up and retry." >&2
+  exit 1
+fi
+
 # Start server, run tests, stop server
 [计划「验证命令 → 集成测试」中的 dev server 命令] &
 SERVER_PID=$!
@@ -211,7 +218,7 @@ SERVER_PID=$!
 # Wait for server to be ready
 SERVER_READY=0
 for i in $(seq 1 30); do
-  if curl -sf http://localhost:[计划中的端口][计划中的健康检查路径] >/dev/null 2>&1; then
+  if curl -sf --max-time 2 http://localhost:[计划中的端口][计划中的健康检查路径] >/dev/null 2>&1; then
     SERVER_READY=1
     break
   fi
@@ -220,14 +227,18 @@ done
 
 if [ "$SERVER_READY" -ne 1 ]; then
   kill "$SERVER_PID" 2>/dev/null || true
+  pkill -P "$SERVER_PID" 2>/dev/null || true
   echo "ERROR: Server failed to start within 30s" >&2
   exit 1
 fi
 
-[计划「验证命令 → 集成测试」中的测试命令]
+[计划「验证命令 → 集成测试」命令块中 HTTP 服务形态的测试命令]
 TEST_EXIT=$?
 
+# Kill the wrapper AND its children — `npm run dev` & co. fork the real
+# server as a grandchild that a plain `kill $SERVER_PID` leaves behind
 kill "$SERVER_PID" 2>/dev/null || true
+pkill -P "$SERVER_PID" 2>/dev/null || true
 wait "$SERVER_PID" 2>/dev/null || true
 
 exit "$TEST_EXIT"
@@ -235,11 +246,13 @@ exit "$TEST_EXIT"
 
 计划健康检查路径为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。
 
-**进程内 / CLI / 编译装配形态** — 直接运行 `[计划「验证命令 → 集成测试」中的测试命令]`，无需服务器管理。
+**进程内 / CLI / 编译装配形态** — 直接运行计划命令块中以对应形态标注的命令行，无需服务器管理。
 
 ### Level 5：Edge Case 测试
 
 遍历计划中 测试策略 检查清单上的 edge cases
+
+本级别若新增了集成级用例（如 并发访问、网络故障 这类天然跨接缝的项）且计划勾选了「独立命令」，须重跑 Level 4 的集成测试命令覆盖它们——完整套件（Level 6）不包含独立命令。
 
 ### Level 6：全量回归
 
@@ -295,9 +308,10 @@ mkdir -p .claude/PRPs/reports
 | 静态分析 | [done] 通过 | |
 | 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
 | 构建 | [done] 通过 | |
-| 集成测试 | [done] 通过 | 或 N/A |
+| 集成测试 | [done] 通过 | 或 N/A（豁免：<类别>）——豁免时须注明计划声明的类别 |
 | Edge Case 测试 | [done] 通过 | |
 | 全量回归 | [done] 通过 | 零回归 |
+| 手动验证 | [done] 已由用户确认 / 待人工执行 | 集成豁免时必填：带出计划「手动验证」清单摘要；非豁免填 N/A。手动验证由用户执行，AI 不得代替勾选 |
 
 ## 变更文件
 
@@ -361,9 +375,10 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Lint | [done] |
 | 单元测试 | [done]（编写了 N 个，M 个 red-proven） |
 | 构建 | [done] |
-| 集成测试 | [done] 或 N/A |
+| 集成测试 | [done] 或 N/A（豁免：<类别>） |
 | Edge Case 测试 | [done] |
 | 全量回归 | [done] 零回归 |
+| 手动验证 | 待人工执行：<清单摘要> / 已由用户确认 / N/A（非豁免） |
 
 ### 变更文件
 - 创建了 [N] 个文件，更新了 [M] 个文件
@@ -414,10 +429,10 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 4. 成功后再继续
 
 ### 集成测试失败
-1. 检查服务器是否正确启动
-2. 验证 endpoint/route 是否存在
-3. 检查请求格式是否符合预期
-4. 修复并重新运行
+1. HTTP 服务形态：检查服务器是否正确启动、endpoint/route 是否存在、请求格式是否符合预期
+2. 进程内形态：检查测试 harness 的应用装配与依赖注入是否与计划「涉及接缝」一致
+3. CLI / 编译装配形态：核对命令参数与断言目标（stdout / exit code / 产物路径）
+4. 修复并重新运行本级别
 
 ### 全量回归失败
 1. 确认失败的是既有测试（回归）还是新测试遗漏
@@ -433,6 +448,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 - **TYPES_PASS**：零类型错误
 - **LINT_PASS**：零 lint 错误
 - **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明
+- **MANUAL_VERIFICATION_ESCALATED**：集成测试豁免时，手动验证清单已在报告与输出中带出提醒（注明豁免类别）
 - **REGRESSION_PASS**：完整测试套件零回归
 - **BUILD_PASS**：构建成功
 - **REPORT_CREATED**：实现报告已保存

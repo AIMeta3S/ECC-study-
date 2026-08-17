@@ -169,17 +169,25 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 构建过程必须成功，且无任何错误。
 
-### Level 4：集成测试（如适用）
+### Level 4：集成测试
+
+本级别默认必须执行。判定与执行：
+
+1. **豁免判定** — 计划「验证命令 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A，并核对该集成验证已写入计划「手动验证」清单。小节缺失 → 回补计划的集成测试小节后再执行。
+2. **编写用例** — 读取计划「测试策略 → 集成测试用例」。有新增用例 → 先编写这些测试（放入计划的集成测试命令可运行的测试文件中）；注明“无新增” → 跳过编写。
+3. **按运行形态执行**（计划勾选多种形态时，各形态的命令分别执行）：
+
+**HTTP 服务形态** — 用计划中的值替换占位符，走服务器脚手架：
 
 ```bash
 # Start server, run tests, stop server
-[project dev server command] &
+[计划「验证命令 → 集成测试」中的 dev server 命令] &
 SERVER_PID=$!
 
-# Wait for server to be ready (adjust port as needed)
+# Wait for server to be ready
 SERVER_READY=0
 for i in $(seq 1 30); do
-  if curl -sf http://localhost:PORT/health >/dev/null 2>&1; then
+  if curl -sf http://localhost:[计划中的端口][计划中的健康检查路径] >/dev/null 2>&1; then
     SERVER_READY=1
     break
   fi
@@ -192,7 +200,7 @@ if [ "$SERVER_READY" -ne 1 ]; then
   exit 1
 fi
 
-[integration test command]
+[计划「验证命令 → 集成测试」中的测试命令]
 TEST_EXIT=$?
 
 kill "$SERVER_PID" 2>/dev/null || true
@@ -200,6 +208,10 @@ wait "$SERVER_PID" 2>/dev/null || true
 
 exit "$TEST_EXIT"
 ```
+
+计划健康检查路径为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。
+
+**进程内 / CLI / 编译装配形态** — 直接运行 `[计划「验证命令 → 集成测试」中的测试命令]`，无需服务器管理。
 
 ### Level 5：Edge Case 测试
 
@@ -214,6 +226,8 @@ exit "$TEST_EXIT"
 ```
 
 要求零回归——任何既有测试失败都必须修复后重跑本级别。
+
+若计划的集成测试已包含于完整测试套件，本级别会再次运行它——这是预期行为：最终闸门必须在完整套件上得出零回归结论，不引用其他级别的结果跳过。
 
 **检查点**：全部 6 个验证级别通过。零错误。
 

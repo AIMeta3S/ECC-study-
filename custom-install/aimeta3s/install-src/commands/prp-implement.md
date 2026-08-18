@@ -68,7 +68,7 @@ cat "$ARGUMENTS"
 | 测试策略（含 单元测试 / 集成测试 / Edge Cases 检查清单 小节） | Phase 3 先行测试判定、Phase 4 Level 2 / 4 / 5 |
 | 验证命令（含 静态分析 / 单元测试 / 集成测试 / 完整测试套件 小节） | Phase 4 Level 1–4、Level 6 |
 
-「测试策略 → 集成测试」声明豁免（含类别与理由）时不视为缺失，其下游「验证命令 → 集成测试」因此标 N/A 同样不视为缺失，但需核对计划「手动验证」清单已包含该集成验证。未豁免时，「验证命令 → 集成测试」内的 **运行形态** 与 **与完整测试套件的关系** 为必填勾选项，任一未勾选视同该小节未填写。「数据库验证」「浏览器验证」为可选小节，不列入校验。
+「测试策略 → 集成测试」声明豁免（含类别与理由）时不视为缺失，其下游「验证命令 → 集成测试」因此标 N/A 同样不视为缺失，但需核对计划「手动验证」清单已包含该集成验证——核对不通过时视同计划缺少必需内容，并入下方的停止路径。未豁免时，「验证命令 → 集成测试」内的 **运行形态** 与 **与完整测试套件的关系** 为必填勾选项，任一未勾选视同该小节未填写；且命令块须与勾选形态严格双向对应——每个已勾选形态至少有一条以该形态标注的命令行（HTTP 服务形态须同时含 dev server 行与测试命令行），命令块中不得残留未勾选形态的命令行，任一不满足同样视同该小节未填写。「数据库验证」「浏览器验证」为可选小节，不列入校验。
 
 校验不通过 → 停止，向用户列出缺失或未填写的内容清单：
 
@@ -130,7 +130,7 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 1. **阅读 参照模式 引用** — 打开并阅读任务 MIRROR 字段中的参考的模式文件。编写代码前先理解 convention。
 
-2. **先行测试（条件执行）** — 若计划「测试策略」中与本任务关联的测试标注了 **先行验证**，先编写该测试并运行，确认其**失败**（记录失败输出作为 red 证明），然后才进入实现。实现完成后同一测试必须通过。未标注的任务跳过此步。
+2. **先行测试（条件执行）** — 若计划「测试策略」中与本任务关联的测试标注了 **先行验证**，先编写该测试并运行，确认其**失败**（记录失败输出作为 red 证明），然后才进入实现。实现完成后同一测试必须通过。未标注的任务跳过此步。该判定仅适用于「单元测试」表的用例；集成测试表无先行验证列，一律在 Level 4 实现后编写。
 
 3. **实现** — 严格按照模式编写代码。应用 GOTCHA 警告。使用指定的 IMPORTS。
 
@@ -197,11 +197,11 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 本级别默认必须执行。判定与执行：
 
-1. **豁免判定** — 计划「测试策略 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A（注明豁免类别，供 /code-review --prp 核验），并核对该集成验证已写入计划「手动验证」清单。
-2. **编写用例** — 读取计划「测试策略 → 集成测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明“无变化” → 跳过编写，仍须运行既有集成测试防回归。执行后核对新用例已被命令实际运行——以用例名过滤器运行集成测试命令，确认输出中出现新增用例的标识；若输出显示 0 个匹配，视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。
+1. **豁免判定** — 计划「测试策略 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A（注明豁免类别，供 /code-review --prp 核验），并核对该集成验证已写入计划「手动验证」清单——核对不通过则停止并提示用户补齐计划的手动验证清单（与 Phase 1 一致，不代为修改）。
+2. **编写用例** — 读取计划「测试策略 → 集成测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明“无变化” → 跳过编写，仍须运行既有集成测试防回归。执行后核对新用例已被命令实际运行——以用例名过滤器运行集成测试命令，确认输出中出现新增用例的标识；若输出显示 0 个匹配，视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。测试命令不支持用例名过滤器（如自定义脚本）时，降级为按测试文件路径运行该命令，并核对输出中的用例数/用例名与新增一致。
 3. **按运行形态执行** — 每个已勾选形态，执行计划命令块中以该形态标注的命令行（勾选多种形态时，各形态的命令分别执行）：
 
-**HTTP 服务形态** — 用计划中的值替换占位符，走服务器脚手架：
+**HTTP 服务形态** — 用计划中的值替换占位符，走服务器脚手架。以下脚本须**整段一次执行**，禁止逐行拆跑（`TEST_EXIT=$?` 依赖测试命令紧邻）：
 
 ```bash
 # Pre-flight: the port must be FREE. A leftover server from a previous run
@@ -211,13 +211,27 @@ if nc -z localhost [计划中的端口] 2>/dev/null; then
   exit 1
 fi
 
+# Kill the wrapper, its children AND grandchildren — `npm run dev` & co. run
+# npm → sh → node, and the real server is a grandchild that a plain
+# `kill $SERVER_PID` (or single-level `pkill -P`) leaves behind.
+# Deeper chains are caught by the pre-flight port check on the next run.
+cleanup() {
+  kill "$SERVER_PID" 2>/dev/null || true
+  pkill -P "$SERVER_PID" 2>/dev/null || true
+  for CHILD in $(pgrep -P "$SERVER_PID" 2>/dev/null); do
+    pkill -P "$CHILD" 2>/dev/null || true
+  done
+  wait "$SERVER_PID" 2>/dev/null || true
+}
+trap cleanup EXIT
+
 # Start server, run tests, stop server
 [计划「验证命令 → 集成测试」中的 dev server 命令] &
 SERVER_PID=$!
 
-# Wait for server to be ready
+# Wait for server to be ready (retry count from 计划「启动等待」, default 30)
 SERVER_READY=0
-for i in $(seq 1 30); do
+for i in $(seq 1 [计划中的启动等待秒数，缺省 30]); do
   if curl -sf --max-time 2 http://localhost:[计划中的端口][计划中的健康检查路径] >/dev/null 2>&1; then
     SERVER_READY=1
     break
@@ -226,25 +240,17 @@ for i in $(seq 1 30); do
 done
 
 if [ "$SERVER_READY" -ne 1 ]; then
-  kill "$SERVER_PID" 2>/dev/null || true
-  pkill -P "$SERVER_PID" 2>/dev/null || true
-  echo "ERROR: Server failed to start within 30s" >&2
+  echo "ERROR: Server failed to become ready within [计划中的启动等待秒数，缺省 30]s" >&2
   exit 1
 fi
 
 [计划「验证命令 → 集成测试」命令块中 HTTP 服务形态的测试命令]
 TEST_EXIT=$?
 
-# Kill the wrapper AND its children — `npm run dev` & co. fork the real
-# server as a grandchild that a plain `kill $SERVER_PID` leaves behind
-kill "$SERVER_PID" 2>/dev/null || true
-pkill -P "$SERVER_PID" 2>/dev/null || true
-wait "$SERVER_PID" 2>/dev/null || true
-
 exit "$TEST_EXIT"
 ```
 
-计划健康检查路径为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。
+计划健康检查路径为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。注意端口探测仅证明有进程监听、不证明应用就绪——若测试批量出现连接拒绝/路由 404 类失败，优先怀疑就绪判定过早（可调大「启动等待」），并建议项目补健康端点后改回健康检查。
 
 **进程内 / CLI / 编译装配形态** — 直接运行计划命令块中以对应形态标注的命令行，无需服务器管理。
 
@@ -252,7 +258,7 @@ exit "$TEST_EXIT"
 
 遍历计划中 测试策略 检查清单上的 edge cases
 
-本级别若新增了集成级用例（如 并发访问、网络故障 这类天然跨接缝的项）且计划勾选了「独立命令」，须重跑 Level 4 的集成测试命令覆盖它们——完整套件（Level 6）不包含独立命令。
+判定某 edge case 是否为集成级用例的标准：其验证需跨越本次变更涉及的接缝（模块边界 / 进程边界 / 外部资源）即属集成级（如 并发访问、网络故障）。本级别若新增了此类用例且计划勾选了「独立命令」，须以用例名过滤器（或按测试文件路径）重跑 Level 4 的集成测试命令、仅覆盖这些新增用例——完整套件（Level 6）不包含独立命令，不会覆盖它们；无需全量重跑 Level 4。
 
 ### Level 6：全量回归
 
@@ -311,7 +317,7 @@ mkdir -p .claude/PRPs/reports
 | 集成测试 | [done] 通过 | 或 N/A（豁免：<类别>）——豁免时须注明计划声明的类别 |
 | Edge Case 测试 | [done] 通过 | |
 | 全量回归 | [done] 通过 | 零回归 |
-| 手动验证 | [done] 已由用户确认 / 待人工执行 | 集成豁免时必填：带出计划「手动验证」清单摘要；非豁免填 N/A。手动验证由用户执行，AI 不得代替勾选 |
+| 手动验证 | [done] 已由用户确认 / 待人工执行 / N/A | 计划「手动验证」清单非空时必填：带出清单摘要（无论集成测试是否豁免）；清单为空填 N/A。手动验证由用户执行，AI 不得代替勾选 |
 
 ## 变更文件
 
@@ -378,7 +384,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | 集成测试 | [done] 或 N/A（豁免：<类别>） |
 | Edge Case 测试 | [done] |
 | 全量回归 | [done] 零回归 |
-| 手动验证 | 待人工执行：<清单摘要> / 已由用户确认 / N/A（非豁免） |
+| 手动验证 | 待人工执行：<清单摘要> / 已由用户确认 / N/A（计划无手动验证项） |
 
 ### 变更文件
 - 创建了 [N] 个文件，更新了 [M] 个文件
@@ -448,7 +454,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 - **TYPES_PASS**：零类型错误
 - **LINT_PASS**：零 lint 错误
 - **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明
-- **MANUAL_VERIFICATION_ESCALATED**：集成测试豁免时，手动验证清单已在报告与输出中带出提醒（注明豁免类别）
+- **MANUAL_VERIFICATION_ESCALATED**：计划「手动验证」清单非空时（含集成豁免降级写入的项），清单摘要已在报告与输出中带出提醒（集成豁免时并注明豁免类别）
 - **REGRESSION_PASS**：完整测试套件零回归
 - **BUILD_PASS**：构建成功
 - **REPORT_CREATED**：实现报告已保存

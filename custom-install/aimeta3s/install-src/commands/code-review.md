@@ -151,7 +151,9 @@ git diff --name-only HEAD
 
 ### Phase 5 — 报告落盘
 
-在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物（若仓库已使用遗留的 `.claude/PRPs/reviews/`，则写入该处）：
+在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物（若仓库已使用遗留的 `.claude/PRPs/reviews/`，则写入该处）。
+
+该报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 -review.md>-fix-report.md`，本报告自身不会被 /prp-fix 修改。报告模板：
 
 ```markdown
 # 本地审查: <branch>
@@ -223,7 +225,7 @@ implement 核验：<7 项全通过 | 失败项：...>，覆盖：<完整 | 缺�
 
 后续步骤：
   - PASS → /prp-commit 提交变更
-  - BLOCK COMMIT → 修复 CRITICAL/HIGH 问题后重新运行 /code-review
+  - BLOCK COMMIT → 运行 /prp-fix 按报告问题清单修复并核销，随后重新运行 /code-review
 ```
 
 ---

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-14",
+  "generated": "2026-08-18",
   "aimeta3sHome": "~/.claude",
   "dirMappings": {
     "agents": "agents",
@@ -275,6 +275,12 @@
       "name": "prp-commit",
       "installPath": "~/.claude/commands/prp-commit.md",
       "sourcePath": "commands/prp-commit.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-fix",
+      "installPath": "~/.claude/commands/prp-fix.md",
+      "sourcePath": "commands/prp-fix.md"
     },
     {
       "category": "command",

@@ -129,7 +129,7 @@ flowchart TD
 /prp-prd 功能/创意描述
 /prp-plan .claude/PRPs/prds/{name}.prd.md
 /prp-implement .claude/PRPs/plans/{name}.plan.md
-/code-review --prp {plan-name}
+/code-review --prp .claude/PRPs/reports/{plan-name}-report.md
 /prp-fix [审查报告路径]（留空自动定位最新；BLOCK COMMIT 后进入，PASS 后跳过）
 /prp-commit [提交内容的描述]
 /prp-pr base-branch（默认 main）

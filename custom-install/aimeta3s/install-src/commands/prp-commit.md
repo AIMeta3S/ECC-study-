@@ -23,7 +23,7 @@ git status --short
 
 ### 审查门禁检查（软门禁）
 
-探测 `.claude/reviews/` 与遗留 `.claude/PRPs/reviews/` 下的 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 -review.md>-fix-report.md`，见 /code-review 命名契约）判断：
+探测 `.claude/reviews/` 与 `.claude/PRPs/reviews/`（`--prp` 档落盘处）下的 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 -review.md>-fix-report.md`，见 /code-review 命名契约）判断：
 
 | 状态 | 动作 |
 |---|---|

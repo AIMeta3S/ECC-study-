@@ -342,8 +342,8 @@ mkdir -p .claude/PRPs/reports
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- [ ] 通过 `/code-review --prp {plan-name}` 审查本 phase 变更
-- [ ] 若决策 BLOCK COMMIT，通过 `/prp-fix` 修复核销后重跑 `/code-review --prp {plan-name}`
+- [ ] 通过 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md` 审查本 phase 变更
+- [ ] 若决策 BLOCK COMMIT，通过 `/prp-fix` 修复核销后重跑 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md`
 - [ ] 通过 `/prp-commit` 提交
 - [ ] 如果 PRD 还有「待开始」的 phase 时，运行 `/prp-plan <PRD路径>` 进入下一 phase
 - [ ] 如果所有 phase 完成后，通过 `/prp-pr` 创建 PR
@@ -407,7 +407,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Phase 2 | [next] |
 | ... | ... |
 
-> 下一步：运行 `/code-review --prp {plan-name}` 审查本 phase 变更；若决策 BLOCK COMMIT，先运行 `/prp-fix` 修复核销再重跑审查，PASS 后再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
+> 下一步：运行 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md` 审查本 phase 变更；若决策 BLOCK COMMIT，先运行 `/prp-fix` 修复核销再重跑审查，PASS 后再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
 ```
 
 ---

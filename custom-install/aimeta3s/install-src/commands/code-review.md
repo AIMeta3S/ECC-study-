@@ -1,6 +1,6 @@
 ---
 description: 代码审查 —— 本地未提交变更或 GitHub PR（--prp 核验 implement 结果、--full 全量验证，默认快速档）
-argument-hint: [--pr <number|url> | --prp <plan-name> | --full | 空 进行本地快速审查]
+argument-hint: [--pr <number|url> | --prp <report-path> | --full | 空 进行本地快速审查]
 ---
 
 # 代码审查
@@ -18,7 +18,7 @@ argument-hint: [--pr <number|url> | --prp <plan-name> | --full | 空 进行本�
 | `--pr <number\|url>`、裸 PR number 或 PR URL | PR 审核模式 | Tier 1 + Tier 2 |
 | 空 | 本地审查模式 | 仅 Tier 1 |
 | `--full` | 本地审查模式 | Tier 1 + Tier 2 |
-| `--prp <plan-name>` | 本地审查模式 | Tier 1 + implement 结果核验 |
+| `--prp <report-path>`（实现报告完整路径） | 本地审查模式 | Tier 1 + implement 结果核验 |
 
 裸 number/URL 保留兼容。`--full` 与 `--prp` 同给时以 `--prp` 为准（核验不足可复跑 `--full`）。
 
@@ -104,13 +104,13 @@ git diff --name-only HEAD
 |---|---|
 | 默认（空参数） | 仅 Tier 1（快速静态门禁） |
 | `--full` | Tier 1 + Tier 2 |
-| `--prp <plan-name>` | Tier 1 + implement 结果核验（见下） |
+| `--prp <report-path>` | Tier 1 + implement 结果核验（见下） |
 
 记录每条命令的 pass/fail。
 
 #### implement 结果核验（`--prp` 档）
 
-读取 `.claude/PRPs/reports/{plan-name}-report.md`，核对以下两项。文件不存在或无「验证结果」小节 → 停止并提示："未找到 `{plan-name}` 的实现报告，请确认 plan-name 或改用 `--full`。"
+读取 `<report-path>` 指向的实现报告（`{plan-name}-report.md` 的完整路径，如 `.claude/PRPs/reports/feature-x-report.md`），核对以下两项。文件不存在或无「验证结果」小节 → 停止并提示："未找到实现报告 `<report-path>`，请确认路径或改用 `--full`。"
 
 **① 验证结果完整性** —— 以下 7 项须全部通过：
 
@@ -151,7 +151,7 @@ git diff --name-only HEAD
 
 ### Phase 5 — 报告落盘
 
-在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物（若仓库已使用遗留的 `.claude/PRPs/reviews/`，则写入该处）。
+按档位落盘：`--prp` 档在 `.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建。
 
 该报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 -review.md>-fix-report.md`，本报告自身不会被 /prp-fix 修改。报告模板：
 
@@ -190,7 +190,7 @@ git diff --name-only HEAD
 
 ## implement 结果核验（仅 `--prp` 档写入本节）
 
-**实现报告**：`.claude/PRPs/reports/{plan-name}-report.md`
+**实现报告**：`<report-path>`
 
 | 核验项 | 结果 |
 |---|---|
@@ -221,7 +221,7 @@ git diff --name-only HEAD
 implement 核验：<7 项全通过 | 失败项：...>，覆盖：<完整 | 缺失 N 个文件>（仅 --prp 档输出此行）
 
 产物：
-  审查：.claude/reviews/local-<yyyymmdd-HHMM>-review.md
+  审查：.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>-review.md（默认 / --full）
 
 后续步骤：
   - PASS → /prp-commit 提交变更
@@ -295,7 +295,7 @@ done
 
 ### Phase 6 — 报告
 
-在 `.claude/reviews/pr-<NUMBER>-review.md` 创建审查产物，除非仓库已为此工作流使用旧版 `.claude/PRPs/reviews/`：
+在 `.claude/reviews/pr-<NUMBER>-review.md` 创建审查产物（PR 模式固定使用 `.claude/reviews/`）：
 
 ```markdown
 # PR 审查: #<NUMBER> — <TITLE>

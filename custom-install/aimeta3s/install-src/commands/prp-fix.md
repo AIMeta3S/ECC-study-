@@ -25,11 +25,11 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 | 输入 | 操作 |
 |---|---|
-| 显式路径 | 校验文件存在后使用（`local-*-review.md`、PR 报告 `pr-<N>-review.md`、遗留目录下同类文件均可） |
+| 显式路径 | 校验文件存在后使用（限 `.claude/PRPs/reviews/local-*-review.md`，不处理其他目录报告） |
 | 留空 · 快路径 | 本会话刚运行过 /code-review → 直接使用其刚落盘的报告路径（终端输出中可见），跳过目录扫描 |
-| 留空 · 扫描 | 依次探测 `.claude/reviews/`（默认/`--full` 档落盘处）与 `.claude/PRPs/reviews/`（`--prp` 档落盘处），收集所有 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 跨目录取最新（不依赖 mtime） |
+| 留空 · 扫描 | 探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录），收集所有 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新（不依赖 mtime） |
 
-两个目录均无报告 → 停止："未找到审查报告。请先运行 /code-review。"
+目录下无报告 → 停止："未找到审查报告。请先运行 /code-review --prp <report-path>。"
 
 选定后向用户展示目标报告路径，再继续。
 
@@ -183,8 +183,6 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 |---|---|
 | PASS 报告 | 自动定位 → 短路停止；显式指定 → 询问后仅处理 MEDIUM/LOW |
 | 纯验证失败型 BLOCK | 清单以失败验证项为主体；`--prp` 核验失败升级用户，避免「修报告不修代码」的空转 |
-| `.claude/PRPs/reviews/` 目录 | `--prp` 档审查报告的落盘处；与 `.claude/reviews/` 同等探测，fix-report 落在源报告同目录 |
-| PR 模式报告（`pr-<N>-review.md`） | 仅显式路径可用；决策词为 APPROVE / REQUEST CHANGES / BLOCK；修复后需用户手动 push，再 `/code-review <PR号>` 复审——本命令不执行任何远端操作 |
 | plan-name 无法恢复 | 走 Phase 2 恢复链第 ④ 级，修复循环本身不受影响 |
 | 连续多轮 BLOCK | 每轮 review 独立时间戳、独立配对 fix-report；连续 2 轮仍 BLOCK → 建议人工介入 |
 
@@ -195,5 +193,4 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 你的输入 | 执行的操作 |
 |---|---|
 | `/prp-fix` | 定位最新审查报告，按清单修复并核销 |
-| `/prp-fix .claude/reviews/local-20260818-1030-review.md` | 处理指定报告 |
-| `/prp-fix .claude/reviews/pr-42-review.md` | 修复 PR 审查发现（修后需手动 push 再复审） |
+| `/prp-fix .claude/PRPs/reviews/local-20260818-1030-review.md` | 处理指定报告 |

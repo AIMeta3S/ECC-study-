@@ -153,7 +153,7 @@ git diff --name-only HEAD
 
 按档位落盘：`--prp` 档在 `.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建。
 
-该报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 -review.md>-fix-report.md`，本报告自身不会被 /prp-fix 修改。报告模板：
+`--prp` 档报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 -review.md>-fix-report.md`，本报告自身不会被 /prp-fix 修改；默认 / `--full` 档报告（`.claude/reviews/`）不在 /prp-fix 服务范围内。报告模板：
 
 ```markdown
 # 本地审查: <branch>
@@ -225,7 +225,8 @@ implement 核验：<7 项全通过 | 失败项：...>，覆盖：<完整 | 缺�
 
 后续步骤：
   - PASS → /prp-commit 提交变更
-  - BLOCK COMMIT → 运行 /prp-fix 按报告问题清单修复并核销，随后重新运行 /code-review
+  - BLOCK COMMIT（--prp 档）→ 运行 /prp-fix 按报告问题清单修复并核销，随后重新运行 /code-review --prp <report-path>
+  - BLOCK COMMIT（默认 / --full 档）→ 按报告问题清单，修复变更，随后重新运行 /code-review（同档位）
 ```
 
 ---

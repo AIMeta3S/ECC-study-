@@ -23,11 +23,11 @@ git status --short
 
 ### 审查门禁检查（软门禁）
 
-探测 `.claude/reviews/` 与 `.claude/PRPs/reviews/`（`--prp` 档落盘处）下的 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 -review.md>-fix-report.md`，见 /code-review 命名契约）判断：
+探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录）下的 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 -review.md>-fix-report.md`，见 /code-review 命名契约）判断：
 
 | 状态 | 动作 |
 |---|---|
-| 无任何审查报告 | 静默跳过（未用过 /code-review 的仓库零感知） |
+| 无任何审查报告 | 静默跳过（未跑过 /code-review --prp 档的仓库零感知） |
 | 最新报告 PASS | 直接继续 |
 | BLOCK COMMIT，无配对 fix-report | 警告并列出未核销的 CRITICAL/HIGH 计数，用户确认后才继续 |
 | BLOCK COMMIT，有 fix-report 且 CRITICAL/HIGH 全部已修复 | 提示「修复已核销但决策仍为 BLOCK，建议先重跑 /code-review 复审」，确认后继续 |

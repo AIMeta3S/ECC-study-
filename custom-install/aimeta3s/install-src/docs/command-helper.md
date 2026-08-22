@@ -1,4 +1,4 @@
-<!-- aimeta3s-doc: command-helper | version: 2 | updated: 2026-08-18 | source: commands/*.md（精确路径见 manifest.json） -->
+<!-- aimeta3s-doc: command-helper | version: 3 | updated: 2026-08-22 | source: commands/*.md（精确路径见 manifest.json） -->
 
 # aimeta3s 命令使用建议
 
@@ -30,7 +30,7 @@
 |---|---|---|---|
 | `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） |
 | `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） |
-| `prp-implement` | 按计划落地，每改即验，跑 6 级验证 | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/reports/{plan-name}-report.md`，计划完成后归档到 `plans/completed/`） |
+| `prp-implement` | 按计划落地，每改即验，跑 4 级验证（静态分析/单元测试/构建/集成测试） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/implement/{plan-name}.report.md`，计划完成后归档到 `plans/completed/`） |
 | `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `.claude/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix-report.md`） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
@@ -61,7 +61,7 @@
 
 | 命令 | 一句话用途 |
 |---|---|
-| `code-review` | 总枢：本地未提交变更或 GitHub PR 的全面审查（两模式共用 8 维度清单与统一评级，本地含验证与落盘） |
+| `code-review` | 总枢：本地未提交变更或 GitHub PR 的全面审查（两模式共用 8 维度清单与统一评级；本地三档：`--prp` 核验 implement 结果 / `--full` 全量验证 / 默认快速档） |
 | `python-review` | Python 专项（PEP 8 / 类型 / 安全 / Pythonic），调 python-reviewer |
 | `fastapi-review` | FastAPI 专项（架构/异步/DI/Pydantic/安全），调 fastapi-reviewer |
 | `vue-review` | Vue 专项（reactivity/composables/template 安全），调 vue-reviewer + typescript-reviewer |
@@ -110,7 +110,7 @@
 
 #### P1. PRP 深度流水线（重型 / 多阶段大功能）
 
-- **何时用**：大型功能、需要深度代码库调研、需要严格 6 级验证、需求需要多轮交互澄清。
+- **何时用**：大型功能、需要深度代码库调研、需要严格 4 级验证、需求需要多轮交互澄清。
 - **流水线流程**：
 ```mermaid
 flowchart TD
@@ -129,7 +129,7 @@ flowchart TD
 /prp-prd 功能/创意描述
 /prp-plan .claude/PRPs/prds/{name}.prd.md
 /prp-implement .claude/PRPs/plans/{name}.plan.md
-/code-review --prp .claude/PRPs/reports/{plan-name}-report.md
+/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md
 /prp-fix [审查报告路径]（留空自动定位最新；BLOCK COMMIT 后进入，PASS 后跳过）
 /prp-commit [提交内容的描述]
 /prp-pr base-branch（默认 main）
@@ -251,7 +251,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 | 流水线 | 适合规模 | 含审查 | 含提交 | 含门禁 | 典型场景 |
 |---|---|---|---|---|---|
-| P1 PRP 深度 | 大 / 多阶段 | 否（后接 code-review + prp-fix 修复闭环） | 是（prp-commit） | 否 | 大型功能、需 6 级验证 |
+| P1 PRP 深度 | 大 / 多阶段 | 否（后接 code-review + prp-fix 修复闭环） | 是（prp-commit） | 否 | 大型功能、需 4 级验证 |
 | P2 精简 | 中 / 小 | 否（后接 code-review） | 否（接 pr/prp-pr） | 否 | 中小功能、需求较清楚 |
 | P3 orch 编排 | 单次改动 | 是（code-reviewer） | 是（gated） | 是（GATE 1/2） | 明确改动类型、要门禁 |
 | P4 会话闭环 | 任意 | — | — | — | 跨会话连续性 |
@@ -336,7 +336,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 | 阶段 | 推荐命令 | 作用 |
 |---|---|---|
-| 广谱变更审查（本地/PR） | `/code-review` | 7 类清单：Correctness/Type Safety/Pattern/Security/Performance/Completeness/Maintainability |
+| 广谱变更审查（本地/PR） | `/code-review` | 8 维度清单：Correctness/Type Safety/Pattern/Security/Performance/Completeness/Maintainability/Accessibility |
 | 审查发现 CRITICAL/HIGH，按清单修复 | `/prp-fix` | 读最新报告 → 逐项修复 → 核销落盘 → 复审 |
 | 语言/框架深化 | `/python-review` `/vue-review` `/fastapi-review` | vue-review 会同时调 typescript-reviewer，两者发现不重叠 |
 | 项目级安全表面 | `/security-scan` | AgentShield 扫 agent/hook/MCP/permission/secret，正交于 diff |
@@ -360,7 +360,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 | 阶段 | 推荐命令 | 说明 |
 |---|---|---|
 | 暂存 + 提交 | `/prp-commit` | 自然语言描述要提交什么（"与认证相关的文件"/"除了测试"等） |
-| 发 PR | `/pr` 或 `/prp-pr` | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `.claude/PRPs/{prds,plans,reports}/` |
+| 发 PR | `/pr` 或 `/prp-pr` | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `.claude/PRPs/{prds,plans,implement}/` |
 | PR 审查 | `/code-review <PR号>` | 两命令的"下一步"都指向 code-review |
 
 > **先 commit 再 pr**：`/pr` 与 `/prp-pr` 都要求工作区干净且有领先 commit；工作区脏时 `/prp-pr` 会反向提示"先用 `/prp-commit` 提交"。

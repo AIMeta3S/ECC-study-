@@ -45,7 +45,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 |---|---|
 | ① | 报告「implement 结果核验」节的实现报告路径中提取 `{plan-name}` |
 | ② | 当前分支名 `feat/{plan-name}` 剥离前缀 |
-| ③ | `.claude/PRPs/reports/` 下最新 `*-report.md` 的文件名推导 |
+| ③ | `.claude/PRPs/implement/` 下最新 `*.report.md` 的文件名推导 |
 | ④ | 均失败 → 用源报告时间戳命名，后续步骤降级为提示通用 `/code-review`（不带 `--prp`） |
 
 4. **PASS 短路**：
@@ -142,7 +142,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## 后续步骤
 
-- [ ] 重跑 /code-review --prp .claude/PRPs/reports/{plan-name}-report.md（或原档位）复审
+- [ ] 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审
 - [ ] 复审 PASS 后 /prp-commit 提交
 ```
 
@@ -161,7 +161,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 产物：<fix-report 路径>
 
 后续步骤：
-  - 重跑 /code-review --prp .claude/PRPs/reports/{plan-name}-report.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit
+  - 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit
   - 复审 PASS → /prp-commit 提交
   - 连续 2 轮修复后仍 BLOCK COMMIT → 建议人工介入排查
 ```

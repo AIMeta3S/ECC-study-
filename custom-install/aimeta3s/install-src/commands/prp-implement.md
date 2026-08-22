@@ -348,7 +348,7 @@ mkdir -p .claude/PRPs/implement
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- 通过 `/code-review --prp .claude/PRPs/plans/{plan-name}-plan.md` 审查本 phase 变更
+- 通过 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更
 ```
 
 ### 更新 PRD（如适用）

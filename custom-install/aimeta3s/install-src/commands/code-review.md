@@ -195,7 +195,8 @@ git diff --name-only HEAD
 
 ## implement 结果核验（仅 `--prp` 档写入本节）
 
-**实现报告**：`<plan-path>`
+**计划文件**：`<plan-path>`
+**实现报告**：`.claude/PRPs/implement/{plan-name}.report.md`
 
 | 核验项 | 结果 |
 |---|---|
@@ -204,8 +205,6 @@ git diff --name-only HEAD
 | 构建 | 通过 / 失败 / N/A |
 | 集成测试 | 通过 / 失败 / N/A（豁免依据见上） |
 | Edge Case 测试 | 通过 / 失败 |
-| 全量回归 | 通过（零回归） / 失败 |
-| 手动验证 | 待人工执行 / 已由用户确认 / N/A（计划无手动验证项） |
 
 **覆盖对照**：完整 / 缺失（<未覆盖的源码文件清单>）
 
@@ -223,7 +222,6 @@ git diff --name-only HEAD
 
 问题：<critical_count> 个 CRITICAL，<high_count> 个 HIGH，<medium_count> 个 MEDIUM，<low_count> 个 LOW
 验证：<pass_count>/<total_count> 项通过（档位：Tier 1 / Tier 1+2 / Tier 1+implement 核验）
-implement 核验：<7 项全通过 | 失败项：...>，覆盖：<完整 | 缺失 N 个文件>（仅 --prp 档输出此行）
 
 产物：
   审查：.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>-review.md（默认 / --full）

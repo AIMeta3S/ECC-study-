@@ -5,7 +5,9 @@ argument-hint: <path/to/plan.md>
 
 > 属于 PRP 工作流系列的一部分。
 
-# PRP Implement
+**输入**: $ARGUMENTS
+
+# PRP 实现
 
 逐步执行计划文件，并进行持续验证。每次更改都立即验证——绝不累积破损状态。
 
@@ -44,7 +46,7 @@ cat package.json | grep -A 20 '"scripts"'
 
 ## Phase 1 — 加载
 
-读取计划文件：
+`$ARGUMENTS` 为计划文件的完整路径（<plan-path>）（例如：`.claude/PRPs/plans/{plan-name}.plan.md`）。读取计划文件：
 
 ```bash
 cat "$ARGUMENTS"
@@ -55,25 +57,33 @@ cat "$ARGUMENTS"
 1. **文件存在性**：计划文件不存在 → 停止，向用户提示：
 
 ```
-错误：计划文件未找到：<路径>。
+错误：计划文件未找到：<plan-path>。
 请确认路径是否正确；若尚未创建计划，可先运行 /prp-plan <feature-description> 创建。
 ```
 
-2. **章节完整性**：以下内容是后续步骤的必要输入，任一缺失、为空或仍为未填写的占位符，都会导致对应步骤无法执行，逐项核对：
+2. **章节完整性**：任一必需内容校验不通过 → 停止，向用户提示
+
+以下内容是后续步骤的必要输入，任一缺失、为空或仍为未填写的占位符，都会导致对应步骤无法执行，逐项核对：
 
 | 必需内容 | 缺失时无法执行的步骤 |
 |---|---|
-| 摘要、Patterns to Mirror、要更改的文件、验收标准 | Phase 1 章节提取 |
-| 分步任务（每项含 ACTION / IMPLEMENT / MIRROR / IMPORTS / GOTCHA / 验证 字段） | Phase 3 逐任务执行 |
-| 测试策略（含 单元测试 / 集成测试 / Edge Cases 检查清单 小节） | Phase 3 先行测试判定、Phase 4 Level 2 / 4 / 5 |
-| 验证命令（含 静态分析 / 单元测试 / 集成测试 / 完整测试套件 小节） | Phase 4 Level 1/2/4、Level 6（Level 3 构建与 Level 1 的 lint 命令由 Phase 0 检测提供，不依赖计划） |
+| 摘要、用户故事、问题  → 解决方案、Patterns to Mirror、Files to Change、验收标准 | Phase 1 章节提取 |
+| 分步任务（每项含 IDENTIFIER / ACTION / IMPLEMENT / MIRROR / VALIDATE 字段） | Phase 3 逐任务执行 |
+| 测试策略（含 单元测试 / 集成测试 / Edge Cases 检查清单 小节） | Phase 3 先行测试判定、Phase 4 Level 2 / 4 |
+| 验证命令（含 静态分析 / 单元测试 / 集成测试 小节） | Phase 4 Level 1/2/4（Level 3 构建与 Level 1 的 lint 命令由 Phase 0 检测提供，不依赖计划） |
 
-「测试策略 → 单元测试」声明豁免（含类别与理由）时不视为缺失，其下游「验证命令 → 单元测试」因此标 N/A 同样不视为缺失，但需核对计划「手动验证」清单已包含该降级验证、计划「风险」表已登记补建单元测试基建的跟进项——核对不通过时视同计划缺少必需内容，并入下方的停止路径。「测试策略 → 集成测试」声明豁免（含类别与理由）时同样不视为缺失，其下游「验证命令 → 集成测试」因此标 N/A 同样不视为缺失，但需核对计划「手动验证」清单已包含该集成验证——核对不通过时视同计划缺少必需内容，并入下方的停止路径。未豁免时，「验证命令 → 集成测试」内的 **运行形态** 与 **与完整测试套件的关系** 为必填勾选项，任一未勾选视同该小节未填写；且命令块须与勾选形态严格双向对应——每个已勾选形态至少有一条以该形态标注的命令行（HTTP 服务形态须同时含 dev server 行与测试命令行），命令块中不得残留未勾选形态的命令行，任一不满足同样视同该小节未填写。勾选 HTTP 服务形态时，「端口」与「健康检查路径」为必填（「启动等待」可缺省，按 30 处理）——仍为占位符视同该小节未填写。「数据库验证」「浏览器验证」为可选小节，不列入校验。
+「验证命令 → 集成测试」内的 **运行形态** 为必填勾选项，未勾选视同该小节未填写；
+命令块须与勾选形态严格双向对应——每个已勾选形态至少有一条以该形态标注的命令行（HTTP 服务形态须同时含 dev server 行与测试命令行），命令块中不得残留未勾选形态的命令行，任一不满足同样视同该小节未填写。
+勾选 HTTP 服务形态时，「端口」与「健康检查路径」为必填（「启动等待」可缺省，按 30 处理）——仍为占位符视同该小节未填写。
+「数据库验证」「浏览器验证」为可选小节，不列入校验。
 
-校验不通过 → 停止，向用户列出缺失或未填写的内容清单：
+任意一项校验不通过 → 停止，向用户列出缺失或未填写的内容清单：
 
 ```
-错误：计划缺少或未填写以下必需内容：<清单>。
+错误：计划缺少或未填写以下必需内容：
+
+<清单>
+
 计划可能由旧版 /prp-plan 模板生成或存在未填写项。
 请运行 /prp-plan 重新生成，或手动补齐后再执行 /prp-implement。
 ```
@@ -81,14 +91,16 @@ cat "$ARGUMENTS"
 **校验失败仅向用户提示并停止**——不要自动调用 /prp-plan 或替用户修改计划，由用户决定如何补齐。
 
 校验通过后，从计划中提取以下章节：
-- **摘要** — 要构建什么
+- **摘要** — 正在建造什么
+- **用户故事** — 为哪些用户提供什么功能达到什么目标
+- **问题  → 解决方案** — 主要问题及解决方案
 - **Patterns to Mirror** — 需遵循的 Code conventions
-- **要更改的文件** — 要创建或修改的哪些内容
-- **分步任务** — 要执行哪些任务，及执行顺序
+- **Files to Change** — 要创建或修改哪些文件
+- **分步任务** — 实现顺序
 - **验证命令** — 如何验证正确性
 - **验收标准** — 完成的定义
 
-**检查点**：计划已加载。所有章节已识别。任务已提取。
+**CHECKPOINT**：Plan loaded. All sections identified. Tasks extracted.
 
 ---
 
@@ -105,10 +117,10 @@ git status --porcelain
 
 | 当前状态 | 操作 |
 |---|---|
-| 在 feature branch 上 | 使用当前分支 |
-| 在 main 上，工作区干净 | 创建 feature branch：`git checkout -b feat/{plan-name}` |
-| 在 main 上，工作区有改动 | **STOP** — 先让用户 stash 或 commit |
-| 在用于此功能的 git worktree 中 | 使用该 worktree |
+| 在 feature 分支上 | 使用当前分支 |
+| 在 main 上，working tree 干净 | 创建 feature branch：`git checkout -b feat/{plan-name}` |
+| 在 main 上，working tree 有改动 | **STOP** — 先让用户 stash 或 commit |
+| 在此 feature 的 git worktree 中 | 使用该 worktree |
 
 ### 同步远程仓库
 
@@ -116,7 +128,7 @@ git status --porcelain
 git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 ```
 
-**检查点**：在正确的分支上。工作区就绪。远程已同步。
+**CHECKPOINT**：在正确的分支上。Working tree 准备就绪。远程已同步。
 
 ---
 
@@ -128,57 +140,67 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 对于 **分步任务** 中的每个任务：
 
-1. **阅读 参照模式 引用** — 打开并阅读任务 MIRROR 字段中的参考的模式文件。编写代码前先理解 convention。
+1. **Read MIRROR reference** — Open the pattern file referenced in the task's MIRROR field. Understand the convention before writing code.
 
-2. **先行测试（条件执行）** — 若计划「测试策略」中与本任务关联的测试（按「单元测试」表「关联任务」列对应；无该列的旧计划按测试名称/场景对应）标注了 **先行验证**，先编写该测试并运行，确认其**失败**（记录失败输出作为 red 证明），然后才进入实现。red 证明的失败输出须包含该用例的标识（用例名/用例数）——「No tests found / 0 matched」不构成 red 证明，按测试文件不在命令收集范围处理（修正文件路径或命令后重跑）。实现完成后同一测试必须通过。未标注的任务跳过此步；计划「单元测试」声明豁免时无表可依，所有任务按未标注处理。该判定仅适用于「单元测试」表的用例；集成测试表无先行验证列，一律在 Level 4 实现后编写。
+2. **先行测试（条件执行）** — 若计划「测试策略」中与本任务关联的测试（按「单元测试」表「关联任务」列对应）标注了 **先行验证**为**否**或未标注的任务跳过此步。标注为**是**的先编写该测试并运行，确认其**失败**（记录失败输出作为 red 证明），然后才进入实现。red 证明的失败输出须包含该用例的标识（用例名/用例数）——「No tests found / 0 matched」不构成 red 证明，按测试文件不在命令收集范围处理（修正文件路径或命令后重跑），实现完成后同一测试必须通过。该判定仅适用于「单元测试」表的用例；集成测试表无先行验证列，一律在 Level 4 实现后编写。
 
-3. **实现** — 严格按照模式编写代码。应用 GOTCHA 警告。使用指定的 IMPORTS。
+3. **Implement** — Write the code following the pattern exactly. Apply GOTCHA warnings. Use specified IMPORTS.
 
 4. **立即验证** — 在**每一次**文件变更后：
    ```bash
-   # 运行 type-check（根据项目调整命令）
-   [阶段 0 中的 type-check 命令]
+   # Run type-check (adjust command per project)
+   [type-check command from Phase 0]
    ```
-   如果 type-check 失败 → 在进入下一个文件前先修复错误。
+   如果 type-check 失败 → 在移动到下一个 file 之前修复该错误。
 
 5. **跟踪进度** — 记录：`[done] 任务 N: [任务名称] — 完成`
 
 ### 处理偏差
 
-如果实施过程中必须偏离计划：
-- 记录改变了 **什么（WHAT）**
-- 记录 **为什么（WHY）** 改变
-- 继续采用修正后的方法
+如果实现必须偏离计划：
+- Note 变更了 **什么（WHAT）**
+- Note **为什么（WHY）** 变更
+- 使用修正后的方法继续
 - 这些偏差将被记录在报告中
 
-**检查点**：所有任务已执行。偏差已记录。
+**CHECKPOINT**：所有任务已执行。所有偏差已记录。
 
 ---
 
 ## Phase 4 — 验证
 
-运行计划中的所有验证级别。每个级别的问题都必须修复后才能继续下一步。
+运行计划中的所有 validation levels。在继续之前修复每个 level 的 issues。
 
 ### Level 1：静态分析
 
 ```bash
-# 类型检查 — 必须零错误
-[项目的 type-check 命令]
+# Type checking — zero errors required
+[project type-check command]
 
-# Linting — 尽可能自动修复
-[项目的 lint 命令]
-[项目的 lint-fix 命令]
+# Linting — fix automatically where possible
+[project lint command]
+[project lint-fix command]
 ```
 
-如果 auto-fix 后仍有 lint 错误，手动修复。
+如果 auto-fix 后仍存在 lint 错误，手动修复。
 
 ### Level 2：单元测试
 
 本级别默认必须执行。判定与执行：
 
-1. **豁免判定** — 计划「测试策略 → 单元测试」声明**豁免**（自动化基建缺失，含理由）→ 跳过本级别，报告标 N/A（注明豁免类别，供 /code-review --prp 核验），并核对该降级验证已写入计划「手动验证」清单、「风险」表已登记补建跟进项——核对不通过则停止并提示用户补齐计划（与 Phase 1 一致，不代为修改）。
-2. **编写用例** — 读取计划「测试策略 → 单元测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明"无变化" → 跳过编写，仍须运行既有用例防回归；无「动作」列的旧计划按新增处理。标注 **先行验证** 的用例已在 Phase 3 编写并留有 red 证明；本步编写其余用例，覆盖计划 测试策略 表与 Edge Cases 检查清单所列的行为。断言**可观察行为**（输入 → 输出、状态变化），不断言实现细节。
-3. **执行** — 运行计划「验证命令 → 单元测试」中的命令。执行输出中须出现本次新增/调整用例的标识（用例名/用例数），无该标识或 0 匹配时，先以用例名过滤器重跑确认收集，仍为 0 匹配则视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。测试失败 → 修复实现（而不是测试，除非测试本身有误）。
+1. **编写用例**：Write tests for every new function (as specified in the plan's Testing Strategy)
+  - 读取计划「测试策略 → 单元测试」，按表执行。
+  - 新增 → 将测试写入「测试文件」列的路径。
+  - 调整/删除 → 更新或移除该文件中的对应既有测试。
+  - 注明“无变化” → 跳过编写，仍须运行既有用例防回归。
+  - 标注 **先行验证** 的用例已在 Phase 3 编写并留有 red 证明，无需重复编写。
+  - 断言**可观察行为**（输入 → 输出、状态变化），不断言实现细节。
+  - Every function needs at least one test。
+  - 覆盖计划“Edge Cases 检查清单”中的单元级情况——判定：验证无需跨越本次变更涉及的接缝（模块边界/进程边界/外部资源），如 空输入、边界值。编写完成后逐项对照检查清单，确认全部单元级情况已落位。
+3. **执行**：run project test command for affected area
+  — 运行计划「验证命令 → 单元测试」中的命令。
+  - 执行输出中须出现本次新增/调整用例的标识（用例名/用例数），无该标识或 0 匹配时，先以用例名过滤器重跑确认收集，仍为 0 匹配则视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。
+  - 如果一个测试失败 → 修复实现（而不是测试，除非测试本身有误）。
 
 ### Level 3：构建检查
 
@@ -190,13 +212,21 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 ### Level 4：集成测试
 
-本级别默认必须执行。判定与执行：
+1. **编写用例**
+  - 读取计划「测试策略 → 集成测试」，按表执行。
+  - 新增 → 将测试写入「测试文件」列的路径。
+  - 调整/删除 → 更新或移除该文件中的对应既有测试。
+  - 注明“无变化” → 跳过编写，仍须运行既有集成测试防回归。
+  - 覆盖计划“Edge Cases 检查清单”中的集成级情况——判定：验证需跨越本次变更涉及的接缝，如 并发访问、网络故障。编写完成后逐项对照检查清单，确认全部集成级情况已落位。
+2. **按运行形态执行**
+  - 每个已勾选形态，执行计划命令块中以该形态标注的命令行（勾选多种形态时，各形态的命令分别执行）：
+  - 输出中须出现新增用例的标识（用例名/用例数），输出无该标识或显示 0 个匹配时，先以用例名过滤器重跑该形态命令确认收集（命令不支持过滤器——如自定义脚本——按测试文件路径运行），仍为 0 匹配则视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。
 
-1. **豁免判定** — 计划「测试策略 → 集成测试」声明**豁免**（含类别与理由）→ 跳过本级别，报告标 N/A（注明豁免类别，供 /code-review --prp 核验），并核对该集成验证已写入计划「手动验证」清单——核对不通过则停止并提示用户补齐计划的手动验证清单（与 Phase 1 一致，不代为修改）。豁免类别为「自动化基建缺失」时，一并核对计划「风险」表已登记补建集成测试基建的跟进项，未登记按同样方式停止提示。
-2. **编写用例** — 读取计划「测试策略 → 集成测试」。按表执行：新增 → 将测试写入「测试文件」列的路径；调整/删除 → 更新或移除该文件中的对应既有测试；注明“无变化” → 跳过编写，仍须运行既有集成测试防回归。新用例的收集核对在第 3 步各形态命令的执行输出上完成，不单独空跑：输出中须出现新增用例的标识（用例名/用例数）；输出无该标识或显示 0 个匹配时，先以用例名过滤器重跑该形态命令确认收集（命令不支持过滤器——如自定义脚本——时按测试文件路径运行），仍为 0 匹配则视为测试文件不在命令收集范围，修正文件路径或命令后重跑（防止被静默跳过）。
-3. **按运行形态执行** — 每个已勾选形态，执行计划命令块中以该形态标注的命令行（勾选多种形态时，各形态的命令分别执行）：
-
-**HTTP 服务形态** — 用计划中的值替换占位符，走服务器脚手架。以下脚本须**整段一次执行**，禁止逐行拆跑（`TEST_EXIT=$?` 依赖测试命令紧邻）：
+**HTTP 服务形态**：
+  - 用计划中的值替换占位符，走服务器脚手架。
+  - 以下脚本须**整段一次执行**，禁止逐行拆跑（`TEST_EXIT=$?` 依赖测试命令紧邻）。
+  - 计划中**健康检查路径**为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。
+  - 注意端口探测仅证明有进程监听、不证明应用就绪——若测试批量出现连接拒绝/路由 404 类失败，优先怀疑就绪判定过早（可调大「启动等待」），并建议项目补健康端点后改回健康检查。
 
 ```bash
 # Fail the whole block if a test command pipes into tee/tail — without this,
@@ -249,33 +279,12 @@ TEST_EXIT=$?
 exit "$TEST_EXIT"
 ```
 
-计划健康检查路径为“无”时，用端口探测替代 curl 健康检查（如 `nc -z localhost [计划中的端口]`）。注意端口探测仅证明有进程监听、不证明应用就绪——若测试批量出现连接拒绝/路由 404 类失败，优先怀疑就绪判定过早（可调大「启动等待」），并建议项目补健康端点后改回健康检查。
-
-**进程内 / CLI / 编译装配形态** — 直接运行计划命令块中以对应形态标注的命令行，无需服务器管理。
-
+**进程内 / CLI / 编译装配形态**：
+  - 直接运行计划命令块中以对应形态标注的命令行，无需服务器管理。
+  
 每个形态命令执行后，按第 2 步完成收集核对（HTTP 形态的核对在该次脚手架运行内完成，不另起服务器）。
 
-### Level 5：Edge Case 测试
-
-遍历计划中 测试策略 检查清单上的 edge cases
-
-判定某 edge case 是否为集成级用例的标准：其验证需跨越本次变更涉及的接缝（模块边界 / 进程边界 / 外部资源）即属集成级（如 并发访问、网络故障）。此类新增用例写入计划「测试策略 → 集成测试」表「测试文件」列约定的位置（或同类既有集成用例所在文件）；「与完整测试套件的关系」两项皆勾选时，写入「独立命令」所覆盖的文件并按独立命令处理。本级别若新增了此类用例且计划勾选了「独立命令」，须以用例名过滤器（或按测试文件路径）重跑 Level 4 的集成测试命令、仅覆盖这些新增用例——完整套件（Level 6）不包含独立命令，不会覆盖它们；无需全量重跑 Level 4。
-
-未跨接缝的 edge case 按单元级处理，写入计划「测试策略 → 单元测试」表「测试文件」列约定的位置；本级别新增此类用例时，重跑「验证命令 → 单元测试」命令覆盖之。单元测试已声明豁免时，本级别不应产生单元级用例——若产生，说明豁免理由与计划矛盾，停止并提示用户。
-
-### Level 6：全量回归
-
-所有新测试（含 Level 5 的 edge case 测试）编写完毕后，运行计划「验证命令 → 完整测试套件」中的命令：
-
-```bash
-[计划中的完整测试套件命令]
-```
-
-要求零回归——任何既有测试失败都必须修复后重跑本级别。
-
-若计划的集成测试已包含于完整测试套件，本级别会再次运行它——这是预期行为：最终闸门必须在完整套件上得出零回归结论，不引用其他级别的结果跳过。
-
-**检查点**：全部 6 个验证级别通过。零错误。
+**检查点**：全部 4 个验证级别通过。零错误。
 
 ---
 
@@ -284,26 +293,26 @@ exit "$TEST_EXIT"
 ### 创建实现报告
 
 ```bash
-mkdir -p .claude/PRPs/reports
+mkdir -p .claude/PRPs/implement
 ```
 
-将报告写入 `.claude/PRPs/reports/{plan-name}-report.md`：
+将报告写入 `.claude/PRPs/implement/{plan-name}.report.md`：
 
 ```markdown
 # 实现报告：[功能名称]
 
 ## 摘要
-[实施了哪些内容]
+[实现了哪些内容]
 
 ## 评估 vs 实际
 
 | 指标 | 预期（计划） | 实际 |
 |---|---|---|
-| 复杂度 | [来自计划] | [实际] |
-| 置信度 | [来自计划] | [实际] |
-| 变更文件数 | [来自计划] | [实际数量] |
+| 复杂度 | [from plan] | [actual] |
+| 置信度 | [from plan] | [actual] |
+| 变更文件数 | [from plan] | [actual count] |
 
-## 已完成任务
+## 完成的任务
 
 | # | 任务 | 状态 | 备注 |
 |---|---|---|---|
@@ -315,12 +324,9 @@ mkdir -p .claude/PRPs/reports
 | 级别 | 状态 | 备注 |
 |---|---|---|
 | 静态分析 | [done] 通过 | |
-| 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven）或 N/A（豁免：<类别>）——豁免时须注明计划声明的类别 |
-| 构建 | [done] 通过 | |
-| 集成测试 | [done] 通过 | 或 N/A（豁免：<类别>）——豁免时须注明计划声明的类别 |
-| Edge Case 测试 | [done] 通过 | |
-| 全量回归 | [done] 通过 | 零回归 |
-| 手动验证 | [done] 已由用户确认 / 待人工执行 / N/A | 计划「手动验证」清单非空时必填：带出清单摘要（无论单元/集成测试是否豁免）；清单为空填 N/A。手动验证由用户执行，AI 不得代替勾选 |
+| 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
+| 构建 | [done] 通过或 N/A | |
+| 集成测试 | [done] 通过 | 编写了 N 个测试 |
 
 ## 变更文件
 
@@ -342,18 +348,15 @@ mkdir -p .claude/PRPs/reports
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- [ ] 通过 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md` 审查本 phase 变更
-- [ ] 若决策 BLOCK COMMIT，通过 `/prp-fix` 修复核销后重跑 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md`
-- [ ] 通过 `/prp-commit` 提交
-- [ ] 如果 PRD 还有「待开始」的 phase 时，运行 `/prp-plan <PRD路径>` 进入下一 phase
-- [ ] 如果所有 phase 完成后，通过 `/prp-pr` 创建 PR
+- 通过 `/code-review --prp .claude/PRPs/plans/{plan-name}-plan.md` 审查本 phase 变更
 ```
 
 ### 更新 PRD（如适用）
 
 如果本次实现针对 PRD 的某个 phase：
 1. 将该 phase 的状态从 `进行中` 更新为 `已完成`
-2. 添加报告路径作为引用
+2. 将该 phase 的`PRP 计划`从 `.claude/PRPs/plans/{plan-name}.plan.md` 更新为 `.claude/PRPs/plans/completed/{plan-name}.plan.md`
+3. 添加报告路径作为引用
 
 ### 归档计划
 
@@ -370,7 +373,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 
 向用户报告：
 
-```
+```markdown
 ## 实现完成
 
 - **计划**：[计划文件路径] → 已归档到 completed/
@@ -383,12 +386,10 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 |---|---|
 | 类型检查 | [done] |
 | Lint | [done] |
-| 单元测试 | [done]（编写了 N 个，M 个 red-proven）或 N/A（豁免：<类别>） |
+| 单元测试 | [done]（编写了 N 个，M 个 red-proven） |
 | 构建 | [done] |
-| 集成测试 | [done] 或 N/A（豁免：<类别>） |
+| 集成测试 | [done]（编写了 N 个） |
 | Edge Case 测试 | [done] |
-| 全量回归 | [done] 零回归 |
-| 手动验证 | 待人工执行：<清单摘要> / 已由用户确认 / N/A（计划无手动验证项） |
 
 ### 变更文件
 - 创建了 [N] 个文件，更新了 [M] 个文件
@@ -397,8 +398,8 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 [摘要，或填 "None — 完全按计划实现"]
 
 ### 产物
-- 报告：`.claude/PRPs/reports/{name}-report.md`
-- 已归档计划：`.claude/PRPs/plans/completed/{name}.plan.md`
+- 报告：`.claude/PRPs/implement/{plan-name}.report.md`
+- 已归档计划：`.claude/PRPs/plans/completed/{plan-name}.plan.md`
 
 ### PRD 进度（如适用）
 | Phase | 状态 |
@@ -407,7 +408,9 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | Phase 2 | [next] |
 | ... | ... |
 
-> 下一步：运行 `/code-review --prp .claude/PRPs/reports/{plan-name}-report.md` 审查本 phase 变更；若决策 BLOCK COMMIT，先运行 `/prp-fix` 修复核销再重跑审查，PASS 后再运行 `/prp-commit` 提交。如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 进入下一 phase；如果所有 phase 完成后，运行 `/prp-pr` 创建 pull request。
+## 下一步
+运行 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；
+
 ```
 
 ---
@@ -444,12 +447,6 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 3. CLI / 编译装配形态：核对命令参数与断言目标（stdout / exit code / 产物路径）
 4. 修复并重新运行本级别
 
-### 全量回归失败
-1. 确认失败的是既有测试（回归）还是新测试遗漏
-2. 若是回归 → 定位本次变更引入的破坏并修复实现
-3. 重跑完整测试套件
-4. 仅在零回归后继续
-
 ---
 
 ## 成功标准
@@ -457,9 +454,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 - **TASKS_COMPLETE**：计划中的所有任务已执行
 - **TYPES_PASS**：零类型错误
 - **LINT_PASS**：零 lint 错误
-- **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明——豁免或已注明无变化时按相应形态处理
-- **MANUAL_VERIFICATION_ESCALATED**：计划「手动验证」清单非空时（含单元/集成豁免降级写入的项），清单摘要已在报告与输出中带出提醒（豁免时并注明豁免类别）
-- **REGRESSION_PASS**：完整测试套件零回归
+- **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明
 - **BUILD_PASS**：构建成功
 - **REPORT_CREATED**：实现报告已保存
 - **PLAN_ARCHIVED**：计划已移至 `completed/`
@@ -468,8 +463,4 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 
 ## 后续步骤
 
-- 运行 `/code-review` 审查本 phase 变更
-- 若决策 BLOCK COMMIT，运行 `/prp-fix` 修复核销后重跑 `/code-review`，PASS 再提交
-- 运行 `/prp-commit` 用描述性信息提交本 phase 变更
-- 如果 PRD 还有「待开始」phase，运行 `/prp-plan .claude/PRPs/prds/{name}.prd.md`（会自动定位下一个待开始 phase）进入下一 phase
-- 所有 phase 完成后，运行 `/prp-pr` 创建 pull request
+- 运行 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；

@@ -106,19 +106,19 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ## 阶段 4：DEEP DIVE - Vision & Users
 
-基于 FOUNDATION（阶段2） + GROUNDING（阶段3），请问：
+基于 FOUNDATION（阶段2） + GROUNDING（阶段3），请问（使用中文提问）：
 
-> **愿景与用户：**
+> **Vision & Users:**
 >
-> 1. **愿景**：如果这个项目大获成功，理想的最终状态是什么？请用一句话概括。
+> 1. **Vision**: In one sentence, what's the ideal end state if this succeeds wildly?
 >
-> 2. **主要用户**：描述您最重要的用户——他们的角色、背景以及触发他们需求的原因。
+> 2. **Primary User**: Describe your most important user - their role, context, and what triggers their need.
 >
-> 3. **待完成的任务** ：补全这句话：“当[情况]时，我想要[动机]，这样我就可以[结果]。”
+> 3. **Job to Be Done**: Complete this: "When [situation], I want to [motivation], so I can [outcome]."
 >
-> 4. **非用户**：哪些人明确不属于目标群体？我们应该忽略哪些人？
+> 4. **Non-Users**: Who is explicitly NOT the target? Who should we ignore?
 >
-> 5. **制约因素**：存在哪些限制？（时间、预算、技术、法规）
+> 5. **Constraints**: What limitations exist? (time, budget, technical, regulatory)
 
 **GATE**：等待用户响应后再继续。
 
@@ -288,7 +288,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ---
 
-## 实施阶段
+## 实现阶段
 
 <!--
   状态：待开始 | 进行中 | 已完成
@@ -297,24 +297,24 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
   PRP：创建后链接到生成的计划文件
 -->
 
-| 序号 | 阶段 | 描述 | 状态 | 并行 | 依赖 | PRP 计划 |
-|------|------|------|------|------|------|----------|
-| 1 | {阶段名称} | {该阶段的交付内容} | 待开始 | - | - | - |
-| 2 | {阶段名称} | {该阶段的交付内容} | 待开始 | - | 1 | - |
-| 3 | {阶段名称} | {该阶段的交付内容} | 待开始 | with 4 | 2 | - |
-| 4 | {阶段名称} | {该阶段的交付内容} | 待开始 | with 3 | 2 | - |
-| 5 | {阶段名称} | {该阶段的交付内容} | 待开始 | - | 3, 4 | - |
+| 序号 | 标识 | 名称 | 描述 | 状态 | 并行 | 依赖 | PRP 计划 |
+|------|------|------|------|------|------|------|----------|
+| 1 | {阶段的唯一标识} | {阶段名称} | {该阶段的交付内容} | 待开始 | - | - | - |
+| 2 | {阶段的唯一标识} | {阶段名称} | {该阶段的交付内容} | 待开始 | - | 1 | - |
+| 3 | {阶段的唯一标识} | {阶段名称} | {该阶段的交付内容} | 待开始 | with 4 | 2 | - |
+| 4 | {阶段的唯一标识} | {阶段名称} | {该阶段的交付内容} | 待开始 | with 3 | 2 | - |
+| 5 | {阶段的唯一标识} | {阶段名称} | {该阶段的交付内容} | 待开始 | - | 3, 4 | - |
 
 ### 阶段详情
 
 **阶段 1：{名称}**
-- **目标**：{要达成的目标}
-- **范围**：{明确的交付物边界}
+- **目标**：{我们想要实现的目标}
+- **范围**：{Bounded deliverables}
 - **成功标志**：{如何判断已完成}
 
 **阶段 2：{名称}**
-- **目标**：{要达成的目标}
-- **范围**：{明确的交付物边界}
+- **目标**：{我们想要实现的目标}
+- **范围**：{Bounded deliverables}
 - **成功标志**：{如何判断已完成}
 
 {按需继续补充各阶段...}
@@ -379,19 +379,19 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ### 建议的下一步
 
-{选项之一：用户调研、技术预研、原型开发、 利益相关者评审等}
+{选项之一：用户调研、技术预研、原型开发、利益相关者评审等}
 
-### 实施阶段
+### 实现阶段
 
 | # | 阶段 | 状态 | 可否并行 |
 |------|------|------|----------|
 {PRD 中的阶段列表}
 
-### 开始实施
+### 开始实现
 
 运行：`/prp-plan .claude/PRPs/prds/{名称}.prd.md`
 
-该命令将自动选择下一个待办阶段并生成实施计划。
+该命令将自动选择下一个待办阶段并生成实现计划。
 ```
 
 ---
@@ -399,7 +399,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 ## 后续步骤
 
 PRD 生成之后：
-- 可以使用 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 命令，使用本次生成的 PRD 文档创建实施计划
+- 可以使用 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 命令，使用本次生成的 PRD 文档创建实现计划
 - 可以使用 `/save-session` 跨 session 保留 PRD 上下文
 
 ## 成功标准

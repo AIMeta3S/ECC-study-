@@ -155,6 +155,8 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 **源报告文件保持原样，不做任何原地修改。**
 
+**fix-report 的读者**：本报告供人类查阅与 /prp-commit 提交门禁判断使用；/code-review 复审为盲审（见其「复审盲审原则」），不读取本文件内容作为裁决依据——「误报」申辩须能在代码中独立复现，才会被复审采纳。
+
 ---
 
 ## Phase 7 — 输出
@@ -166,7 +168,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 产物：<fix-report 路径>
 
 后续步骤：
-  - 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit
+  - 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit；建议 /clear 后新会话执行，避免本轮修复的上下文锚定复审判断
   - 复审 PASS → /prp-commit 提交
   - 连续 2 轮修复后仍 BLOCK COMMIT → 建议人工介入排查
 ```

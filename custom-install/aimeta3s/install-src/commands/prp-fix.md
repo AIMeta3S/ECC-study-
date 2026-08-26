@@ -25,9 +25,9 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 | 输入 | 操作 |
 |---|---|
-| 显式路径 | 校验文件存在后使用（限 `.claude/PRPs/reviews/local-*-review.md`，不处理其他目录报告） |
+| 显式路径 | 校验文件存在后使用（限 `.claude/PRPs/reviews/*.review.md`，不处理其他目录报告） |
 | 留空 · 快路径 | 本会话刚运行过 /code-review → 直接使用其刚落盘的报告路径（终端输出中可见），跳过目录扫描 |
-| 留空 · 扫描 | 探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录），收集所有 `local-*-review.md`，按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新（不依赖 mtime） |
+| 留空 · 扫描 | 探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录），收集所有 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新（不依赖 mtime） |
 
 目录下无报告 → 停止："未找到审查报告。请先运行 /code-review --prp <report-path>。"
 
@@ -115,7 +115,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## Phase 6 — 核销落盘
 
-写入与源报告同目录的 `<源文件名去 -review.md>-fix-report.md`（如 `local-20260818-1030-fix-report.md`）：
+写入与源报告同目录的 `<源文件名去 .review.md>-fix.report.md`（如 `{plan-name}-20260818-1030-fix.report.md`）：
 
 ```markdown
 # 修复核销: <源报告文件名>
@@ -198,4 +198,4 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 你的输入 | 执行的操作 |
 |---|---|
 | `/prp-fix` | 定位最新审查报告，按清单修复并核销 |
-| `/prp-fix .claude/PRPs/reviews/local-20260818-1030-review.md` | 处理指定报告 |
+| `/prp-fix .claude/PRPs/reviews/{plan-name}-20260818-1030.review.md` | 处理指定报告 |

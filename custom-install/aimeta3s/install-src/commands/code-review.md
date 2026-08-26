@@ -187,9 +187,9 @@ git diff --name-only HEAD
 
 ### Phase 5 — 报告落盘
 
-按档位落盘：`--prp` 档在 `.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md` 创建审查产物；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>-review.md` 创建。
+按档位落盘：`--prp` 档在 `.claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 创建审查产物（`{plan-name}` 提取自 `<plan-path>`，同 Phase 3 规则）；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>.review.md` 创建。
 
-`--prp` 档报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 -review.md>-fix-report.md`，本报告自身不会被 /prp-fix 修改；默认 / `--full` 档报告（`.claude/reviews/`）不在 /prp-fix 服务范围内。报告模板：
+`--prp` 档报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 .review.md>-fix.report.md`，本报告自身不会被 /prp-fix 修改；默认 / `--full` 档报告（`.claude/reviews/`）不在 /prp-fix 服务范围内。报告模板：
 
 ```markdown
 # 本地审查: <branch>
@@ -225,7 +225,7 @@ git diff --name-only HEAD
 
 | 核验项 | 结论 | 备注 |
 |---|---|---|
-| 1.1 目标漂移 | 通过 / 发现问题 / 无法核验（缺失章节：X） | 各等级问题数（如 HIGH:1 MEDIUM:2）；通过时填「—」 |
+| 1.1 目标漂移 | 通过 / 发现问题 / 无法核验（缺失章节：X） | 各等级问题数（如 HIGH:1 MEDIUM:2）；通过时填「—」；必须说明的重要信息（如果有）； |
 | 1.2 遵循 Code conventions | 同上 | 同上 |
 | 1.3 符合预期文件 | 同上 | 同上 |
 | 1.4 所有任务完成 | 同上 | 同上 |
@@ -271,12 +271,13 @@ git diff --name-only HEAD
 验证：<pass_count>/<total_count> 项通过（档位：Tier 1 / Tier 1+2 / Tier 1+implement 核验）
 
 产物：
-  审查：.claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>-review.md（默认 / --full）
+  审查：.claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>.review.md（默认 / --full）
 
 后续步骤：
   - PASS → /prp-commit 提交变更
-  - BLOCK COMMIT（--prp 档）→ 运行 `/prp-fix .claude/PRPs/reviews/local-<yyyymmdd-HHMM>-review.md` 按报告问题清单修复并核销，随后重新运行 /code-review --prp <plan-path>
-  - BLOCK COMMIT（默认 / --full 档）→ 按报告问题清单，修复变更，随后重新运行 /code-review（同档位）
+  - BLOCK COMMIT（--prp 档）→ 运行 `/prp-fix .claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 按报告问题清单修复并核销，随后重新运行 /code-review --prp <plan-path>
+  - BLOCK COMMIT（默认 / --full 档）→ 按报告问题清单，修复变更，随后重新运行 `/code-review` 或 `/code-review  --full`
+
 ```
 
 ---
@@ -346,7 +347,7 @@ done
 
 ### Phase 6 — 报告
 
-在 `.claude/reviews/pr-<NUMBER>-review.md` 创建审查产物（PR 模式固定使用 `.claude/reviews/`）：
+在 `.claude/reviews/pr-<NUMBER>.review.md` 创建审查产物（PR 模式固定使用 `.claude/reviews/`）：
 
 ```markdown
 # PR 审查: #<NUMBER> — <TITLE>
@@ -431,7 +432,7 @@ PR #<NUMBER>: <TITLE>
 验证：<pass_count>/<total_count> 项检查通过
 
 产物：
-  审查：.claude/reviews/pr-<NUMBER>-review.md
+  审查：.claude/reviews/pr-<NUMBER>.review.md
   GitHub：<PR URL>
 
 后续步骤：

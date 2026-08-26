@@ -2,7 +2,7 @@
 
 # aimeta3s 命令使用建议
 
-本指南面向 `commands/` 下的 **42 个命令**。这些命令数量多、族系复杂，单看每个命令文件难以判断"我这个任务到底该用哪条"。本文档把视角从「按命令查」翻转为「按场景用」：
+本指南面向 `commands/` 下的 **43 个命令**。这些命令数量多、族系复杂，单看每个命令文件难以判断"我这个任务到底该用哪条"。本文档把视角从「按命令查」翻转为「按场景用」：
 
 1. 先从命令之间的串联关系抽象出 **9 条流水线**；
 2. 再把常见开发场景直接映射到流水线；
@@ -14,7 +14,7 @@
 
 ## 一、命令总览速查表
 
-按族归类的 42 个命令，每个一句话用途；带 commit 前缀的标注前缀。
+按族归类的 43 个命令，每个一句话用途；带 commit 前缀的标注前缀。
 
 ### 规划与实施类
 
@@ -31,9 +31,10 @@
 | `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） |
 | `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） |
 | `prp-implement` | 按计划落地，每改即验，跑 4 级验证（静态分析/单元测试/构建/集成测试） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/implement/{plan-name}.report.md`，计划完成后归档到 `plans/completed/`） |
-| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `.claude/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix-report.md`） |
+| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `.claude/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix.report.md`） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
+| `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后创建 PR（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR |
 
 #### 精简族
 | 命令 | 一句话用途 | 输入 | 输出 |
@@ -114,7 +115,9 @@
 - **流水线流程**：
 ```mermaid
 flowchart TD
-    A["prp-prd"] -->|"*.prd.md"| B["prp-plan"]
+    A["prp-prd"] -->|"*.prd.md（人工逐条）"| B["prp-plan"]
+    A -->|"*.prd.md"| R["prp-run（可选·全自动调度器）"]
+    R -.->|"逐 phase 派发"| B
     B -->|"*.plan.md"| C["prp-implement"]
     C --> G["code-review --prp"]
     G -->|"PASS"| E["prp-commit"]
@@ -123,10 +126,12 @@ flowchart TD
     E --> D{"PRD 中还有<br/>「待开始」的 phase？"}
     D -->|是，继续下一个 phase 的 plan| B
     D -->|否，全部完成| F["prp-pr"]
+    R -.-> F
 ```
 
 - **流水线各命令示例**：
 /prp-prd 功能/创意描述
+/prp-run .claude/PRPs/prds/{name}.prd.md（可选：全自动调度整条流水线，含 --max-phases / --dry-run / --no-pr 护栏）
 /prp-plan .claude/PRPs/prds/{name}.prd.md
 /prp-implement .claude/PRPs/plans/{name}.plan.md
 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md
@@ -134,7 +139,7 @@ flowchart TD
 /prp-commit [提交内容的描述]
 /prp-pr base-branch（默认 main）
 
-- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。
+- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。`/prp-run` 是该循环的自动调度器：断点从文件系统推导、每步核验产物，仅人工介入点（连续 2 轮 BLOCK、歧义门等）停。
 
 #### P2. 精简流水线（轻型 / 中小功能）
 
@@ -487,6 +492,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 > 从"我想做什么"定位命令，再回到第三节看完整场景。
 
 - **理清需求**：`plan-prd` · `prp-prd`
+- **一键跑完 PRP 流水线**：`prp-run`
 - **出实施计划**：`plan` · `prp-plan`
 - **评审 plan/产物（浏览器画布）**：`plan-canvas`
 - **实现新功能**：`orch-add-feature` · `feature-dev` · `prp-implement` · `gan-build` · `gan-design`
@@ -506,7 +512,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 ---
 
-*本指南基于 `commands/` 下 42 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
+*本指南基于 `commands/` 下 43 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
 
 ---
 

@@ -391,7 +391,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 运行：`/prp-plan .claude/PRPs/prds/{名称}.prd.md`
 
-该命令将自动选择下一个待办阶段并生成实现计划。
+该命令将自动选择下一个待办阶段并生成实现计划。或 `/prp-run .claude/PRPs/prds/{名称}.prd.md` 一键调度全流程（自动逐 phase 推进直至创建 PR）。
 ```
 
 ---
@@ -400,6 +400,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 PRD 生成之后：
 - 可以使用 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 命令，使用本次生成的 PRD 文档创建实现计划
+- 想全自动推进后续 phase 时：`/prp-run .claude/PRPs/prds/{name}.prd.md`（自动逐 phase 调度 plan→implement→review→fix→commit，直至创建 PR；断点从文件系统推导，可随时中断重跑续接）
 - 可以使用 `/save-session` 跨 session 保留 PRD 上下文
 
 ## 成功标准

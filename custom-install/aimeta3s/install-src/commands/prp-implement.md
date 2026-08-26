@@ -75,7 +75,7 @@ cat "$ARGUMENTS"
 「验证命令 → 集成测试」内的 **运行形态** 为必填勾选项，未勾选视同该小节未填写；
 命令块须与勾选形态严格双向对应——每个已勾选形态至少有一条以该形态标注的命令行（HTTP 服务形态须同时含 dev server 行与测试命令行），命令块中不得残留未勾选形态的命令行，任一不满足同样视同该小节未填写。
 勾选 HTTP 服务形态时，「端口」与「健康检查路径」为必填（「启动等待」可缺省，按 30 处理）——仍为占位符视同该小节未填写。
-「数据库验证」「浏览器验证」为可选小节，不列入校验。
+「数据库验证」「浏览器验证」为可选小节，不列入校验；已填写时由 Phase 4 Level 5/6 执行，缺失时跳过并在报告中记 N/A。
 
 任意一项校验不通过 → 停止，向用户列出缺失或未填写的内容清单：
 
@@ -170,6 +170,22 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 ## Phase 4 — 验证
 
 运行计划中的所有 validation levels。在继续之前修复每个 level 的 issues。
+
+### 证据落盘
+
+本阶段开始时创建验证证据日志：`.claude/PRPs/implement/{plan-name}.validation.log`（`{plan-name}` 从计划文件名推导）。
+
+- 每条验证命令的执行输出必须以**原始转储**追加落盘（`| tee -a`），禁止手工转述、摘要或省略替代——该日志是 /code-review `--prp` 档的核验依据。
+- 每条命令一个条目，格式：
+
+```text
+## [round: implement] cmd: <命令原文>
+## exit: <exit code>
+<命令完整输出——超长时保留首尾各 200 行，中间以「……（截断 N 行）……」标注>
+```
+
+- 同一命令多次重跑（修复后复跑）时，每次执行各占一个条目，保留失败记录与最终通过的那次。
+- Level 4 HTTP 形态的服务器脚手架须整段执行并整体 `| tee -a` 落盘（`set -o pipefail` 已保证 tee 场景下 exit code 保真）。
 
 ### Level 1：静态分析
 
@@ -284,7 +300,35 @@ exit "$TEST_EXIT"
   
 每个形态命令执行后，按第 2 步完成收集核对（HTTP 形态的核对在该次脚手架运行内完成，不另起服务器）。
 
-**检查点**：全部 4 个验证级别通过。零错误。
+### Level 5：数据库验证（如计划适用）
+
+计划「验证命令 → 数据库验证」小节存在且已填写（非占位符）→ 执行其中的命令，输出按「证据落盘」约定 tee -a 落盘；小节不存在 → 跳过本级别，报告中记 N/A。
+
+### Level 6：浏览器验证（如计划适用）
+
+计划「验证命令 → 浏览器验证」小节存在且已填写（非占位符）→ 按下述流程执行；小节不存在 → 跳过本级别，报告中记 N/A。
+
+复用 Level 4 HTTP 形态的服务器脚手架，端口与健康检查取自本小节的「端口」「健康检查路径」配置（健康检查路径为「无」时用 TCP 探活）：
+
+1. 启动计划中的开发服务器命令，等待就绪。
+2. `curl` 采集证据：关键页面（至少入口路由）的 HTTP 状态码与页面 `<title>`，全部 tee -a 落盘（round 标识同上）。
+3. 按脚手架清理逻辑关停服务器。
+
+本级别可自动化的部分到「服务可启动、关键页面可访问」为止；「Feature works as designed」的设计符合性判断无法自动化——报告中固定标注：自动化探活通过，设计符合性需人工确认。
+
+**检查点**：全部验证级别通过（Level 5/6 视计划适用性）。零错误。
+
+### 终态快照
+
+全部级别通过后，向验证证据日志追加当前 git 状态快照——/code-review `--prp` 档据此判定证据是否仍然有效：
+
+```bash
+{
+  echo "## snapshot HEAD: $(git rev-parse HEAD)"
+  echo "## snapshot status:"
+  git status --porcelain
+} >> .claude/PRPs/implement/{plan-name}.validation.log
+```
 
 ---
 
@@ -321,12 +365,16 @@ mkdir -p .claude/PRPs/implement
 
 ## 验证结果
 
-| 级别 | 状态 | 备注 |
-|---|---|---|
-| 静态分析 | [done] 通过 | |
-| 单元测试 | [done] 通过 | 编写了 N 个测试（M 个 red-proven） |
-| 构建 | [done] 通过或 N/A | |
-| 集成测试 | [done] 通过 | 编写了 N 个测试 |
+**验证证据**：`.claude/PRPs/implement/{plan-name}.validation.log`
+
+| 级别 | 状态 | exit | 备注 |
+|---|---|---|---|
+| 静态分析 | [done] 通过 | 0 | |
+| 单元测试 | [done] 通过 | 0 | 编写了 N 个测试（M 个 red-proven） |
+| 构建 | [done] 通过或 N/A | 0 | |
+| 集成测试 | [done] 通过 | 0 | 编写了 N 个测试 |
+| 数据库验证 | [done] 通过或 N/A | 0 | 计划无此小节时 N/A |
+| 浏览器验证 | [done] 探活通过或 N/A | 0 | 设计符合性需人工确认 |
 
 ## 变更文件
 
@@ -389,6 +437,8 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | 单元测试 | [done]（编写了 N 个，M 个 red-proven） |
 | 构建 | [done] |
 | 集成测试 | [done]（编写了 N 个） |
+| 数据库验证 | [done] 或 N/A |
+| 浏览器验证 | [done]（探活）或 N/A |
 | Edge Case 测试 | [done] |
 
 ### 变更文件
@@ -399,6 +449,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 
 ### 产物
 - 报告：`.claude/PRPs/implement/{plan-name}.report.md`
+- 验证证据：`.claude/PRPs/implement/{plan-name}.validation.log`
 - 已归档计划：`.claude/PRPs/plans/completed/{plan-name}.plan.md`
 
 ### PRD 进度（如适用）
@@ -457,6 +508,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 - **TESTS_PASS**：所有测试通过（green），新测试已编写，标注先行验证的测试均有 red 证明
 - **BUILD_PASS**：构建成功
 - **REPORT_CREATED**：实现报告已保存
+- **EVIDENCE_LOGGED**：验证证据日志已落盘（含全部命令条目与终态快照）
 - **PLAN_ARCHIVED**：计划已移至 `completed/`
 
 ---

@@ -55,7 +55,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 自动定位到 PASS 报告 | 停止："最新报告决策为 PASS，无需修复。"并列出 MEDIUM/LOW 计数，提示可选清理 |
 | 显式指定的 PASS 报告 | 询问是否仍处理 MEDIUM/LOW，确认后进入 Phase 3（范围仅 MEDIUM/LOW） |
 
-5. **纯验证失败型 BLOCK**（零 CRITICAL/HIGH 但验证表有失败行）：问题清单以失败验证项为主体，Phase 4 按验证错误修复；`--prp` 核验失败多源于 implement 报告失真 → 不硬修，升级用户（提示回 /prp-implement 补验证或人工核对）。
+5. **纯验证失败型 BLOCK**（零 CRITICAL/HIGH 但验证表有失败行）：问题清单以失败验证项为主体，Phase 4 按验证错误修复。`--prp` 档的验证失败按证据类型分流：**证据过期型**（快照不一致——验证执行后代码有变更，非 implement 之过）→ 走正常修复流程，修复后 Phase 5 复跑刷新证据即可；**证据矛盾型**（日志 exit 非 0 或命令缺失，报告却声称通过——报告失真嫌疑）→ 不硬修，升级用户（提示回 /prp-implement 补验证或人工核对）。
 
 ---
 
@@ -106,7 +106,10 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 通过 / 失败（Tier 1） | 复跑 Tier 1 |
 | 失败（Tier 2） | 复跑该项 |
 | 跳过（默认档） | 保持跳过 |
-| 上游已验证（--prp） | 保持跳过（复审时由 code-review --prp 重新核验） |
+| 证据核验通过（--prp） | 本轮修复未触碰代码（全部为「不修复」处置）→ 保持跳过；触碰了代码 → 执行下方证据刷新 |
+| 无证据 / 证据矛盾 / 证据过期（--prp） | 执行下方证据刷新 |
+
+**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `.claude/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `.claude/PRPs/implement/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix-report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
 
 ---
 
@@ -128,6 +131,8 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 |---|---|---|---|---|
 
 ## 验证结果（复跑）
+
+**证据刷新**：已追加至 `.claude/PRPs/implement/{plan-name}.validation.log`（round: prp-fix <时间戳>） / 未触碰代码，证据保持原轮 / 证据矛盾型升级，未刷新
 
 | 校验项 | 结果 |
 |---|---|

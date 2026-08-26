@@ -310,12 +310,12 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 **阶段 1：{名称}**
 - **目标**：{我们想要实现的目标}
 - **范围**：{Bounded deliverables}
-- **成功标志**：{如何判断已完成}
+- **验收标准**：{如何判断已完成}
 
 **阶段 2：{名称}**
 - **目标**：{我们想要实现的目标}
 - **范围**：{Bounded deliverables}
-- **成功标志**：{如何判断已完成}
+- **验收标准**：{如何判断已完成}
 
 {按需继续补充各阶段...}
 
@@ -344,7 +344,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 ---
 
 *生成时间: {timestamp}*
-*状态: 草稿 - 待验证验证*
+*状态: 草稿 - 待验证*
 ```
 
 ---

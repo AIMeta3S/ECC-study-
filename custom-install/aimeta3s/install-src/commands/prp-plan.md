@@ -449,7 +449,12 @@ mkdir -p .claude/PRPs/plans
 # 启动开发服务器并验证
 [项目特定的开发服务器命令]
 ```
-预期结果：Feature works as designed
+
+配置（必填）：
+- **端口**：[端口号，如 3000]
+- **健康检查路径**：[如 /health；无健康端点则填“无”，缺省用 TCP 探活]
+
+预期结果：Feature works as designed（自动化部分：服务可启动、关键页面可访问，由 /prp-implement Level 6 执行；设计符合性需人工确认）
 
 ---
 

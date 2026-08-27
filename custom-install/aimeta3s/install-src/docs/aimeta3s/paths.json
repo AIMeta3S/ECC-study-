@@ -574,6 +574,17 @@
           "lifecycle": "persistent",
           "trigger": "/prp-push-gogs",
           "cleanup": "无（项目内）"
+        },
+        {
+          "path": "docs/PRPs/runs/<prd-name>-<yyyymmdd-HHMM>.run.md",
+          "resolved": "<cwd>/docs/PRPs/runs/<prd-name>-<yyyymmdd-HHMM>.run.md",
+          "description": "/prp-run 调度运行日志（断点推导/dispatch 摘要/核验证据/STOP 原因的旁路记录，只写不读、best-effort），每次运行新文件",
+          "category": "command",
+          "source": "commands/prp-run",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/prp-run",
+          "cleanup": "无（项目内）"
         }
       ],
       "note": "当前项目工作区；产物落在项目内"

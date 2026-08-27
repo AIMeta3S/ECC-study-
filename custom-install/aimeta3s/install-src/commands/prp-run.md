@@ -14,7 +14,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 ## 核心理念
 
 - **只调度，不干活**：本命令不实现、不审查、不自行修复——每一步派一个独立 subagent 执行对应现有命令（/prp-plan、/prp-implement、/code-review --prp、/prp-fix、/prp-commit、PR 出口 /prp-pr 或 /prp-push-gogs 按 git remote 平台二选一），命令文档本身是过程与产物的唯一权威。本命令不改变这些命令的任何行为。
-- **无状态文件**：进度与断点全部从文件系统推导——PRD「实现阶段」表的状态列、`docs/PRPs/{plans,plans/completed,implement,reviews}/` 的产物存在性、review 文件名内嵌时间戳与决策行。任意时刻重跑 `/prp-run <同一 PRD>` 都从当前真实状态续跑。
+- **无状态文件**：进度与断点全部从文件系统推导——PRD「实现阶段」表的状态列、`docs/PRPs/{plans,plans/completed,implement,reviews}/` 的产物存在性、review 文件名内嵌时间戳与决策行。任意时刻重跑 `/prp-run <同一 PRD>` 都从当前真实状态续跑。（运行日志只写不读、不参与推导，不影响无状态设计，见「运行日志」章节。）
 - **先核验，再采信**：每个 subagent 返回后，必须用文件系统证据交叉核验其自述（产物存在、PRD 状态推进、决策行可解析）；证据与自述矛盾时以证据为准并停止。
 - **串行执行**：PRD「并行」列标注被忽略，phase 严格按序号逐个执行——同一工作区不允许两个 implement 并发。
 
@@ -49,6 +49,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 1. **PRD 存在性 + 「实现阶段」表解析**：读不到表，或表内检索不到 `待开始|进行中|已完成` 任一状态 → 停止（格式漂移，提示对照 /prp-prd 模板表头 `| 序号 | 标识 | 名称 | 描述 | 状态 | 并行 | 依赖 | PRP 计划 |`）。
 2. **git 仓库检查**：`git rev-parse --show-toplevel` 失败 → 停止。
 3. **PR 出口预检**：未给 `--no-pr` 时解析 `git remote get-url origin` 的 host——`github.com` → 执行 `gh auth status`，失败 → 停止并提示 `gh auth login`（避免整条流水线白跑后才在 prp-pr 失败），并记 `pr_cmd = prp-pr`；其他 host（Gogs 等自建服务）→ 记 `pr_cmd = prp-push-gogs`，无需 gh（GHE host 非 github.com 时也会走该出口，按需再扩展）。
+4. **创建运行日志**：非 `--dry-run` 时按「运行日志」章节创建 `docs/PRPs/runs/{prd-name}-<时间戳>.run.md` 并写入头部（best-effort，失败仅警告不停止）。
 
 ### 1.3 断点推导表
 
@@ -85,6 +86,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 ```text
 记号见阶段 1·1.1；dispatch(cmd, args) 按阶段 3 派发协议执行并返回结构化摘要 r；
 STOP(原因) = 停止调度，向用户转述原因与断点，提示「重跑 /prp-run <PRD> 幂等续跑」。
+# 每步 dispatch 前/返回后、每次核验、每次 STOP 与小结均按「运行日志」章节落盘（best-effort）。
 
 phases_done = 0
 while phases_done < max_phases:
@@ -225,7 +227,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | prp-push-gogs 推送失败 / rebase 冲突（Gogs） | 转述返回摘要；解决后重跑（幂等） |
 | `--max-phases` 用尽 | 温和停止：进度 N/M，重跑继续 |
 
-每次 STOP 均输出当前断点（PRD 路径 + 当前 phase + 已完成步骤），用户处理后重跑 `/prp-run <同一 PRD>` 从断点继续。
+每次 STOP 均输出当前断点（PRD 路径 + 当前 phase + 已完成步骤），并写入运行日志 STOP 条目（触发条件 + 断点 + 转述内容，见「运行日志」章节），用户处理后重跑 `/prp-run <同一 PRD>` 从断点继续。
 
 ---
 
@@ -259,6 +261,49 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 - 调度器自身无任何内存状态：被 /clear、会话中断、Ctrl-C 后，重跑 `/prp-run <同一 PRD>` 走阶段 1 推导表，从文件系统断点继续。
 - 幂等性保证：所有「下一步动作」都是推导表的纯函数；已完成的步骤（plan 已建、implement 已归档、review 已 PASS、commit 已落）自动跳过。唯一外部副作用步骤 PR 出口命令重复派发安全：prp-pr 自带「PR 已存在」停止条件；prp-push-gogs 幂等（rebase 无操作或快进、重跑生成新 pr.md）。
 - 用户中途手改 PRD/产物：下次推导以当时文件系统为准；若造成状态与证据矛盾，由 #2a/#4f/无进展守卫拦截而非静默继续。
+
+---
+
+## 运行日志（run log）
+
+调度层信息（断点推导、dispatch 摘要、核验证据、STOP 原因）不会出现在任何命令产物中——为追溯与问题查找，每次运行落盘一份**纯旁路**日志。
+
+### 路径与命名
+
+`docs/PRPs/runs/{prd-name}-<yyyymmdd-HHMM>.run.md`（`{prd-name}` = PRD 文件名去 `.prd.md`）。时间戳与 reviews 同规、内嵌文件名；重跑产生新文件，旧文件保留（与 prs 草稿同惯例）。创建时 `mkdir -p docs/PRPs/runs`。
+
+### 文件结构
+
+头部 + 追加式条目 + 尾部固定锚点 `<!-- run-log:end -->`（Edit 追加锚，始终保持在文件末尾）：
+
+```markdown
+# Run: {prd-name} — {yyyymmdd-HHMM}
+- PRD: <路径> ｜ 参数: <max-phases/no-pr 等> ｜ pr_cmd: <prp-pr | prp-push-gogs>
+- 断点推导: P = phase <标识>；闭环进度 N/M；本轮动作序列: <逐条>
+
+<!-- run-log:end -->
+```
+
+### 写入时机表
+
+| 时机 | 条目 |
+|---|---|
+| 阶段 1 推导完成后（Write 创建） | 上述头部全部字段 |
+| 每次 dispatch 前 | `## [step N] {cmd} {args}` + 时刻（`date +%Y%m%d-%H%M`） |
+| 每次 dispatch 返回后 | subagent 返回摘要**四行原文**（引用块原样，不转述不截断） |
+| 每次核验后 | 核验方法与证据关键行（Glob/Grep/git 输出） |
+| 核验失败 STOP | 「自述 vs 证据」对照表 |
+| 每次 STOP | `## [STOP]` 触发条件 + 断点 + 转述内容 |
+| 每 phase 闭环 | 小结一行表（plan / report / review / commit 哈希） |
+| 收尾 | `## [结束]` phase 完成总表 + PR URL 或 compare URL |
+
+### 写入协议
+
+- **追加用 Edit 工具**：old_string 锚定 `<!-- run-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
+- **best-effort**：日志写入失败 → 向用户输出一行警告（含原因）后继续调度；不作为 STOP 条件、不作为核验项、不重试。
+- **只写不读**：断点推导、核验、任何决策均不读取 run 文件——它是给人读的旁路记录，不是事实源（维持无状态设计）。
+- `--dry-run` 不落盘（零副作用模式）。
+- run 文件位于 `docs/PRPs/**` 产物集内，随 prp-commit 一并提交、被后续 code-review 自动豁免；目标项目不想入库可自行 .gitignore。
 
 ---
 

@@ -36,7 +36,7 @@
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
 | `prp-push-gogs` | Gogs 等自建服务收尾出口：推送分支、生成 PR 标题/描述落盘、给出网页建 PR 的 compare 指引（PR 网页手动创建） | base-branch（默认 origin/HEAD）+ 可选 `--plan` | PR 草稿（`docs/PRPs/prs/{plan-name\|branch-name}-<时间戳>.pr.md`）+ 已推送远端分支 |
-| `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后按 git remote 自适应 PR 出口——GitHub 创建 PR，Gogs 等自建服务推送 + 网页建 PR 指引（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR / PR 草稿 |
+| `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后按 git remote 自适应 PR 出口——GitHub 创建 PR，Gogs 等自建服务推送 + 网页建 PR 指引（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR / PR 草稿 + 运行日志（`docs/PRPs/runs/`，含断点推导/dispatch 摘要/核验证据/STOP 原因） |
 
 #### 精简族
 | 命令 | 一句话用途 | 输入 | 输出 |

@@ -207,11 +207,11 @@ Define the implementation approach:
 
 ## 阶段 6 — GENERATE
 
-使用下方模板编写完整的计划文档。保存到 `.claude/PRPs/plans/{kebab-case-feature-name}.plan.md`。
+使用下方模板编写完整的计划文档。保存到 `docs/PRPs/plans/{kebab-case-feature-name}.plan.md`。
 
 如果目录不存在则创建：
 ```bash
-mkdir -p .claude/PRPs/plans
+mkdir -p docs/PRPs/plans
 ```
 
 ### 计划模板
@@ -494,7 +494,7 @@ mkdir -p .claude/PRPs/plans
 
 将生成的计划写入：
 ```
-.claude/PRPs/plans/{kebab-case-feature-name}.plan.md
+docs/PRPs/plans/{kebab-case-feature-name}.plan.md
 ```
 
 ### 更新 PRD（如果输入是 PRD）
@@ -508,7 +508,7 @@ mkdir -p .claude/PRPs/plans
 ```markdown
 ## 计划已创建
 
-- **文件** ：.claude/PRPs/plans/{kebab-case-feature-name}.plan.md
+- **文件** ：docs/PRPs/plans/{kebab-case-feature-name}.plan.md
 - **源 PRD** : [路径 或 “N/A”]
 - **阶段** ： [阶段名称 或 “独立”]
 - **复杂度** ： [级别]
@@ -520,7 +520,7 @@ mkdir -p .claude/PRPs/plans
 
 ## 下一步
 
-运行 `/prp-implement .claude/PRPs/plans/{kebab-case-feature-name}.plan.md` 来执行此计划。
+运行 `/prp-implement docs/PRPs/plans/{kebab-case-feature-name}.plan.md` 来执行此计划。
 
 [「风险」表含实现前跟进项（如测试基建补建、既有用例定位失败）时] 先决策跟进项的处理时机再执行——计划中的集成测试命令按基建补全后的应然形态填写，未补建即运行会在 Level 4 失败。
 

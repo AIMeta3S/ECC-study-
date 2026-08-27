@@ -74,9 +74,9 @@ git diff origin/<base>..HEAD --name-only
 ### PRP Artifacts
 
 检查相关的 PRP artifacts：
-- `.claude/PRPs/implement/` — 实现报告
-- `.claude/PRPs/plans/` — 已执行的 plans
-- `.claude/PRPs/prds/` — 相关的 PRDs
+- `docs/PRPs/implement/` — 实现报告
+- `docs/PRPs/plans/` — 已执行的 plans
+- `docs/PRPs/prds/` — 相关的 PRDs
 
 如果存在，在 PR body 中引用它们。
 

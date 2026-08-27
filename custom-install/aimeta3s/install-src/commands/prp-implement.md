@@ -46,7 +46,7 @@ cat package.json | grep -A 20 '"scripts"'
 
 ## Phase 1 — 加载
 
-`$ARGUMENTS` 为计划文件的完整路径（<plan-path>）（例如：`.claude/PRPs/plans/{plan-name}.plan.md`）。读取计划文件：
+`$ARGUMENTS` 为计划文件的完整路径（<plan-path>）（例如：`docs/PRPs/plans/{plan-name}.plan.md`）。读取计划文件：
 
 ```bash
 cat "$ARGUMENTS"
@@ -173,7 +173,7 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 ### 证据落盘
 
-本阶段开始时创建验证证据日志：`.claude/PRPs/implement/{plan-name}.validation.log`（`{plan-name}` 从计划文件名推导）。
+本阶段开始时创建验证证据日志：`docs/PRPs/implement/{plan-name}.validation.log`（`{plan-name}` 从计划文件名推导）。
 
 - 每条验证命令的执行输出必须以**原始转储**追加落盘（`| tee -a`），禁止手工转述、摘要或省略替代——该日志是 /code-review `--prp` 档的核验依据。
 - 每条命令一个条目，格式：
@@ -327,7 +327,7 @@ exit "$TEST_EXIT"
   echo "## snapshot HEAD: $(git rev-parse HEAD)"
   echo "## snapshot status:"
   git status --porcelain
-} >> .claude/PRPs/implement/{plan-name}.validation.log
+} >> docs/PRPs/implement/{plan-name}.validation.log
 ```
 
 ---
@@ -337,10 +337,10 @@ exit "$TEST_EXIT"
 ### 创建实现报告
 
 ```bash
-mkdir -p .claude/PRPs/implement
+mkdir -p docs/PRPs/implement
 ```
 
-将报告写入 `.claude/PRPs/implement/{plan-name}.report.md`：
+将报告写入 `docs/PRPs/implement/{plan-name}.report.md`：
 
 ```markdown
 # 实现报告：[功能名称]
@@ -365,7 +365,7 @@ mkdir -p .claude/PRPs/implement
 
 ## 验证结果
 
-**验证证据**：`.claude/PRPs/implement/{plan-name}.validation.log`
+**验证证据**：`docs/PRPs/implement/{plan-name}.validation.log`
 
 | 级别 | 状态 | exit | 备注 |
 |---|---|---|---|
@@ -396,21 +396,21 @@ mkdir -p .claude/PRPs/implement
 | `path/to/test` | N 个测试 | [覆盖范围] |
 
 ## 后续步骤
-- 通过 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更
+- 通过 `/code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更
 ```
 
 ### 更新 PRD（如适用）
 
 如果本次实现针对 PRD 的某个 phase：
 1. 将该 phase 的状态从 `进行中` 更新为 `已完成`
-2. 将该 phase 的`PRP 计划`从 `.claude/PRPs/plans/{plan-name}.plan.md` 更新为 `.claude/PRPs/plans/completed/{plan-name}.plan.md`
+2. 将该 phase 的`PRP 计划`从 `docs/PRPs/plans/{plan-name}.plan.md` 更新为 `docs/PRPs/plans/completed/{plan-name}.plan.md`
 3. 添加报告路径作为引用
 
 ### 归档计划
 
 ```bash
-mkdir -p .claude/PRPs/plans/completed
-mv "$ARGUMENTS" .claude/PRPs/plans/completed/
+mkdir -p docs/PRPs/plans/completed
+mv "$ARGUMENTS" docs/PRPs/plans/completed/
 ```
 
 **检查点**：报告已创建。PRD 已更新。计划已归档。
@@ -448,9 +448,9 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 [摘要，或填 "None — 完全按计划实现"]
 
 ### 产物
-- 报告：`.claude/PRPs/implement/{plan-name}.report.md`
-- 验证证据：`.claude/PRPs/implement/{plan-name}.validation.log`
-- 已归档计划：`.claude/PRPs/plans/completed/{plan-name}.plan.md`
+- 报告：`docs/PRPs/implement/{plan-name}.report.md`
+- 验证证据：`docs/PRPs/implement/{plan-name}.validation.log`
+- 已归档计划：`docs/PRPs/plans/completed/{plan-name}.plan.md`
 
 ### PRD 进度（如适用）
 | Phase | 状态 |
@@ -460,7 +460,7 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 | ... | ... |
 
 ## 下一步
-运行 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；
+运行 `/code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；
 
 ```
 
@@ -515,4 +515,4 @@ mv "$ARGUMENTS" .claude/PRPs/plans/completed/
 
 ## 后续步骤
 
-- 运行 `/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；
+- 运行 `/code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md` 审查本 phase 变更；

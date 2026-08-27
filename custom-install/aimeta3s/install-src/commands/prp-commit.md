@@ -23,7 +23,7 @@ git status --short
 
 ### 审查门禁检查（软门禁）
 
-探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录）下的 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 .review.md>-fix.report.md`，见 /code-review 命名契约）判断：
+探测 `docs/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录）下的 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 .review.md>-fix.report.md`，见 /code-review 命名契约）判断：
 
 | 状态 | 动作 |
 |---|---|

@@ -25,9 +25,9 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 | 输入 | 操作 |
 |---|---|
-| 显式路径 | 校验文件存在后使用（限 `.claude/PRPs/reviews/*.review.md`，不处理其他目录报告） |
+| 显式路径 | 校验文件存在后使用（限 `docs/PRPs/reviews/*.review.md`，不处理其他目录报告） |
 | 留空 · 快路径 | 本会话刚运行过 /code-review → 直接使用其刚落盘的报告路径（终端输出中可见），跳过目录扫描 |
-| 留空 · 扫描 | 探测 `.claude/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录），收集所有 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新（不依赖 mtime） |
+| 留空 · 扫描 | 探测 `docs/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录），收集所有 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新（不依赖 mtime） |
 
 目录下无报告 → 停止："未找到审查报告。请先运行 /code-review --prp <report-path>。"
 
@@ -45,7 +45,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 |---|---|
 | ① | 报告「implement 结果核验」节的实现报告路径中提取 `{plan-name}` |
 | ② | 当前分支名 `feat/{plan-name}` 剥离前缀 |
-| ③ | `.claude/PRPs/implement/` 下最新 `*.report.md` 的文件名推导 |
+| ③ | `docs/PRPs/implement/` 下最新 `*.report.md` 的文件名推导 |
 | ④ | 均失败 → 用源报告时间戳命名，后续步骤降级为提示通用 `/code-review`（不带 `--prp`） |
 
 4. **PASS 短路**：
@@ -109,7 +109,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 证据核验通过（--prp） | 本轮修复未触碰代码（全部为「不修复」处置）→ 保持跳过；触碰了代码 → 执行下方证据刷新 |
 | 无证据 / 证据矛盾 / 证据过期（--prp） | 执行下方证据刷新 |
 
-**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `.claude/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `.claude/PRPs/implement/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix.report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
+**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `docs/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `docs/PRPs/implement/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix.report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
 
 ---
 
@@ -132,7 +132,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## 验证结果（复跑）
 
-**证据刷新**：已追加至 `.claude/PRPs/implement/{plan-name}.validation.log`（round: prp-fix <时间戳>） / 未触碰代码，证据保持原轮 / 证据矛盾型升级，未刷新
+**证据刷新**：已追加至 `docs/PRPs/implement/{plan-name}.validation.log`（round: prp-fix <时间戳>） / 未触碰代码，证据保持原轮 / 证据矛盾型升级，未刷新
 
 | 校验项 | 结果 |
 |---|---|
@@ -147,7 +147,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## 后续步骤
 
-- [ ] 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审
+- [ ] 重跑 /code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审
 - [ ] 复审 PASS 后 /prp-commit 提交
 ```
 
@@ -168,7 +168,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 产物：<fix.report 路径>
 
 后续步骤：
-  - 重跑 /code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit；建议 /clear 后新会话执行，避免本轮修复的上下文锚定复审判断
+  - 重跑 /code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit；建议 /clear 后新会话执行，避免本轮修复的上下文锚定复审判断
   - 复审 PASS → /prp-commit 提交
   - 连续 2 轮修复后仍 BLOCK COMMIT → 建议人工介入排查
 ```
@@ -200,4 +200,4 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 你的输入 | 执行的操作 |
 |---|---|
 | `/prp-fix` | 定位最新审查报告，按清单修复并核销 |
-| `/prp-fix .claude/PRPs/reviews/{plan-name}-20260818-1030.review.md` | 处理指定报告 |
+| `/prp-fix docs/PRPs/reviews/{plan-name}-20260818-1030.review.md` | 处理指定报告 |

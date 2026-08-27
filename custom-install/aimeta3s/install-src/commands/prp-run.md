@@ -14,7 +14,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 ## 核心理念
 
 - **只调度，不干活**：本命令不实现、不审查、不自行修复——每一步派一个独立 subagent 执行对应现有命令（/prp-plan、/prp-implement、/code-review --prp、/prp-fix、/prp-commit、/prp-pr），命令文档本身是过程与产物的唯一权威。本命令不改变这 7 个命令的任何行为。
-- **无状态文件**：进度与断点全部从文件系统推导——PRD「实现阶段」表的状态列、`.claude/PRPs/{plans,plans/completed,implement,reviews}/` 的产物存在性、review 文件名内嵌时间戳与决策行。任意时刻重跑 `/prp-run <同一 PRD>` 都从当前真实状态续跑。
+- **无状态文件**：进度与断点全部从文件系统推导——PRD「实现阶段」表的状态列、`docs/PRPs/{plans,plans/completed,implement,reviews}/` 的产物存在性、review 文件名内嵌时间戳与决策行。任意时刻重跑 `/prp-run <同一 PRD>` 都从当前真实状态续跑。
 - **先核验，再采信**：每个 subagent 返回后，必须用文件系统证据交叉核验其自述（产物存在、PRD 状态推进、决策行可解析）；证据与自述矛盾时以证据为准并停止。
 - **串行执行**：PRD「并行」列标注被忽略，phase 严格按序号逐个执行——同一工作区不允许两个 implement 并发。
 
@@ -25,7 +25,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 | 输入 | 含义 |
 |---|---|
 | `<PRD路径>`（以 `.prd.md` 结尾） | 必需。调度对象 PRD；文件不存在 → 停止 |
-| 留空 | 若 `.claude/PRPs/prds/` 下恰有 1 个 `.prd.md` 则使用之；0 个或多个 → 停止并要求显式给路径（PRD 文件名无时间戳，无法可靠自动取最新） |
+| 留空 | 若 `docs/PRPs/prds/` 下恰有 1 个 `.prd.md` 则使用之；0 个或多个 → 停止并要求显式给路径（PRD 文件名无时间戳，无法可靠自动取最新） |
 | `--max-phases N` | 可选，默认无上限。最多调度 N 个 phase 后温和停止（规模/成本护栏） |
 | `--dry-run` | 只做阶段 1 断点推导，打印「将从断点继续执行的完整动作序列」后结束，不派任何 subagent |
 | `--no-pr` | 全部 phase 完成后不派 /prp-pr（止步于最后一个 commit） |
@@ -39,7 +39,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 - `闭环(F)` = phase F 的完整收尾，需同时满足：F.状态 = `已完成` **且** `reviews(F.plan-name)` 非空且最新决策 = PASS **且** `git status --porcelain` 为空（变更已提交）。
 - `P` = PRD「实现阶段」表中第一个 `闭环` 未完成的 phase（全部闭环完成 → P 不存在）。P 有三种情形：待开始、进行中、或「已完成但审查/提交未收尾」——第三种正是「implement 已把状态写为已完成、后续 review/commit 前中断重跑」的正常断点，必须被接住而非跳过。
 - `{plan-name}` = P 的「PRP 计划」列路径去掉目录与 `.plan.md` 后缀。
-- `reviews(name)` = `.claude/PRPs/reviews/` 下匹配 `{name}-*.review.md` 的报告，按文件名内嵌时间戳 `yyyymmdd-HHMM` 排序（与 /prp-fix Phase 1 同规，不依赖 mtime）。
+- `reviews(name)` = `docs/PRPs/reviews/` 下匹配 `{name}-*.review.md` 的报告，按文件名内嵌时间戳 `yyyymmdd-HHMM` 排序（与 /prp-fix Phase 1 同规，不依赖 mtime）。
 - `newest_review(name)` = 其中最新一份；`decision(r)` = 从报告检索决策行 `**决策**: PASS | BLOCK COMMIT` 的结果（容忍冒号后空白差异）。
 - `block_run(name)` = `reviews(name)` 从最新往前数，末尾连续 `BLOCK COMMIT` 的个数（遇到 PASS 或无法解析即停）。
 - `fix_report(r)` = 与 r 同目录的 `<r 文件名去 .review.md>-fix.report.md`。
@@ -106,7 +106,7 @@ while phases_done < max_phases:
         if r.状态 == 需人工: STOP(r.需用户决策)          # 含 main 脏工作区 STOP
         if r.状态 == 失败:   STOP(r 摘要)
         核验B（见阶段 4）；失败 → STOP
-    completed_plan = .claude/PRPs/plans/completed/{name}.plan.md
+    completed_plan = docs/PRPs/plans/completed/{name}.plan.md
 
     # —— C. 审查与修复循环（#3/#4x，上限由 block_run 守卫）——
     loop:
@@ -272,8 +272,8 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 
 | 你的输入 | 执行的操作 |
 |---|---|
-| `/prp-run .claude/PRPs/prds/user-export.prd.md` | 断点推导后全自动跑到创建 PR |
-| `/prp-run .claude/PRPs/prds/user-export.prd.md --dry-run` | 只打印断点与将执行的动作序列 |
+| `/prp-run docs/PRPs/prds/user-export.prd.md` | 断点推导后全自动跑到创建 PR |
+| `/prp-run docs/PRPs/prds/user-export.prd.md --dry-run` | 只打印断点与将执行的动作序列 |
 | `/prp-run`（prds/ 下仅一个 PRD） | 自动定位该 PRD 并继续 |
 | `/prp-run <PRD> --max-phases 1` | 只推进 1 个 phase 即温和停止 |
 | `/prp-run <PRD> --no-pr` | 跑完所有 phase 的 commit，不创建 PR |

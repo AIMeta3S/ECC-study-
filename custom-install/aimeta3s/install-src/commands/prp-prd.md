@@ -187,9 +187,9 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ## 阶段 7：GENERATE - Write PRD
 
-**输出路径**：`.claude/PRPs/prds/{kebab-case-name}.prd.md`
+**输出路径**：`docs/PRPs/prds/{kebab-case-name}.prd.md`
 
-如需要则创建目录：`mkdir -p .claude/PRPs/prds`
+如需要则创建目录：`mkdir -p docs/PRPs/prds`
 
 ### PRD 模板
 
@@ -356,7 +356,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 ```markdown
 ## PRD 已生成
 
-**文件**：`.claude/PRPs/prds/{名称}.prd.md`
+**文件**：`docs/PRPs/prds/{名称}.prd.md`
 
 ### 摘要
 
@@ -389,9 +389,9 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 
 ### 开始实现
 
-运行：`/prp-plan .claude/PRPs/prds/{名称}.prd.md`
+运行：`/prp-plan docs/PRPs/prds/{名称}.prd.md`
 
-该命令将自动选择下一个待办阶段并生成实现计划。或 `/prp-run .claude/PRPs/prds/{名称}.prd.md` 一键调度全流程（自动逐 phase 推进直至创建 PR）。
+该命令将自动选择下一个待办阶段并生成实现计划。或 `/prp-run docs/PRPs/prds/{名称}.prd.md` 一键调度全流程（自动逐 phase 推进直至创建 PR）。
 ```
 
 ---
@@ -399,8 +399,8 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 ## 后续步骤
 
 PRD 生成之后：
-- 可以使用 `/prp-plan .claude/PRPs/prds/{name}.prd.md` 命令，使用本次生成的 PRD 文档创建实现计划
-- 想全自动推进后续 phase 时：`/prp-run .claude/PRPs/prds/{name}.prd.md`（自动逐 phase 调度 plan→implement→review→fix→commit，直至创建 PR；断点从文件系统推导，可随时中断重跑续接）
+- 可以使用 `/prp-plan docs/PRPs/prds/{name}.prd.md` 命令，使用本次生成的 PRD 文档创建实现计划
+- 想全自动推进后续 phase 时：`/prp-run docs/PRPs/prds/{name}.prd.md`（自动逐 phase 调度 plan→implement→review→fix→commit，直至创建 PR；断点从文件系统推导，可随时中断重跑续接）
 - 可以使用 `/save-session` 跨 session 保留 PRD 上下文
 
 ## 成功标准

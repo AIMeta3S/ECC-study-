@@ -189,7 +189,7 @@ AI：
 
 > **需要先明确需求？** 使用 `/plan-prd` 在 `.claude/prds/{name}.prd.md` 生成一份精简 PRD。
 >
-> **需要旧版 PRP 流程？** 使用 `/prp-plan` 进行深度 PRP 规划并生成 `.claude/PRPs/` artifact。使用 `/prp-implement` 以严格的验证循环执行这些计划。
+> **需要旧版 PRP 流程？** 使用 `/prp-plan` 进行深度 PRP 规划并生成 `docs/PRPs/` artifact。使用 `/prp-implement` 以严格的验证循环执行这些计划。
 
 ## 可选 Planner Agent
 

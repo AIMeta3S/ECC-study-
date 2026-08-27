@@ -18,7 +18,7 @@ argument-hint: [--pr <number|url> | --prp <plan-path> | --full | 空 进行本�
 | `--pr <number\|url>`、裸 PR number 或 PR URL | PR 审核模式 | Tier 1 + Tier 2 |
 | 空 | 本地审查模式 | 仅 Tier 1 |
 | `--full` | 本地审查模式 | Tier 1 + Tier 2 |
-| `--prp <plan-path>`（PRP 计划完整路径，例如：`.claude/PRPs/plans/completed/{plan-name}.plan.md`） | 本地审查模式 | Tier 1 + implement 结果核验 |
+| `--prp <plan-path>`（PRP 计划完整路径，例如：`docs/PRPs/plans/completed/{plan-name}.plan.md`） | 本地审查模式 | Tier 1 + implement 结果核验 |
 
 裸 number/URL 保留兼容。`--full` 与 `--prp` 同给时以 `--prp` 为准（核验不足可复跑 `--full`）。
 
@@ -100,7 +100,7 @@ git status --porcelain
 | 集合 | 路径规则 | 处理 |
 |---|---|---|
 | **审查集** | 其余全部变更（含 untracked 新建文件） | 进入 Phase 2 审查、列入「已审查文件」 |
-| **产物集** | `.claude/PRPs/**`、`.claude/prds/`、`.claude/plans/`、`.claude/reviews/**` | 排除：不读取、不进入 Phase 2、不列入「已审查文件」；仅在报告「概括」中记数量（如"3 个流程产物未纳入审查"） |
+| **产物集** | `docs/PRPs/**`、`.claude/prds/`、`.claude/plans/`、`.claude/reviews/**` | 排除：不读取、不进入 Phase 2、不列入「已审查文件」；仅在报告「概括」中记数量（如"3 个流程产物未纳入审查"） |
 
 分流必须黑名单式（仅剔除产物路径），不得改用计划「Files to Change」白名单——核验 1.3 依赖变更全集发现计划外变更（越界）。`--prp` 档经 `<plan-path>` 显式读取的计划/实现报告/证据日志属核验环节的指定输入，不受本分流影响。
 
@@ -163,7 +163,7 @@ git status --porcelain
   - 测试策略小节注明「无变化——复用既有单元/集成测试」→ 该层级视为已由既有用例覆盖，不因「无新增」记缺失；但在代码库中定位不到对应既有用例文件 → 该声明无效，仍记覆盖缺失
   - 源码文件有实质变更，单元与集成两个层级均无测试覆盖且无排除理由 → 记为覆盖缺失
 
-2. **核验验证命令执行结果**（依赖：计划文件的「验证命令」小节——含 静态分析 / 单元测试 / 集成测试 小节，可选 数据库验证 / 浏览器验证 小节）：根据 `<plan-path>` 推导验证证据日志路径——提取 `{plan-name}` → `.claude/PRPs/implement/{plan-name}.validation.log`（与实现报告路径的推导同源，均从 `<plan-path>` 出发）。读取证据日志，对**最后一轮**条目核验五个判定：
+2. **核验验证命令执行结果**（依赖：计划文件的「验证命令」小节——含 静态分析 / 单元测试 / 集成测试 小节，可选 数据库验证 / 浏览器验证 小节）：根据 `<plan-path>` 推导验证证据日志路径——提取 `{plan-name}` → `docs/PRPs/implement/{plan-name}.validation.log`（与实现报告路径的推导同源，均从 `<plan-path>` 出发）。读取证据日志，对**最后一轮**条目核验五个判定：
 
    - **证据存在**：日志文件存在且含至少一轮完整条目（每条验证命令一个 `cmd:` 条目 + 轮末快照）。不存在 → 无法核验，记 HIGH 问题。
    - **命令齐全**：计划「验证命令」中实际存在的每个小节（含可选小节），其每条命令在日志最后一轮均有对应 `cmd:` 条目（命令原文或等价形式）。缺失 → 记 HIGH 问题，列出缺失命令。计划中标注「不适用——无接缝变更」的小节除外。
@@ -173,7 +173,7 @@ git status --porcelain
 
   > 静态分析小节照常纳入上述证据核对（一致性检查），但该小节的**决策以 Tier 1 重跑实测为准**——不因报告或日志中的声明放行。
 
-3. **评判偏差合理性并过滤**（依据：计划文件 + 真实变更 + 实现报告）：根据 `<plan-path>` 推导实现报告路径——提取 `{plan-name}` → `.claude/PRPs/implement/{plan-name}.report.md`，读取实现报告「与计划的偏差」节，逐条评判每个登记的偏差：
+3. **评判偏差合理性并过滤**（依据：计划文件 + 真实变更 + 实现报告）：根据 `<plan-path>` 推导实现报告路径——提取 `{plan-name}` → `docs/PRPs/implement/{plan-name}.report.md`，读取实现报告「与计划的偏差」节，逐条评判每个登记的偏差：
 
    - **合理**：偏差理由经对照计划（目标、验收标准、测试策略）与真实变更核实成立，且不损害计划目标、验收标准、测试覆盖（例：计划指定的文件/接口在代码库中已变更为等价形态，实现随之适配）。
    - **质疑**：无理由、理由与真实变更不符、损害计划目标/验收标准、削减测试覆盖或跳过任务。
@@ -206,7 +206,7 @@ git status --porcelain
 
 ### Phase 5 — 报告落盘
 
-按档位落盘：`--prp` 档在 `.claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 创建审查产物（`{plan-name}` 提取自 `<plan-path>`，同 Phase 3 规则）；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>.review.md` 创建。
+按档位落盘：`--prp` 档在 `docs/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 创建审查产物（`{plan-name}` 提取自 `<plan-path>`，同 Phase 3 规则）；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>.review.md` 创建。
 
 `--prp` 档报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 .review.md>-fix.report.md`，本报告自身不会被 /prp-fix 修改；默认 / `--full` 档报告（`.claude/reviews/`）不在 /prp-fix 服务范围内。报告模板：
 
@@ -239,8 +239,8 @@ git status --porcelain
 ## implement 结果核验（仅 `--prp` 档写入本节）
 
 **计划文件**：`<plan-path>`
-**实现报告**：`.claude/PRPs/implement/{plan-name}.report.md`
-**验证证据**：`.claude/PRPs/implement/{plan-name}.validation.log`
+**实现报告**：`docs/PRPs/implement/{plan-name}.report.md`
+**验证证据**：`docs/PRPs/implement/{plan-name}.validation.log`
 
 | 核验项 | 结论 | 备注 |
 |---|---|---|
@@ -290,11 +290,11 @@ git status --porcelain
 验证：<pass_count>/<total_count> 项通过（档位：Tier 1 / Tier 1+2 / Tier 1+implement 核验）
 
 产物：
-  审查：.claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>.review.md（默认 / --full）
+  审查：docs/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md（--prp 档） / .claude/reviews/local-<yyyymmdd-HHMM>.review.md（默认 / --full）
 
 后续步骤：
   - PASS → /prp-commit 提交变更
-  - BLOCK COMMIT（--prp 档）→ 运行 `/prp-fix .claude/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 按报告问题清单修复并核销，随后重新运行 /code-review --prp <plan-path>
+  - BLOCK COMMIT（--prp 档）→ 运行 `/prp-fix docs/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 按报告问题清单修复并核销，随后重新运行 /code-review --prp <plan-path>
   - BLOCK COMMIT（默认 / --full 档）→ 按报告问题清单，修复变更，随后重新运行 `/code-review` 或 `/code-review  --full`
 
 ```
@@ -327,7 +327,7 @@ gh pr diff <NUMBER>
 构建审查上下文：
 
 1. **项目规则** —— 阅读 `CLAUDE.md`、`.claude/docs/` 以及任何 contributing guidelines
-2. **规划产物** —— 检查 `.claude/prds/`、`.claude/plans/`、`.claude/reviews/` 以及遗留的 `.claude/PRPs/{prds,plans,reports,reviews}/`，以获取与此 PR 相关的上下文——仅用于理解 PR 意图与背景；其中的结论（发现清单、误报判定、偏差豁免）不得作为本轮发现的裁决依据或豁免理由
+2. **规划产物** —— 检查 `.claude/prds/`、`.claude/plans/`、`.claude/reviews/`、`docs/PRPs/{prds,plans,implement,reviews}/` 以及遗留的 `.claude/PRPs/{prds,plans,reports,reviews}/`，以获取与此 PR 相关的上下文——仅用于理解 PR 意图与背景；其中的结论（发现清单、误报判定、偏差豁免）不得作为本轮发现的裁决依据或豁免理由
 3. **PR 意图** —— 解析 PR 描述，了解目标、相关问题和测试计划
 4. **变更文件** —— 列出所有修改的文件，并按类型分类（源码、测试、配置、文档）
 

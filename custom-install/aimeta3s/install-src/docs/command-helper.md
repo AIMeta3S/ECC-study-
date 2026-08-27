@@ -19,8 +19,8 @@
 ### 规划与实施类
 
 /prp-prd 功能/创意描述
-/prp-plan .claude/PRPs/prds/{name}.prd.md
-/prp-implement .claude/PRPs/plans/{name}.plan.md
+/prp-plan docs/PRPs/prds/{name}.prd.md
+/prp-implement docs/PRPs/plans/{name}.plan.md
 /prp-fix [审查报告路径]（留空自动定位最新）
 /prp-commit 提交内容描述
 /prp-pr base-branch（默认 main）
@@ -28,10 +28,10 @@
 #### PRP 族
 | 命令 | 一句话用途 | 输入 | 输出 |
 |---|---|---|---|
-| `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） |
-| `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`.claude/PRPs/prds/{name}.prd.md`） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） |
-| `prp-implement` | 按计划落地，每改即验，跑 4 级验证（静态分析/单元测试/构建/集成测试） | 计划文件（`.claude/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`.claude/PRPs/implement/{plan-name}.report.md`，计划完成后归档到 `plans/completed/`） |
-| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `.claude/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix.report.md`） |
+| `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`docs/PRPs/prds/{name}.prd.md`） |
+| `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`docs/PRPs/prds/{name}.prd.md`） | 计划文件（`docs/PRPs/plans/{name}.plan.md`） |
+| `prp-implement` | 按计划落地，每改即验，跑 4 级验证（静态分析/单元测试/构建/集成测试） | 计划文件（`docs/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`docs/PRPs/implement/{plan-name}.report.md`，计划完成后归档到 `plans/completed/`） |
+| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `docs/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix.report.md`） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
 | `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后创建 PR（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR |
@@ -131,10 +131,10 @@ flowchart TD
 
 - **流水线各命令示例**：
 /prp-prd 功能/创意描述
-/prp-run .claude/PRPs/prds/{name}.prd.md（可选：全自动调度整条流水线，含 --max-phases / --dry-run / --no-pr 护栏）
-/prp-plan .claude/PRPs/prds/{name}.prd.md
-/prp-implement .claude/PRPs/plans/{name}.plan.md
-/code-review --prp .claude/PRPs/plans/completed/{plan-name}.plan.md
+/prp-run docs/PRPs/prds/{name}.prd.md（可选：全自动调度整条流水线，含 --max-phases / --dry-run / --no-pr 护栏）
+/prp-plan docs/PRPs/prds/{name}.prd.md
+/prp-implement docs/PRPs/plans/{name}.plan.md
+/code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md
 /prp-fix [审查报告路径]（留空自动定位最新；BLOCK COMMIT 后进入，PASS 后跳过）
 /prp-commit [提交内容的描述]
 /prp-pr base-branch（默认 main）
@@ -282,8 +282,8 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 | 子场景 | 推荐命令 | 产物 |
 |---|---|---|
 | 只定 what/why，4 问框定 | `/plan-prd` | `.claude/prds/{name}.prd.md` |
-| 深度 8 阶段 + 实施阶段表 | `/prp-prd` | `.claude/PRPs/prds/{name}.prd.md` |
-| 基于已有 PRD 出实施计划 | `/plan <prd>` 或 `/prp-plan <prd>` | `.claude/plans/` 或 `.claude/PRPs/plans/` |
+| 深度 8 阶段 + 实施阶段表 | `/prp-prd` | `docs/PRPs/prds/{name}.prd.md` |
+| 基于已有 PRD 出实施计划 | `/plan <prd>` 或 `/prp-plan <prd>` | `.claude/plans/` 或 `docs/PRPs/plans/` |
 
 #### 场景 B：已有一份设计文档/PRD，要落地成代码
 
@@ -294,7 +294,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 |---|---|
 | 设计文档 → 可运行 MVP 垂直切片（端到端） | `/orch-build-mvp` |
 | PRD → 分步实施计划（精简） | `/plan .claude/prds/{name}.prd.md` |
-| PRD → 深度计划（多阶段） | `/prp-plan .claude/PRPs/prds/{name}.prd.md` |
+| PRD → 深度计划（多阶段） | `/prp-plan docs/PRPs/prds/{name}.prd.md` |
 
 ### 3.2 实现阶段
 
@@ -365,7 +365,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 | 阶段 | 推荐命令 | 说明 |
 |---|---|---|
 | 暂存 + 提交 | `/prp-commit` | 自然语言描述要提交什么（"与认证相关的文件"/"除了测试"等） |
-| 发 PR | `/pr` 或 `/prp-pr` | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `.claude/PRPs/{prds,plans,implement}/` |
+| 发 PR | `/pr` 或 `/prp-pr` | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `docs/PRPs/{prds,plans,implement}/` |
 | PR 审查 | `/code-review <PR号>` | 两命令的"下一步"都指向 code-review |
 
 > **先 commit 再 pr**：`/pr` 与 `/prp-pr` 都要求工作区干净且有领先 commit；工作区脏时 `/prp-pr` 会反向提示"先用 `/prp-commit` 提交"。

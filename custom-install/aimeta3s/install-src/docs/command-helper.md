@@ -1,8 +1,8 @@
-<!-- aimeta3s-doc: command-helper | version: 3 | updated: 2026-08-22 | source: commands/*.md（精确路径见 manifest.json） -->
+<!-- aimeta3s-doc: command-helper | version: 3 | updated: 2026-08-28 | source: commands/*.md（精确路径见 manifest.json） -->
 
 # aimeta3s 命令使用建议
 
-本指南面向 `commands/` 下的 **43 个命令**。这些命令数量多、族系复杂，单看每个命令文件难以判断"我这个任务到底该用哪条"。本文档把视角从「按命令查」翻转为「按场景用」：
+本指南面向 `commands/` 下的 **44 个命令**。这些命令数量多、族系复杂，单看每个命令文件难以判断"我这个任务到底该用哪条"。本文档把视角从「按命令查」翻转为「按场景用」：
 
 1. 先从命令之间的串联关系抽象出 **9 条流水线**；
 2. 再把常见开发场景直接映射到流水线；
@@ -14,7 +14,7 @@
 
 ## 一、命令总览速查表
 
-按族归类的 43 个命令，每个一句话用途；带 commit 前缀的标注前缀。
+按族归类的 44 个命令，每个一句话用途；带 commit 前缀的标注前缀。
 
 ### 规划与实施类
 
@@ -24,6 +24,7 @@
 /prp-fix [审查报告路径]（留空自动定位最新）
 /prp-commit 提交内容描述
 /prp-pr base-branch（默认 main）
+/prp-push-gogs [base-branch] [--plan <plan-path>]（Gogs：推送 + 网页建 PR 指引）
 
 #### PRP 族
 | 命令 | 一句话用途 | 输入 | 输出 |
@@ -34,7 +35,8 @@
 | `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `docs/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix.report.md`） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
-| `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后创建 PR（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR |
+| `prp-push-gogs` | Gogs 等自建服务收尾出口：推送分支、生成 PR 标题/描述落盘、给出网页建 PR 的 compare 指引（PR 网页手动创建） | base-branch（默认 origin/HEAD）+ 可选 `--plan` | PR 草稿（`docs/PRPs/prs/{plan-name\|branch-name}-<时间戳>.pr.md`）+ 已推送远端分支 |
+| `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后按 git remote 自适应 PR 出口——GitHub 创建 PR，Gogs 等自建服务推送 + 网页建 PR 指引（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR / PR 草稿 |
 
 #### 精简族
 | 命令 | 一句话用途 | 输入 | 输出 |
@@ -137,19 +139,20 @@ flowchart TD
 /code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md
 /prp-fix [审查报告路径]（留空自动定位最新；BLOCK COMMIT 后进入，PASS 后跳过）
 /prp-commit [提交内容的描述]
-/prp-pr base-branch（默认 main）
+/prp-pr base-branch（默认 main，GitHub）
+/prp-push-gogs base-branch（Gogs 等自建服务）
 
-- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。`/prp-run` 是该循环的自动调度器：断点从文件系统推导、每步核验产物，仅人工介入点（连续 2 轮 BLOCK、歧义门等）停。
+- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。`/prp-run` 是该循环的自动调度器：断点从文件系统推导、每步核验产物，仅人工介入点（连续 2 轮 BLOCK、歧义门等）停。PR 出口按 git remote 自适应：GitHub 走 `/prp-pr` 自动建 PR；Gogs 等自建服务走 `/prp-push-gogs`（推送 + 网页手动创建指引）。
 
 #### P2. 精简流水线（轻型 / 中小功能）
 
 ```text
-plan-prd ──▶ plan ──▶ tdd-workflow(skill) ──▶ build-fix ──▶ code-review ──▶ pr | prp-pr
+plan-prd ──▶ plan ──▶ tdd-workflow(skill) ──▶ build-fix ──▶ code-review ──▶ pr | prp-pr | prp-push-gogs(Gogs)
  需求        计划     实施                     修构建        审查            PR
 ```
 
 - **产物路径**：`.claude/prds/` → `.claude/plans/`（注意是小写 `prds`，与 P1 的 `PRPs/prds/` 区分）。
-- **定位**：`plan` 自我定位为"新版"，`prp-*` 为"旧版深度"流程。下游 PR 出口既可走新版 `/pr` 也可走 `/prp-pr`。
+- **定位**：`plan` 自我定位为"新版"，`prp-*` 为"旧版深度"流程。下游 PR 出口既可走新版 `/pr` 也可走 `/prp-pr`（GitHub）；Gogs 等自建服务用 `/prp-push-gogs`（推送 + 网页建 PR 指引）。
 - **何时用**：中小功能、需求已比较清楚、不需要 8 阶段深度调研。
 
 #### P3. orch 端到端编排（单命令自含，按改动类型五选一）
@@ -365,10 +368,10 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 | 阶段 | 推荐命令 | 说明 |
 |---|---|---|
 | 暂存 + 提交 | `/prp-commit` | 自然语言描述要提交什么（"与认证相关的文件"/"除了测试"等） |
-| 发 PR | `/pr` 或 `/prp-pr` | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `docs/PRPs/{prds,plans,implement}/` |
+| 发 PR | `/pr` 或 `/prp-pr`（GitHub）/ `/prp-push-gogs`（Gogs 等自建服务） | `/pr` 引用 `.claude/{prds,plans}/`；`/prp-pr` 引用 `docs/PRPs/{prds,plans,implement}/`；`/prp-push-gogs` 推送并落盘 PR 草稿到 `docs/PRPs/prs/`，PR 在网页手动创建 |
 | PR 审查 | `/code-review <PR号>` | 两命令的"下一步"都指向 code-review |
 
-> **先 commit 再 pr**：`/pr` 与 `/prp-pr` 都要求工作区干净且有领先 commit；工作区脏时 `/prp-pr` 会反向提示"先用 `/prp-commit` 提交"。
+> **先 commit 再 pr**：`/pr`、`/prp-pr` 与 `/prp-push-gogs` 都要求工作区干净且有领先 commit；工作区脏时 `/prp-pr` 会反向提示"先用 `/prp-commit` 提交"。
 
 #### 场景 J：大功能/发布后更新文档
 
@@ -453,8 +456,8 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 ### 岔路 3：提交用 prp-commit 还是直接 pr？
 
 - `/prp-commit`：**暂存 + 提交**动作（P1 链中段），用自然语言指定范围。
-- `/pr` `/prp-pr`：**发 PR 出口**，要求工作区干净、已有领先 commit。
-- 顺序恒为：先 commit，再 pr。两者"下一步"都指向 `/code-review <PR号>`。
+- `/pr` `/prp-pr` `/prp-push-gogs`：**发 PR 出口**，要求工作区干净、已有领先 commit——`/prp-push-gogs` 面向 Gogs 等自建服务（推送 + 落盘 PR 草稿 + 网页创建指引）。
+- 顺序恒为：先 commit，再 pr。GitHub 出口的"下一步"指向 `/code-review <PR号>`。
 
 ### 岔路 4：code-review vs 语言专项 review vs security-scan？
 
@@ -503,7 +506,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 - **修构建**：`build-fix`
 - **审查**：`code-review` · `prp-fix` · `python-review` · `fastapi-review` · `vue-review` · `security-scan`
 - **补测试**：`test-coverage`
-- **提交/PR**：`prp-commit` · `pr` · `prp-pr`
+- **提交/PR**：`prp-commit` · `pr` · `prp-pr` · `prp-push-gogs`（Gogs）
 - **更新文档/地图**：`update-codemaps` · `update-docs`
 - **跨会话**：`save-session` · `resume-session` · `sessions`
 - **沉淀知识**：`learn` · `learn-eval` · `skill-create`
@@ -512,7 +515,7 @@ feature-dev: code-explorer ──▶ code-architect ──▶ implement(偏好 T
 
 ---
 
-*本指南基于 `commands/` 下 43 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
+*本指南基于 `commands/` 下 44 个命令文件的用途、执行阶段与命令间显式串联关系整理。命令的内部步骤请参阅各命令文件本身。*
 
 ---
 

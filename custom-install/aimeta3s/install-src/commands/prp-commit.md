@@ -108,7 +108,8 @@ git commit -m "{type}: {description}"
 
 后续步骤:
   - /prp-plan <PRD路径> → 如果 PRD 还有「待开始」的 phase 时，进入下一 phase
-  - /prp-pr            → 如果所有 phase 完成后，创建 PR（自动 push）
+  - /prp-pr            → 如果所有 phase 完成后，创建 PR（GitHub，自动 push）
+  - /prp-push-gogs     → Gogs 等自建服务：推送 + 网页建 PR 指引（PR 草稿落盘 docs/PRPs/prs/）
 ```
 
 ---

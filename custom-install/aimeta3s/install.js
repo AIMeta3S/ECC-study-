@@ -309,9 +309,11 @@ const PATHS_SPEC = [
   { root: 'CWD', path: '.claude/package-manager.json', description: '检测到的项目包管理器（npm/pnpm/yarn/bun）与脚本命令，供 hooks/scripts 复用', category: 'lib', source: 'scripts/lib/package-manager.js (+ scripts/setup-package-manager.js)', write: 'write', lifecycle: 'persistent', trigger: 'setup', cleanup: '无' },
   { root: 'CWD', path: '<被就地修改的源文件>', description: '被 quality-gate/format/typecheck hook 原地修复的源文件本身（非新增产物）', category: 'hook', source: 'scripts/hooks/quality-gate.js · stop-format-typecheck.js · pre-bash-commit-quality.js', write: 'in-place', lifecycle: 'persistent', trigger: 'PostToolUse / Stop', cleanup: '无（改的就是源文件本身）' },
   { root: 'CWD', path: 'PRD / 流程文档（plan-prd · orch-* · prp-*）', description: 'plan-prd/orch-*/prp-* 命令生成的产品需求与流程文档（Markdown），落在项目内供团队协作', category: 'command', source: 'commands/plan-prd · orch-* · prp-*', write: 'write', lifecycle: 'persistent', trigger: '对应命令', cleanup: '无（项目内）' },
+  { root: 'CWD', path: 'docs/PRPs/prs/<plan-name|branch-name>-<yyyymmdd-HHMM>.pr.md', description: '/prp-push-gogs 生成的 Gogs PR 草稿（PR 标题/描述/compare 链接/操作指引），PR 由用户在 Gogs 网页手动创建', category: 'command', source: 'commands/prp-push-gogs', write: 'write', lifecycle: 'persistent', trigger: '/prp-push-gogs', cleanup: '无（项目内）' },
 
   // ── ${EXTERNAL} ──
   { root: 'EXTERNAL', path: 'GitHub PR', description: '/pr /prp-pr 通过 gh 创建的远程 Pull Request，产物落在 GitHub 仓库而非本机', category: 'command', source: 'commands/pr · prp-pr (gh pr create)', write: 'external', lifecycle: 'persistent', trigger: '/pr · /prp-pr', cleanup: '外部仓库' },
+  { root: 'EXTERNAL', path: 'Gogs PR', description: '/prp-push-gogs 推送分支后经 Gogs 网页 compare 页面手动创建的远程 Pull Request，产物落在 Gogs 服务器而非本机', category: 'command', source: 'commands/prp-push-gogs (git push + 网页创建)', write: 'external', lifecycle: 'persistent', trigger: '/prp-push-gogs', cleanup: '外部仓库' },
   { root: 'EXTERNAL', path: 'instinct 导出文件（--output 路径）', description: '/instinct-export 按 --output 指定路径导出的 instinct 集合文件，供备份或迁移到其他项目', category: 'command', source: 'commands/instinct-export (instinct-cli.py)', write: 'write', lifecycle: 'persistent', trigger: '/instinct-export', cleanup: '由 --output 指定' },
 ];
 

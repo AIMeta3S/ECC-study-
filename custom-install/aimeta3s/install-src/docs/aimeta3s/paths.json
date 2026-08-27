@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-14",
+  "generated": "2026-08-27",
   "aimeta3sHome": "~/.claude",
   "purpose": "运行时落盘产物路径索引（只读；不移动任何数据）。基于主要写入脚本整理，偶有次要写入者未列。",
   "variables": {
@@ -563,6 +563,17 @@
           "lifecycle": "persistent",
           "trigger": "对应命令",
           "cleanup": "无（项目内）"
+        },
+        {
+          "path": "docs/PRPs/prs/<plan-name|branch-name>-<yyyymmdd-HHMM>.pr.md",
+          "resolved": "<cwd>/docs/PRPs/prs/<plan-name|branch-name>-<yyyymmdd-HHMM>.pr.md",
+          "description": "/prp-push-gogs 生成的 Gogs PR 草稿（PR 标题/描述/compare 链接/操作指引），PR 由用户在 Gogs 网页手动创建",
+          "category": "command",
+          "source": "commands/prp-push-gogs",
+          "write": "write",
+          "lifecycle": "persistent",
+          "trigger": "/prp-push-gogs",
+          "cleanup": "无（项目内）"
         }
       ],
       "note": "当前项目工作区；产物落在项目内"
@@ -580,6 +591,17 @@
           "write": "external",
           "lifecycle": "persistent",
           "trigger": "/pr · /prp-pr",
+          "cleanup": "外部仓库"
+        },
+        {
+          "path": "Gogs PR",
+          "resolved": "Gogs PR",
+          "description": "/prp-push-gogs 推送分支后经 Gogs 网页 compare 页面手动创建的远程 Pull Request，产物落在 Gogs 服务器而非本机",
+          "category": "command",
+          "source": "commands/prp-push-gogs (git push + 网页创建)",
+          "write": "external",
+          "lifecycle": "persistent",
+          "trigger": "/prp-push-gogs",
           "cleanup": "外部仓库"
         },
         {

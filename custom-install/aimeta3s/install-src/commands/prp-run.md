@@ -1,5 +1,5 @@
 ---
-description: PRP 流水线调度器 —— 按 PRD 逐 phase 自动调度 prp-plan→prp-implement→code-review→prp-fix→prp-commit，全部完成后 prp-pr 创建 PR（每步文件系统核验，仅人工介入点停）
+description: PRP 流水线调度器 —— 按 PRD 逐 phase 自动调度 prp-plan→prp-implement→code-review→prp-fix→prp-commit，全部完成后按 git remote 自适应 PR 出口：GitHub 派 prp-pr 创建 PR，Gogs 等自建服务派 prp-push-gogs 推送并指引网页手动创建（每步文件系统核验，仅人工介入点停）
 argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 ---
 
@@ -13,7 +13,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 
 ## 核心理念
 
-- **只调度，不干活**：本命令不实现、不审查、不自行修复——每一步派一个独立 subagent 执行对应现有命令（/prp-plan、/prp-implement、/code-review --prp、/prp-fix、/prp-commit、/prp-pr），命令文档本身是过程与产物的唯一权威。本命令不改变这 7 个命令的任何行为。
+- **只调度，不干活**：本命令不实现、不审查、不自行修复——每一步派一个独立 subagent 执行对应现有命令（/prp-plan、/prp-implement、/code-review --prp、/prp-fix、/prp-commit、PR 出口 /prp-pr 或 /prp-push-gogs 按 git remote 平台二选一），命令文档本身是过程与产物的唯一权威。本命令不改变这些命令的任何行为。
 - **无状态文件**：进度与断点全部从文件系统推导——PRD「实现阶段」表的状态列、`docs/PRPs/{plans,plans/completed,implement,reviews}/` 的产物存在性、review 文件名内嵌时间戳与决策行。任意时刻重跑 `/prp-run <同一 PRD>` 都从当前真实状态续跑。
 - **先核验，再采信**：每个 subagent 返回后，必须用文件系统证据交叉核验其自述（产物存在、PRD 状态推进、决策行可解析）；证据与自述矛盾时以证据为准并停止。
 - **串行执行**：PRD「并行」列标注被忽略，phase 严格按序号逐个执行——同一工作区不允许两个 implement 并发。
@@ -28,7 +28,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 | 留空 | 若 `docs/PRPs/prds/` 下恰有 1 个 `.prd.md` 则使用之；0 个或多个 → 停止并要求显式给路径（PRD 文件名无时间戳，无法可靠自动取最新） |
 | `--max-phases N` | 可选，默认无上限。最多调度 N 个 phase 后温和停止（规模/成本护栏） |
 | `--dry-run` | 只做阶段 1 断点推导，打印「将从断点继续执行的完整动作序列」后结束，不派任何 subagent |
-| `--no-pr` | 全部 phase 完成后不派 /prp-pr（止步于最后一个 commit） |
+| `--no-pr` | 全部 phase 完成后不派 PR 出口命令（/prp-pr 或 /prp-push-gogs，止步于最后一个 commit） |
 
 ---
 
@@ -48,7 +48,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 
 1. **PRD 存在性 + 「实现阶段」表解析**：读不到表，或表内检索不到 `待开始|进行中|已完成` 任一状态 → 停止（格式漂移，提示对照 /prp-prd 模板表头 `| 序号 | 标识 | 名称 | 描述 | 状态 | 并行 | 依赖 | PRP 计划 |`）。
 2. **git 仓库检查**：`git rev-parse --show-toplevel` 失败 → 停止。
-3. **gh 预检**：未给 `--no-pr` 时执行 `gh auth status`，失败 → 停止并提示 `gh auth login`（避免整条流水线白跑后才在 prp-pr 失败）。
+3. **PR 出口预检**：未给 `--no-pr` 时解析 `git remote get-url origin` 的 host——`github.com` → 执行 `gh auth status`，失败 → 停止并提示 `gh auth login`（避免整条流水线白跑后才在 prp-pr 失败），并记 `pr_cmd = prp-pr`；其他 host（Gogs 等自建服务）→ 记 `pr_cmd = prp-push-gogs`，无需 gh（GHE host 非 github.com 时也会走该出口，按需再扩展）。
 
 ### 1.3 断点推导表
 
@@ -70,8 +70,8 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 | 4d | 同上 | `block_run >= 2` | 停止：连续 2 轮 BLOCK，人工介入 |
 | 4e | 同上 | `newest_review` 无决策行 / 解析失败 | 停止：报告格式漂移，人工打开裁决 |
 | 4f | 决策 = PASS，工作区干净，但 P.状态 = 进行中 | PRD 状态落后于产物（#2b 尾态） | 停止：提示人工将该 phase 状态改为已完成、计划路径补 `completed/` 前缀后重跑——**调度器不自行改写 PRD 状态列**（写入权属 prp-plan/prp-implement） |
-| 5 | P 不存在（全部闭环完成） | 当前分支有领先提交且无 PR | 派 **prp-pr** |
-| 5a | 全部闭环完成 | PR 已存在（`gh pr list --head <branch>` 非空） | 输出 PR 链接，正常结束 |
+| 5 | P 不存在（全部闭环完成） | 当前分支有领先提交且无 PR | 派 **prp-pr / prp-push-gogs**（按 1.2 预检的 pr_cmd） |
+| 5a | 全部闭环完成 | PR 已存在（`gh pr list --head <branch>` 非空，仅 GitHub） | 输出 PR 链接，正常结束 |
 | 5b | 全部闭环完成 | 无领先提交且工作区干净 | 结束并提示：变更可能已推送/已建 PR，人工确认 |
 
 ### 1.4 启动摘要
@@ -134,11 +134,12 @@ while phases_done < max_phases:
 
 # —— E. 收尾（#5 / #5a / #5b）——
 if --no-pr: 输出总结，结束
-if gh pr list --head $(git branch --show-current) 非空: 输出既有 PR 链接，结束
-r = dispatch("prp-pr", "")
+if pr_cmd == prp-pr and gh pr list --head $(git branch --show-current) 非空: 输出既有 PR 链接，结束   # 仅 GitHub
+pr_args = prp-pr ? "" : "--plan " + 最后闭环 phase 的 plans/completed/{name}.plan.md 路径
+r = dispatch(pr_cmd, pr_args)
 if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲突 / gh 未认证等
 核验E（见阶段 4）
-输出总结（phase 完成表 + 全部产物路径 + PR URL）
+输出总结（phase 完成表 + 全部产物路径 + PR URL 或 compare URL）
 ```
 
 **两条守卫**：
@@ -189,7 +190,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | C 审查 | `code-review` | `--prp <plans/completed/{name}.plan.md>` | 产物列必含新落盘 review 报告路径；关键结论含决策与四级问题计数 |
 | F 修复 | `prp-fix` | `<最新 review 报告路径>` | 产物列必含 fix.report；关键结论注明是否实际触碰代码（决定证据刷新核验） |
 | D 提交 | `prp-commit` | （空 = 全部变更） | 产物列写 commit 哈希与消息；关键结论含软门禁走查结果 |
-| E PR | `prp-pr` | （空，base 默认 main） | 产物列必含 PR URL；各前置停止 → 状态: 需人工 + 原因 |
+| E PR 出口 | `prp-pr` / `prp-push-gogs`（按 1.2 平台判定） | GitHub: 空（base 默认 main）；Gogs: `--plan <最后闭环 phase 的 completed plan 路径>` | 产物列必含 PR URL（GitHub）或 pr.md 落盘路径 + compare URL（Gogs）；各前置停止 → 状态: 需人工 + 原因 |
 
 ---
 
@@ -204,7 +205,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | C | 新报告且决策可解析 | 列目录取 `{name}-*.review.md` 中时间戳晚于派发时刻的最新一份；检索决策行 `**决策**: PASS \| BLOCK COMMIT` |
 | F | fix.report + 证据刷新 | Glob `<源名去 .review.md>-fix.report.md`；subagent 自述改码时 Grep validation.log 尾部出现 `round: prp-fix` 新条目 |
 | D | 提交发生且工作区干净 | `git log -1` HEAD 相较派发前已变化，且 `git status --porcelain` 为空 |
-| E | PR 存在 | `gh pr view --json number,url`（按当前分支）命中 |
+| E | PR 存在（GitHub）；pr.md 落盘 + 分支到达远端（Gogs） | GitHub: `gh pr view --json number,url`（按当前分支）命中；Gogs: Glob `docs/PRPs/prs/{最后闭环 plan-name}-*.pr.md` 存在 + `git ls-remote --heads origin <branch>` 命中 |
 
 核验失败统一处理：重查一次文件系统 → 仍矛盾 → STOP，输出「subagent 自述 vs 文件系统证据」对照表。
 
@@ -219,8 +220,9 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | 任一核验失败 | 期望 vs 实际对照；不自行修补 |
 | subagent 异常/超时/未按格式返回 | 失败摘要 + 「重跑 /prp-run <PRD> 幂等续跑；若该步骤实际已完成将自动跳过」 |
 | PRD/报告格式漂移 | 具体缺失项与修复提示 |
-| gh 未认证（启动预检） | `gh auth login` 后重跑 |
-| prp-pr 前置停止 | 按其返回转述；无领先提交且无 PR 时视为完成（#5b） |
+| gh 未认证（启动预检，仅 GitHub 平台） | `gh auth login` 后重跑 |
+| PR 出口命令前置停止（prp-pr / prp-push-gogs） | 按其返回转述；无领先提交且无 PR 时视为完成（#5b） |
+| prp-push-gogs 推送失败 / rebase 冲突（Gogs） | 转述返回摘要；解决后重跑（幂等） |
 | `--max-phases` 用尽 | 温和停止：进度 N/M，重跑继续 |
 
 每次 STOP 均输出当前断点（PRD 路径 + 当前 phase + 已完成步骤），用户处理后重跑 `/prp-run <同一 PRD>` 从断点继续。
@@ -237,10 +239,11 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | review 报告无决策行 | 核验C 检索无命中 | STOP，人工打开报告裁决 |
 | subagent 中途死掉/超时/格式不符 | 派发返回异常 | STOP + 幂等重跑提示（不自动重派会改代码的命令） |
 | implement STOP（main 脏工作区） | subagent 需人工 | STOP + 提示 stash/commit 后重跑 |
-| prp-pr：已在 base 分支 | 返回需人工 | STOP（正常流程 implement 已切 feat 分支，此情况说明用户手切） |
-| prp-pr：无领先提交 | 返回需人工 | 若全部 phase 已提交且远端同步 → 按 #5b 视为完成 |
-| prp-pr：PR 已存在 | 派发前自查或返回 | #5a：输出链接，正常结束 |
-| gh 未认证 | 启动预检 / E 步 | 启动预检失败即 STOP；漏网时按返回 STOP |
+| prp-pr：已在 base 分支（仅 GitHub） | 返回需人工 | STOP（正常流程 implement 已切 feat 分支，此情况说明用户手切） |
+| prp-pr：无领先提交（仅 GitHub） | 返回需人工 | 若全部 phase 已提交且远端同步 → 按 #5b 视为完成 |
+| prp-pr：PR 已存在（仅 GitHub） | 派发前自查或返回 | #5a：输出链接，正常结束 |
+| gh 未认证（仅 GitHub） | 启动预检 / E 步 | 启动预检失败即 STOP；漏网时按返回 STOP |
+| remote 为 Gogs 等自建服务 | 1.2 平台判定 | 无 gh 依赖；E 步派 prp-push-gogs（推送 + 网页建 PR 指引），PR 由用户网页手动完成 |
 | 多 phase 依赖列异常（依赖环/依赖未完成） | prp-plan 阶段 0 找不到合规 phase，但 PRD 仍有待开始 | subagent 自述与 PRD 矛盾 → 核验A 失败 → STOP |
 | 全部 phase 状态已完成但调度器中途重启 | 按 `闭环` 判定（1.1） | 仍有已完成但未闭环的 phase（无终审 PASS / 变更未提交）→ 继续该 phase 的 review/commit 分支；全部闭环 → #5/#5a/#5b |
 | 「PRP 计划」列指向的 plan 被人工移动/删除 | 推导 #2a | STOP 人工核对 |
@@ -254,7 +257,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 ## 中断恢复与幂等
 
 - 调度器自身无任何内存状态：被 /clear、会话中断、Ctrl-C 后，重跑 `/prp-run <同一 PRD>` 走阶段 1 推导表，从文件系统断点继续。
-- 幂等性保证：所有「下一步动作」都是推导表的纯函数；已完成的步骤（plan 已建、implement 已归档、review 已 PASS、commit 已落）自动跳过。唯一外部副作用步骤 prp-pr 自带「PR 已存在」停止条件，重复派发安全。
+- 幂等性保证：所有「下一步动作」都是推导表的纯函数；已完成的步骤（plan 已建、implement 已归档、review 已 PASS、commit 已落）自动跳过。唯一外部副作用步骤 PR 出口命令重复派发安全：prp-pr 自带「PR 已存在」停止条件；prp-push-gogs 幂等（rebase 无操作或快进、重跑生成新 pr.md）。
 - 用户中途手改 PRD/产物：下次推导以当时文件系统为准；若造成状态与证据矛盾，由 #2a/#4f/无进展守卫拦截而非静默继续。
 
 ---
@@ -264,7 +267,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 - 目标 phase 全部闭环完成，且每个 phase 五产物齐全（plan 归档件、implement report、validation.log、终审 PASS 的 review、commit）
 - 每步核验通过，无「自述与证据矛盾」放行
 - 连续 BLOCK 未超过 2 轮即收敛，或已在第 2 轮停机人工介入
-- 最终输出：PR URL（或 --no-pr 下的末次 commit 哈希）与 phase 完成总表
+- 最终输出：PR URL（GitHub）或 pr.md 落盘 + compare URL + 已推送分支（Gogs 等自建服务，PR 需网页手动创建）；--no-pr 下为末次 commit 哈希；以及 phase 完成总表
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generated": "2026-08-26",
+  "generated": "2026-08-27",
   "aimeta3sHome": "~/.claude",
   "dirMappings": {
     "agents": "agents",
@@ -305,6 +305,12 @@
       "name": "prp-prd",
       "installPath": "~/.claude/commands/prp-prd.md",
       "sourcePath": "commands/prp-prd.md"
+    },
+    {
+      "category": "command",
+      "name": "prp-push-gogs",
+      "installPath": "~/.claude/commands/prp-push-gogs.md",
+      "sourcePath": "commands/prp-push-gogs.md"
     },
     {
       "category": "command",

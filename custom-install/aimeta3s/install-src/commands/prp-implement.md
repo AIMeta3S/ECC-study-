@@ -186,6 +186,7 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 - 同一命令多次重跑（修复后复跑）时，每次执行各占一个条目，保留失败记录与最终通过的那次。
 - Level 4 HTTP 形态的服务器脚手架须整段执行并整体 `| tee -a` 落盘（`set -o pipefail` 已保证 tee 场景下 exit code 保真）。
+- 本日志只承载验证证据；Phase 0-3 的叙事性过程记录（决策/偏差/重试）另见「过程日志（exec log）」章节，两者不混写。
 
 ### Level 1：静态分析
 
@@ -497,6 +498,57 @@ mv "$ARGUMENTS" docs/PRPs/plans/completed/
 2. 进程内形态：检查测试 harness 的应用装配与依赖注入是否与计划「涉及接缝」一致
 3. CLI / 编译装配形态：核对命令参数与断言目标（stdout / exit code / 产物路径）
 4. 修复并重新运行本级别
+
+---
+
+## 过程日志（exec log）
+
+本命令 Phase 0-3 的执行过程（环境检测、分支决策、逐任务偏差、修复重试）零落盘——为中断诊断与质量回溯，边执行边追加一份**纯旁路**过程日志。与 Phase 4 的 validation.log 分工：validation.log 承载验证证据（原始输出、机器可核验格式），exec.log 承载过程叙事（人类可读），两者不混写。
+
+### 路径与命名
+
+`docs/PRPs/logs/{plan-name}.exec.log`。`{plan-name}` 从计划文件名推导（与 validation.log 同源）。首次写入时 `mkdir -p docs/PRPs/logs`；文件已存在（流水线中通常已由 /prp-plan 创建，或重跑/续跑）则直接追加，不重建头部——不存在则创建头部（PRD 字段从计划 Metadata 推导，取不到写 N/A）。
+
+### 文件结构
+
+头部 + 追加式条目 + 尾部固定锚点 `<!-- exec-log:end -->`（Edit 追加锚，始终保持在文件末尾）：
+
+```markdown
+# Exec: {plan-name}
+- PRD: <路径或 N/A> | 创建: prp-implement <yyyymmdd-HHMM>
+
+<!-- exec-log:end -->
+```
+
+条目格式（字段按需取用，不强制全填；无内容的行省略）：
+
+```markdown
+## [prp-implement <yyyymmdd-HHMM>] Phase N — <主题>
+- 动作: <做了什么>
+- 决策/依据: <选择与理由>
+- 偏差: <与计划的差异 WHAT/WHY>
+- 结果: <exit/产物/下一步>
+- 指针: <validation.log 轮次 / report 路径 / 文件清单>
+```
+
+### 写入时机表
+
+| 时机 | 条目内容 |
+|---|---|
+| Phase 0 完成后（创建/追加） | 语言栈、包管理器、验证命令映射、验证脚本可用性 |
+| Phase 1 后 | plan 路径、任务数、先行验证标注数 |
+| Phase 2 分支决策后 | 工作区检查结论、分支名与 base、同步远程结果；**main 脏工作区 STOP 前追加**检查输出摘要 |
+| Phase 3 每任务 `[done]` 后 | 任务号/名称、改动文件、先行测试 red→green 结果、与 plan 偏差（WHAT/WHY）、中途错误与修复重试 |
+| Phase 4 每轮结束后 | 指针条目：round 标识、命令数、通过/失败概览 +「详见 validation.log」 |
+| Phase 5 后 | 归档动作、PRD 更新、report 路径（指针） |
+
+### 写入协议
+
+- **追加用 Edit 工具**：old_string 锚定 `<!-- exec-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
+- **best-effort**：写入失败 → 向用户输出一行警告（含原因）后继续执行；不作为 STOP 条件、不进成功标准。
+- **只写不读**：实现与报告生成不读取 exec.log——它是给人读的旁路记录，不是事实源。
+- **不记边界**：验证命令原始输出不落盘（validation.log 职责，其机器可核验格式不容叙事混入）；代码 diff 不落盘（git 承载，只记文件清单）；最终结论不重述（report.md 承载，只记指针）。
+- exec.log 位于 `docs/PRPs/**` 产物集内，随 /prp-commit 一并提交、被 /code-review 自动豁免。
 
 ---
 

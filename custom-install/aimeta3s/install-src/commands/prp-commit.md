@@ -114,6 +114,44 @@ git commit -m "{type}: {description}"
 
 ---
 
+## 过程日志（exec log）
+
+本命令零文件产物（只有 git commit），门禁走查与暂存解读过程无处追溯——边执行边追加一份**纯旁路**过程日志。
+
+### 路径与命名
+
+`docs/PRPs/logs/{plan-name}.exec.log`。`{plan-name}` 取自阶段 1 探测到的最新审查报告文件名 `{plan-name}-<yyyymmdd-HHMM>.review.md` 的前缀；**无任何审查报告时跳过 exec.log 写入**（无锚可依；流水线内提交前必有 PASS review，不受影响）。首次写入时 `mkdir -p docs/PRPs/logs`；文件已存在则直接追加，不重建头部——不存在则创建头部。
+
+### 文件结构
+
+头部 + 追加式条目 + 尾部固定锚点 `<!-- exec-log:end -->`（Edit 追加锚，始终保持在文件末尾）。条目格式（字段按需取用，不强制全填）：
+
+```markdown
+## [prp-commit <yyyymmdd-HHMM>] 阶段 N — <主题>
+- 动作: <做了什么>
+- 决策/依据: <解读与匹配理由>
+- 结果: <暂存统计/commit>
+- 指针: <review 路径 / commit 哈希>
+```
+
+### 写入时机表
+
+| 时机 | 条目内容 |
+|---|---|
+| 阶段 1 门禁走查后 | 走查来源（最新 review 路径 + 决策 + fix.report 状态）或「静默跳过（无报告，本次不写 exec.log）」；变更摘要（added/modified/deleted/untracked 计数） |
+| 阶段 2 暂存后 | 输入解读 → 匹配文件与理由、`git diff --cached --stat` 关键行 |
+| 阶段 3 提交后 | commit 哈希、消息、文件数（指针） |
+
+### 写入协议
+
+- **追加用 Edit 工具**：old_string 锚定 `<!-- exec-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
+- **best-effort**：写入失败 → 向用户输出一行警告（含原因）后继续执行；不作为停止条件。
+- **只写不读**：提交决策不读取 exec.log——它是给人读的旁路记录，不是事实源。
+- **不记边界**：diff 内容不落盘（git 承载，只记统计与文件清单）。
+- exec.log 位于 `docs/PRPs/**` 产物集内，随本命令提交入库、被 /code-review 自动豁免。
+
+---
+
 ## 示例
 
 | 你的输入 | 执行的操作 |

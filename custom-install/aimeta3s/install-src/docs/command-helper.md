@@ -38,6 +38,8 @@
 | `prp-push-gogs` | Gogs 等自建服务收尾出口：推送分支、生成 PR 标题/描述落盘、给出网页建 PR 的 compare 指引（PR 网页手动创建） | base-branch（默认 origin/HEAD）+ 可选 `--plan` | PR 草稿（`docs/PRPs/prs/{plan-name\|branch-name}-<时间戳>.pr.md`）+ 已推送远端分支 |
 | `prp-run` | 流水线调度器：按 PRD 逐 phase 自动调度 plan→implement→review→fix→commit，全部完成后按 git remote 自适应 PR 出口——GitHub 创建 PR，Gogs 等自建服务推送 + 网页建 PR 指引（仅人工介入点停） | PRD 路径 + 可选护栏参数 | 全流程产物 + PR / PR 草稿 + 运行日志（`docs/PRPs/runs/`，含断点推导/dispatch 摘要/核验证据/STOP 原因） |
 
+> 过程日志：prp-plan / prp-implement / code-review（`--prp` 档）/ prp-fix / prp-commit 五命令的执行过程日志统一追加至 `docs/PRPs/logs/{plan-name}.exec.log`（纯旁路、只写不读、不参与核验；与调度层运行日志 `docs/PRPs/runs/` 分层）。
+
 #### 精简族
 | 命令 | 一句话用途 | 输入 | 输出 |
 |---|---|---|---|

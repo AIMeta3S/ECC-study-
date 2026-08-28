@@ -208,6 +208,8 @@ git status --porcelain
 
 按档位落盘：`--prp` 档在 `docs/PRPs/reviews/{plan-name}-<yyyymmdd-HHMM>.review.md` 创建审查产物（`{plan-name}` 提取自 `<plan-path>`，同 Phase 3 规则）；其余档位（默认、`--full`）在 `.claude/reviews/local-<yyyymmdd-HHMM>.review.md` 创建。
 
+报告落盘后，`--prp` 档另按「过程日志（exec log）」章节把本次审查过程一次性追加至 `docs/PRPs/logs/{plan-name}.exec.log`。
+
 `--prp` 档报告即 /prp-fix 的核销对象——其修复核销产物为同目录 `<本文件名去 .review.md>-fix.report.md`，本报告自身不会被 /prp-fix 修改；默认 / `--full` 档报告（`.claude/reviews/`）不在 /prp-fix 服务范围内。报告模板：
 
 ```markdown
@@ -457,6 +459,53 @@ PR #<NUMBER>: <TITLE>
 后续步骤：
   - <基于决策的上下文建议>
 ```
+
+---
+
+## 过程日志（exec log）
+
+本命令要求 /prp-implement 交付原始输出级证据（validation.log），自己的审查过程（Tier 1 重跑结果、核验判定、决策推导）却只以结论格进入报告——为对等追溯，`--prp` 档补一份**纯旁路**过程日志。其余档位（默认、`--full`、PR 模式）无 `{plan-name}` 锚，不写。
+
+### 路径与命名
+
+`docs/PRPs/logs/{plan-name}.exec.log`。`{plan-name}` 提取自 `--prp <plan-path>`（与 Phase 3 核验、Phase 5 报告落盘同规）。首次写入时 `mkdir -p docs/PRPs/logs`；文件已存在（流水线中通常已由 /prp-plan、/prp-implement 创建）则直接追加，不重建头部——不存在则创建头部。
+
+### 文件结构
+
+头部 + 追加式条目 + 尾部固定锚点 `<!-- exec-log:end -->`（Edit 追加锚，始终保持在文件末尾）。条目格式（字段按需取用，不强制全填）：
+
+```markdown
+## [code-review <yyyymmdd-HHMM>] — <主题>
+- 动作: <做了什么>
+- 决策/依据: <判定与规则匹配>
+- 结果: <exit/计数/产物>
+- 指针: <报告路径 / validation.log 轮次 / 问题 ID>
+```
+
+### 写入时机表
+
+**特殊：Phase 5 报告落盘后一次性批量追加**，中途不写。两处理由：
+
+1. **维护复审盲审**（见「复审盲审原则」）：Edit 前的工具性 Read 必然看到文件中此前 implement/fix 的过程叙事，中途写入会把这些内容带进复审上下文；审查判定全部完成后一次性写入，此时 Read 仅为定位锚点，不构成消费。
+2. 审查中途崩溃无副作用（未改代码、报告未落盘），重跑成本低；/prp-run 场景下 dispatch 异常已有运行日志兜底。
+
+一次性条目内容：
+
+| 来源步骤 | 条目内容 |
+|---|---|
+| Phase 1 分流 | 档位、`--prp` plan 路径、diff 范围（文件数/行数）、产物集豁免命中数 |
+| Phase 3 验证 | Tier 1 重跑每条命令 + exit code；失败时关键错误行摘录（≤10 行） |
+| Phase 3 核验 | validation.log 五判定结果概览（哪项未通过、记了几个 HIGH） |
+| Phase 4 决策 | 问题计数 → 决策规则匹配 |
+| Phase 5 落盘 | 报告路径、决策（指针） |
+
+### 写入协议
+
+- **追加用 Edit 工具**：old_string 锚定 `<!-- exec-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
+- **best-effort**：写入失败 → 向用户输出一行警告（含原因）后继续；不作为 STOP 条件、不进任何核验。
+- **只写不读**：审查判定不得依赖 exec.log 内容（Edit 前的 Read 仅为定位锚点，见写入时机表）。
+- **不记边界**：Tier 1 完整输出不落盘（记命令 + exit + 失败关键行即可，问题详情由报告问题条目承载）；结论不重述（报告承载，只记指针）。
+- exec.log 位于 `docs/PRPs/**` 产物集内（本命令 Phase 1 黑名单已通配），随 /prp-commit 一并提交。
 
 ---
 

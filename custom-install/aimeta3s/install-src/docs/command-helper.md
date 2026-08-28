@@ -144,7 +144,7 @@ flowchart TD
 /prp-pr base-branch（默认 main，GitHub）
 /prp-push-gogs base-branch（Gogs 等自建服务）
 
-- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。`/prp-run` 是该循环的自动调度器：断点从文件系统推导、每步核验产物，仅人工介入点（连续 2 轮 BLOCK、歧义门等）停。PR 出口按 git remote 自适应：GitHub 走 `/prp-pr` 自动建 PR；Gogs 等自建服务走 `/prp-push-gogs`（推送 + 网页手动创建指引）。
+- **多阶段循环**：PRD 有多个 phase 时，`plan → implement → code-review →（BLOCK COMMIT 时 prp-fix → 复审）→ commit` 构成按 phase 迭代的循环——每个 phase 走一轮，直到所有 phase 完成，才创建 PR。`/prp-run` 是该循环的自动调度器：断点从文件系统推导、每步核验产物，仅人工介入点（连续 6 轮 BLOCK、歧义门等）停。PR 出口按 git remote 自适应：GitHub 走 `/prp-pr` 自动建 PR；Gogs 等自建服务走 `/prp-push-gogs`（推送 + 网页手动创建指引）。
 
 #### P2. 精简流水线（轻型 / 中小功能）
 

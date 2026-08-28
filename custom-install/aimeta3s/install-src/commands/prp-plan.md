@@ -39,7 +39,7 @@ Create a detailed, self-contained implementation plan that captures all codebase
    - 选择**下一个符合条件的 `待开始` 阶段**
 4. 从所选阶段中提取：
    - 阶段标识、名称和描述
-   - 验收标准
+   - 成功标志
    - 对前序阶段的依赖
    - 任何范围说明或约束
 5. 将该阶段的描述作为要计划的 feature

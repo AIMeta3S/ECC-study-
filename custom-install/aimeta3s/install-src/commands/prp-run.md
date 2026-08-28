@@ -66,9 +66,9 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 | 3 | P 的 plan 已归档（状态列进行中或已完成均可），`implement/{name}.report.md` 存在 | `reviews(name)` 为空 | 派 **code-review** `--prp <plans/completed/{name}.plan.md>` |
 | 4 | 同上 | `newest_review` 决策 = PASS，`git status --porcelain` 非空 | 派 **prp-commit**（软门禁 PASS 直接放行） |
 | 4a | 同上 | 决策 = PASS，工作区干净，P.状态 = 已完成 | 闭环完成 → 回外层循环取下一 P（自动跳过） |
-| 4b | 同上 | 决策 = BLOCK，`fix_report` 不存在，`block_run < 2` | 派 **prp-fix** `<newest_review 路径>` |
-| 4c | 同上 | 决策 = BLOCK，`fix_report` 存在，`block_run < 2` | 派 **code-review** `--prp ...`（复审盲审） |
-| 4d | 同上 | `block_run >= 2` | 停止：连续 2 轮 BLOCK，人工介入 |
+| 4b | 同上 | 决策 = BLOCK，`fix_report` 不存在，`block_run <= 5` | 派 **prp-fix** `<newest_review 路径>` |
+| 4c | 同上 | 决策 = BLOCK，`fix_report` 存在，`block_run <= 5` | 派 **code-review** `--prp ...`（复审盲审） |
+| 4d | 同上 | `block_run > 5` | 停止：连续 6 轮 BLOCK（容忍 5 轮修复），人工介入 |
 | 4e | 同上 | `newest_review` 无决策行 / 解析失败 | 停止：报告格式漂移，人工打开裁决 |
 | 4f | 决策 = PASS，工作区干净，但 P.状态 = 进行中 | PRD 状态落后于产物（#2b 尾态） | 停止：提示人工将该 phase 状态改为已完成、计划路径补 `completed/` 前缀后重跑——**调度器不自行改写 PRD 状态列**（写入权属 prp-plan/prp-implement） |
 | 5 | P 不存在（全部闭环完成） | 当前分支有领先提交且无 PR | 派 **prp-pr / prp-push-gogs**（按 1.2 预检的 pr_cmd） |
@@ -119,7 +119,7 @@ while phases_done < max_phases:
             newest = newest_review(name)
             if decision(newest) 无法解析: STOP(#4e)
             if decision(newest) == PASS: break           # → D
-            if block_run(name) >= 2: STOP(#4d 连续 2 轮 BLOCK)
+            if block_run(name) > 5: STOP(#4d 连续 6 轮 BLOCK)
             if fix_report(newest) 不存在:
                 r = dispatch("prp-fix", newest 路径)      # MEDIUM 按建议，见阶段 3
                 if r.状态 == 需人工: STOP(r.需用户决策)
@@ -217,7 +217,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 
 | 触发 | 转述给用户的内容 |
 |---|---|
-| 连续 2 轮 BLOCK（block_run ≥ 2） | 两轮报告与 fix.report 路径；建议人工排查根因 |
+| 连续 6 轮 BLOCK（block_run > 5） | 各轮报告与 fix.report 路径；建议人工排查根因 |
 | subagent 返回「需人工」 | 其「需用户决策」问题原文（prp-plan 歧义门、implement main 脏工作区 STOP、prp-fix 升级项等） |
 | 任一核验失败 | 期望 vs 实际对照；不自行修补 |
 | subagent 异常/超时/未按格式返回 | 失败摘要 + 「重跑 /prp-run <PRD> 幂等续跑；若该步骤实际已完成将自动跳过」 |
@@ -236,7 +236,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | 场景 | 检测点 | 处理 |
 |---|---|---|
 | prp-plan 歧义门触发 | subagent 返回 需人工 | STOP，转述问题原文；用户答复后重跑（plan 未落盘 → 重新从 A 开始） |
-| 连续 BLOCK | block_run ≥ 2 | STOP 人工介入（与 /prp-fix 文档既有约定一致） |
+| 连续 BLOCK | block_run > 5 | STOP 人工介入（与 /prp-fix 文档既有约定一致） |
 | PRD 表格格式漂移 | 阶段 1 解析失败 | STOP + 修复提示（对照 /prp-prd 模板表头） |
 | review 报告无决策行 | 核验C 检索无命中 | STOP，人工打开报告裁决 |
 | subagent 中途死掉/超时/格式不符 | 派发返回异常 | STOP + 幂等重跑提示（不自动重派会改代码的命令） |
@@ -311,7 +311,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 
 - 目标 phase 全部闭环完成，且每个 phase 五产物齐全（plan 归档件、implement report、validation.log、终审 PASS 的 review、commit）
 - 每步核验通过，无「自述与证据矛盾」放行
-- 连续 BLOCK 未超过 2 轮即收敛，或已在第 2 轮停机人工介入
+- 连续 BLOCK 未超过 5 轮即收敛，或已在第 6 轮停机人工介入
 - 最终输出：PR URL（GitHub）或 pr.md 落盘 + compare URL + 已推送分支（Gogs 等自建服务，PR 需网页手动创建）；--no-pr 下为末次 commit 哈希；以及 phase 完成总表
 
 ---

@@ -170,7 +170,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 后续步骤：
   - 重跑 /code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit；建议 /clear 后新会话执行，避免本轮修复的上下文锚定复审判断
   - 复审 PASS → /prp-commit 提交
-  - 连续 2 轮修复后仍 BLOCK COMMIT → 建议人工介入排查
+  - 连续 5 轮修复后仍 BLOCK COMMIT → 建议人工介入排查
 ```
 
 ---
@@ -232,7 +232,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | PASS 报告 | 自动定位 → 短路停止；显式指定 → 询问后仅处理 MEDIUM/LOW |
 | 纯验证失败型 BLOCK | 清单以失败验证项为主体；`--prp` 核验失败升级用户，避免「修报告不修代码」的空转 |
 | plan-name 无法恢复 | 走 Phase 2 恢复链第 ④ 级，修复循环本身不受影响 |
-| 连续多轮 BLOCK | 每轮 review 独立时间戳、独立配对 fix.report；连续 2 轮仍 BLOCK → 建议人工介入 |
+| 连续多轮 BLOCK | 每轮 review 独立时间戳、独立配对 fix.report；连续 5 轮修复后仍 BLOCK → 建议人工介入 |
 
 ---
 

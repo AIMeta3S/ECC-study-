@@ -291,6 +291,7 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 ## 实现阶段
 
 <!--
+  标识：p{序号}-{表达阶段意图的英文描述}，kebab-case，不能只写数字编号。
   状态：待开始 | 进行中 | 已完成
   并行：可同时执行的阶段（例如："with 3" 或 "-"）
   依赖：必须先完成的阶段（例如："1, 2" 或 "-"）
@@ -310,12 +311,12 @@ QUESTION SET 1 → GROUNDING → QUESTION SET 2 → RESEARCH → QUESTION SET 3 
 **阶段 1：{名称}**
 - **目标**：{我们想要实现的目标}
 - **范围**：{Bounded deliverables}
-- **验收标准**：{如何判断已完成}
+- **成功标志**：{如何判断已完成}
 
 **阶段 2：{名称}**
 - **目标**：{我们想要实现的目标}
 - **范围**：{Bounded deliverables}
-- **验收标准**：{如何判断已完成}
+- **成功标志**：{如何判断已完成}
 
 {按需继续补充各阶段...}
 

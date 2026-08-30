@@ -173,7 +173,7 @@ git pull --rebase origin $(git branch --show-current) 2>/dev/null || true
 
 ### 证据落盘
 
-本阶段开始时创建验证证据日志：`docs/PRPs/implement/{plan-name}.validation.log`（`{plan-name}` 从计划文件名推导）。
+本阶段开始时创建验证证据日志：`docs/PRPs/implements/{plan-name}.validation.log`（`{plan-name}` 从计划文件名推导）。
 
 - 每条验证命令的执行输出必须以**原始转储**追加落盘（`| tee -a`），禁止手工转述、摘要或省略替代——该日志是 /code-review `--prp` 档的核验依据。
 - 每条命令一个条目，格式：
@@ -328,7 +328,7 @@ exit "$TEST_EXIT"
   echo "## snapshot HEAD: $(git rev-parse HEAD)"
   echo "## snapshot status:"
   git status --porcelain
-} >> docs/PRPs/implement/{plan-name}.validation.log
+} >> docs/PRPs/implements/{plan-name}.validation.log
 ```
 
 ---
@@ -338,10 +338,10 @@ exit "$TEST_EXIT"
 ### 创建实现报告
 
 ```bash
-mkdir -p docs/PRPs/implement
+mkdir -p docs/PRPs/implements
 ```
 
-将报告写入 `docs/PRPs/implement/{plan-name}.report.md`：
+将报告写入 `docs/PRPs/implements/{plan-name}.implement.md`：
 
 ```markdown
 # 实现报告：[功能名称]
@@ -366,7 +366,7 @@ mkdir -p docs/PRPs/implement
 
 ## 验证结果
 
-**验证证据**：`docs/PRPs/implement/{plan-name}.validation.log`
+**验证证据**：`docs/PRPs/implements/{plan-name}.validation.log`
 
 | 级别 | 状态 | exit | 备注 |
 |---|---|---|---|
@@ -449,8 +449,8 @@ mv "$ARGUMENTS" docs/PRPs/plans/completed/
 [摘要，或填 "None — 完全按计划实现"]
 
 ### 产物
-- 报告：`docs/PRPs/implement/{plan-name}.report.md`
-- 验证证据：`docs/PRPs/implement/{plan-name}.validation.log`
+- 报告：`docs/PRPs/implements/{plan-name}.implement.md`
+- 验证证据：`docs/PRPs/implements/{plan-name}.validation.log`
 - 已归档计划：`docs/PRPs/plans/completed/{plan-name}.plan.md`
 
 ### PRD 进度（如适用）
@@ -540,14 +540,14 @@ mv "$ARGUMENTS" docs/PRPs/plans/completed/
 | Phase 2 分支决策后 | 工作区检查结论、分支名与 base、同步远程结果；**main 脏工作区 STOP 前追加**检查输出摘要 |
 | Phase 3 每任务 `[done]` 后 | 任务号/名称、改动文件、先行测试 red→green 结果、与 plan 偏差（WHAT/WHY）、中途错误与修复重试 |
 | Phase 4 每轮结束后 | 指针条目：round 标识、命令数、通过/失败概览 +「详见 validation.log」 |
-| Phase 5 后 | 归档动作、PRD 更新、report 路径（指针） |
+| Phase 5 后 | 归档动作、PRD 更新、implement 报告路径（指针） |
 
 ### 写入协议
 
 - **追加用 Edit 工具**：old_string 锚定 `<!-- exec-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
 - **best-effort**：写入失败 → 向用户输出一行警告（含原因）后继续执行；不作为 STOP 条件、不进成功标准。
 - **只写不读**：实现与报告生成不读取 exec.log——它是给人读的旁路记录，不是事实源。
-- **不记边界**：验证命令原始输出不落盘（validation.log 职责，其机器可核验格式不容叙事混入）；代码 diff 不落盘（git 承载，只记文件清单）；最终结论不重述（report.md 承载，只记指针）。
+- **不记边界**：验证命令原始输出不落盘（validation.log 职责，其机器可核验格式不容叙事混入）；代码 diff 不落盘（git 承载，只记文件清单）；最终结论不重述（implement.md 承载，只记指针）。
 - exec.log 位于 `docs/PRPs/**` 产物集内，随 /prp-commit 一并提交、被 /code-review 自动豁免。
 
 ---

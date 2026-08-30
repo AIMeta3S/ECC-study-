@@ -45,7 +45,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 |---|---|
 | ① | 报告「implement 结果核验」节的实现报告路径中提取 `{plan-name}` |
 | ② | 当前分支名 `feat/{plan-name}` 剥离前缀 |
-| ③ | `docs/PRPs/implement/` 下最新 `*.report.md` 的文件名推导 |
+| ③ | `docs/PRPs/implements/` 下最新 `*.implement.md` 的文件名推导 |
 | ④ | 均失败 → 用源报告时间戳命名，后续步骤降级为提示通用 `/code-review`（不带 `--prp`） |
 
 4. **PASS 短路**：
@@ -109,7 +109,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 证据核验通过（--prp） | 本轮修复未触碰代码（全部为「不修复」处置）→ 保持跳过；触碰了代码 → 执行下方证据刷新 |
 | 无证据 / 证据矛盾 / 证据过期（--prp） | 执行下方证据刷新 |
 
-**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `docs/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `docs/PRPs/implement/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix.report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
+**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `docs/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `docs/PRPs/implements/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix.report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
 
 ---
 
@@ -132,7 +132,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## 验证结果（复跑）
 
-**证据刷新**：已追加至 `docs/PRPs/implement/{plan-name}.validation.log`（round: prp-fix <时间戳>） / 未触碰代码，证据保持原轮 / 证据矛盾型升级，未刷新
+**证据刷新**：已追加至 `docs/PRPs/implements/{plan-name}.validation.log`（round: prp-fix <时间戳>） / 未触碰代码，证据保持原轮 / 证据矛盾型升级，未刷新
 
 | 校验项 | 结果 |
 |---|---|

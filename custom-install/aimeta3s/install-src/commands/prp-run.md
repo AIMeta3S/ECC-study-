@@ -61,9 +61,9 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 | 1 | P = 待开始 | — | 派 **prp-plan** `<PRD路径>` |
 | 2 | P = 进行中 | 「PRP 计划」指向 `plans/{name}.plan.md`（未归档） | 派 **prp-implement** `<该 plan 路径>` |
 | 2a | P = 进行中 | plan 在 `plans/` 与 `plans/completed/` 均不存在 | 停止：plan 丢失（或 PRD 状态先行），人工核对 |
-| 2b | P = 进行中 | plan 已在 `plans/completed/` 且 `implement/{name}.report.md` 存在 | implement 实际已完成、PRD 未及更新 → 按 #3/#4 推导 |
-| 2c | P = 进行中 | plan 已在 `plans/completed/` 但 `implement/{name}.report.md` 不存在 | 停止：产物不完整（implement 中断或产物被移动），人工核对 |
-| 3 | P 的 plan 已归档（状态列进行中或已完成均可），`implement/{name}.report.md` 存在 | `reviews(name)` 为空 | 派 **code-review** `--prp <plans/completed/{name}.plan.md>` |
+| 2b | P = 进行中 | plan 已在 `plans/completed/` 且 `implements/{name}.implement.md` 存在 | implement 实际已完成、PRD 未及更新 → 按 #3/#4 推导 |
+| 2c | P = 进行中 | plan 已在 `plans/completed/` 但 `implements/{name}.implement.md` 不存在 | 停止：产物不完整（implement 中断或产物被移动），人工核对 |
+| 3 | P 的 plan 已归档（状态列进行中或已完成均可），`implements/{name}.implement.md` 存在 | `reviews(name)` 为空 | 派 **code-review** `--prp <plans/completed/{name}.plan.md>` |
 | 4 | 同上 | `newest_review` 决策 = PASS，`git status --porcelain` 非空 | 派 **prp-commit**（软门禁 PASS 直接放行） |
 | 4a | 同上 | 决策 = PASS，工作区干净，P.状态 = 已完成 | 闭环完成 → 回外层循环取下一 P（自动跳过） |
 | 4b | 同上 | 决策 = BLOCK，`fix_report` 不存在，`block_run <= 5` | 派 **prp-fix** `<newest_review 路径>` |
@@ -203,7 +203,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | 步骤后 | 期望证据 | 核验方法 |
 |---|---|---|
 | A | plan 落盘 + PRD 状态推进 | Read PRD 该行：状态 = 进行中、PRP 计划列非 `-`；Glob 该路径存在 |
-| B | 三产物 + 归档 + PRD 已完成 | Glob `plans/completed/{name}.plan.md`、`implement/{name}.report.md`、`implement/{name}.validation.log`；Read PRD 该行状态 = 已完成 |
+| B | 三产物 + 归档 + PRD 已完成 | Glob `plans/completed/{name}.plan.md`、`implements/{name}.implement.md`、`implements/{name}.validation.log`；Read PRD 该行状态 = 已完成 |
 | C | 新报告且决策可解析 | 列目录取 `{name}-*.review.md` 中时间戳晚于派发时刻的最新一份；检索决策行 `**决策**: PASS \| BLOCK COMMIT` |
 | F | fix.report + 证据刷新 | Glob `<源名去 .review.md>-fix.report.md`；subagent 自述改码时 Grep validation.log 尾部出现 `round: prp-fix` 新条目 |
 | D | 提交发生且工作区干净 | `git log -1` HEAD 相较派发前已变化，且 `git status --porcelain` 为空 |

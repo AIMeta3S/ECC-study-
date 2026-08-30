@@ -77,7 +77,7 @@ git log origin/<base>..HEAD --format="%h %s" --reverse
 
 - 有模板：按模板 section 填充（不适用填 N/A，不删 section）
 - 无模板：默认结构（摘要/变更/修改的文件/测试/相关问题）
-- 引用相关 PRP 产物：`docs/PRPs/implement/`、`docs/PRPs/plans/completed/`、`docs/PRPs/prds/` 中与本次变更相关者
+- 引用相关 PRP 产物：`docs/PRPs/implements/`、`docs/PRPs/plans/completed/`、`docs/PRPs/prds/` 中与本次变更相关者
 
 ```bash
 git diff origin/<base>..HEAD --stat

@@ -32,7 +32,7 @@
 | `prp-prd` | 交互式（8 阶段）深度 PRD 生成器，产出分阶段实施表 | 功能/创意描述 | PRD 文件（`docs/PRPs/prds/{name}.prd.md`） |
 | `prp-plan` | 深度代码库分析 + 模式提取，生成自包含实施计划 | PRD 文件（`docs/PRPs/prds/{name}.prd.md`） | 计划文件（`docs/PRPs/plans/{name}.plan.md`） |
 | `prp-implement` | 按计划落地，每改即验，跑 4 级验证（静态分析/单元测试/构建/集成测试） | 计划文件（`docs/PRPs/plans/{name}.plan.md`） | 代码 + 测试 + 报告（`docs/PRPs/implements/{plan-name}.implement.md`，计划完成后归档到 `plans/completed/`） |
-| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `docs/PRPs/reviews/`） | 修复核销报告（与源报告同目录 `*-fix.report.md`） |
+| `prp-fix` | 按 code-review `--prp` 档审查报告逐项修复并核销（CRITICAL/HIGH 必修，MEDIUM 逐项决策） | 审查报告路径（留空自动定位最新，仅 `docs/PRPs/reviews/`） | 修复核销报告（`docs/PRPs/fixes/{plan-name}-<时间戳>.fix.md`，与源 review 同主干） |
 | `prp-commit` | 自然语言驱动的快速提交（中文描述要提交什么） | 提交内容描述 | git commit 产物 |
 | `prp-pr` | 基于未推送 commits 创建 GitHub PR，引用 PRP 产物 | PR 内容描述 | Git PR 产物 |
 | `prp-push-gogs` | Gogs 等自建服务收尾出口：推送分支、生成 PR 标题/描述落盘、给出网页建 PR 的 compare 指引（PR 网页手动创建） | base-branch（默认 origin/HEAD）+ 可选 `--plan` | PR 草稿（`docs/PRPs/prs/{plan-name\|branch-name}-<时间戳>.pr.md`）+ 已推送远端分支 |

@@ -39,14 +39,14 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 1. 提取要素：决策（PASS | BLOCK COMMIT）、四级发现分节、验证结果表、`--prp` 档的「实现报告」路径行。
 2. 给每条发现编号（按分节内出现顺序）：CRITICAL → `C-1`、`C-2`…；HIGH → `H-1`…；MEDIUM → `M-1`…；LOW → `L-1`…。
-3. **plan-name 恢复链**（仅影响 fix.report 命名与后续步骤提示，修复循环不依赖）：
+3. **plan-name 恢复链**（仅影响后续步骤提示——Phase 5 计划定位与 Phase 7 提示；fix.md 文件名直接取自源报告文件名，不依赖本链，修复循环也不依赖）：
 
 | 优先级 | 来源 |
 |---|---|
 | ① | 报告「implement 结果核验」节的实现报告路径中提取 `{plan-name}` |
 | ② | 当前分支名 `feat/{plan-name}` 剥离前缀 |
 | ③ | `docs/PRPs/implements/` 下最新 `*.implement.md` 的文件名推导 |
-| ④ | 均失败 → 用源报告时间戳命名，后续步骤降级为提示通用 `/code-review`（不带 `--prp`） |
+| ④ | 均失败 → 后续步骤降级为提示通用 `/code-review`（不带 `--prp`） |
 
 4. **PASS 短路**：
 
@@ -109,13 +109,13 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | 证据核验通过（--prp） | 本轮修复未触碰代码（全部为「不修复」处置）→ 保持跳过；触碰了代码 → 执行下方证据刷新 |
 | 无证据 / 证据矛盾 / 证据过期（--prp） | 执行下方证据刷新 |
 
-**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `docs/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `docs/PRPs/implements/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <fix.report 时间戳>`（条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
+**证据刷新（--prp 档）**：本轮修复只要实际变更了代码，源报告依据的验证证据即过期——复审时快照必然不一致，不刷新则复审永远 BLOCK。须在 Phase 4 修复全部完成后，复跑计划「验证命令」全部小节（计划文件按 Phase 2 plan-name 恢复链定位，通常在 `docs/PRPs/plans/completed/{plan-name}.plan.md`），输出 `| tee -a` 追加到 `docs/PRPs/implements/{plan-name}.validation.log`，条目 round 标识为 `prp-fix <源报告时间戳>`（取自源报告文件名内嵌时间戳，唯一标识本轮修复；条目与快照格式同 /prp-implement Phase 4）。证据矛盾型（Phase 2 分流为升级用户）不执行刷新，交由用户处置。
 
 ---
 
 ## Phase 6 — 核销落盘
 
-写入与源报告同目录的 `<源文件名去 .review.md>-fix.report.md`（如 `{plan-name}-20260818-1030-fix.report.md`）：
+写入 `docs/PRPs/fixes/` 下与源报告同主干的 `<源文件名去 .review.md>.fix.md`（源报告 `{plan-name}-20260818-1030.review.md` → `{plan-name}-20260818-1030.fix.md`；首次写入时 `mkdir -p docs/PRPs/fixes`）。每轮 review 时间戳独立，fix 与源报告按文件名一一配对，互不覆盖：
 
 ```markdown
 # 修复核销: <源报告文件名>
@@ -155,7 +155,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 **源报告文件保持原样，不做任何原地修改。**
 
-**fix.report 的读者**：本报告供人类查阅与 /prp-commit 提交门禁判断使用；/code-review 复审为盲审（见其「复审盲审原则」），不读取本文件内容作为裁决依据——「误报」申辩须能在代码中独立复现，才会被复审采纳。
+**fix.md 的读者**：本报告供人类查阅与 /prp-commit 提交门禁判断使用；/code-review 复审为盲审（见其「复审盲审原则」），不读取本文件内容作为裁决依据——「误报」申辩须能在代码中独立复现，才会被复审采纳。
 
 ---
 
@@ -165,7 +165,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 修复完成: <源报告路径> 的 <n> 项发现
 处置：<x> 已修复，<y> 不修复（含误报），<z> 阻塞升级
 验证：Tier 1 通过 / 失败项：...
-产物：<fix.report 路径>
+产物：<fix.md 路径>
 
 后续步骤：
   - 重跑 /code-review --prp docs/PRPs/plans/completed/{plan-name}.plan.md（或原档位）复审 —— 决策 PASS 前不要 /prp-commit；建议 /clear 后新会话执行，避免本轮修复的上下文锚定复审判断
@@ -177,7 +177,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 ## 过程日志（exec log）
 
-逐项修复循环（处置决策、每改即验、修复中的错误与重试）只以终态进入 fix.report——为质量回溯（连续 BLOCK 根因分析）与中断诊断，边执行边追加一份**纯旁路**过程日志。
+逐项修复循环（处置决策、每改即验、修复中的错误与重试）只以终态进入 fix.md——为质量回溯（连续 BLOCK 根因分析）与中断诊断，边执行边追加一份**纯旁路**过程日志。
 
 ### 路径与命名
 
@@ -193,7 +193,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 - 决策/依据: <处置选择与理由>
 - 偏差: <与报告建议的差异>
 - 结果: <exit/涉及文件/下一步>
-- 指针: <源报告问题 ID / validation.log 轮次 / fix.report 路径>
+- 指针: <源报告问题 ID / validation.log 轮次 / fix.md 路径>
 ```
 
 ### 写入时机表
@@ -204,14 +204,14 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | Phase 3 处置决策后 | MEDIUM 逐项所选处置、LOW 记录项、不修复/误报初判 |
 | Phase 4 每项处置完成后 | 问题 ID + 等级 + 处置方式 + 涉及文件 + 每改即验结果 + 修复中的错误与重试 |
 | Phase 5 验证后 | 复跑概览 + 证据刷新动作（round 标识指针）；**「证据矛盾型」升级用户前追加**矛盾点 |
-| Phase 6 后 | fix.report 路径（指针） |
+| Phase 6 后 | fix.md 路径（指针） |
 
 ### 写入协议
 
 - **追加用 Edit 工具**：old_string 锚定 `<!-- exec-log:end -->`，新条目插在标记之前；**禁止 shell `>>` 落盘重定向**（会被环境 hook 拦截）。
 - **best-effort**：写入失败 → 向用户输出一行警告（含原因）后继续执行；不作为 STOP 条件、不进成功标准。
 - **只写不读**：修复决策不读取 exec.log——它是给人读的旁路记录，不是事实源。
-- **不记边界**：证据刷新的原始输出不落盘（validation.log 职责，只记 round 指针）；代码 diff 不落盘（git 承载，只记文件清单）；核销结论不重述（fix.report 承载，只记指针）。
+- **不记边界**：证据刷新的原始输出不落盘（validation.log 职责，只记 round 指针）；代码 diff 不落盘（git 承载，只记文件清单）；核销结论不重述（fix.md 承载，只记指针）。
 - exec.log 位于 `docs/PRPs/**` 产物集内，随 /prp-commit 一并提交、被 /code-review 自动豁免。
 
 ---
@@ -220,7 +220,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 
 - CRITICAL/HIGH 全部为「已修复 / 不修复（误报，附证据）/ 阻塞升级（附原因）」三者之一，无未处置项
 - Tier 1 复跑通过
-- fix.report 已落盘且源报告未被修改
+- fix.md 已落盘（`docs/PRPs/fixes/{plan-name}-<yyyymmdd-HHMM>.fix.md`）且源报告未被修改
 - 工作区保持未提交状态
 
 ---
@@ -232,7 +232,7 @@ argument-hint: [审查报告路径] (留空 = 自动定位最新审查报告)
 | PASS 报告 | 自动定位 → 短路停止；显式指定 → 询问后仅处理 MEDIUM/LOW |
 | 纯验证失败型 BLOCK | 清单以失败验证项为主体；`--prp` 核验失败升级用户，避免「修报告不修代码」的空转 |
 | plan-name 无法恢复 | 走 Phase 2 恢复链第 ④ 级，修复循环本身不受影响 |
-| 连续多轮 BLOCK | 每轮 review 独立时间戳、独立配对 fix.report；连续 5 轮修复后仍 BLOCK → 建议人工介入 |
+| 连续多轮 BLOCK | 每轮 review 独立时间戳、独立配对 fix.md；连续 5 轮修复后仍 BLOCK → 建议人工介入 |
 
 ---
 

@@ -23,15 +23,15 @@ git status --short
 
 ### 审查门禁检查（软门禁）
 
-探测 `docs/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录）下的 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（同目录 `<文件名去 .review.md>-fix.report.md`，见 /code-review 命名契约）判断：
+探测 `docs/PRPs/reviews/`（`--prp` 档审查报告落盘处，唯一支持目录）下的 `*.review.md`（命名为 `{plan-name}-<yyyymmdd-HHMM>.review.md`），按文件名内嵌时间戳 `yyyymmdd-HHMM` 取最新，按其「决策」行与配对核销产物（`docs/PRPs/fixes/<文件名去 .review.md>.fix.md`，同主干时间戳一一配对，见 /code-review 命名契约）判断：
 
 | 状态 | 动作 |
 |---|---|
 | 无任何审查报告 | 静默跳过（未跑过 /code-review --prp 档的仓库零感知） |
 | 最新报告 PASS | 直接继续 |
-| BLOCK COMMIT，无配对 fix.report | 警告并列出未核销的 CRITICAL/HIGH 计数，用户确认后才继续 |
-| BLOCK COMMIT，有 fix.report 且 CRITICAL/HIGH 全部已修复 | 提示「修复已核销但决策仍为 BLOCK，建议先重跑 /code-review 复审」，确认后继续 |
-| fix.report 中 CRITICAL/HIGH 存在不修复/误报/阻塞项 | 强警告并逐条列出，确认后继续 |
+| BLOCK COMMIT，无配对 fix.md | 警告并列出未核销的 CRITICAL/HIGH 计数，用户确认后才继续 |
+| BLOCK COMMIT，有 fix.md 且 CRITICAL/HIGH 全部已修复 | 提示「修复已核销但决策仍为 BLOCK，建议先重跑 /code-review 复审」，确认后继续 |
+| fix.md 中 CRITICAL/HIGH 存在不修复/误报/阻塞项 | 强警告并逐条列出，确认后继续 |
 
 本门禁为**警告 + 用户确认**，不做硬阻止；PR 模式报告（`pr-*.md`）不参与本地提交门禁。
 
@@ -138,7 +138,7 @@ git commit -m "{type}: {description}"
 
 | 时机 | 条目内容 |
 |---|---|
-| 阶段 1 门禁走查后 | 走查来源（最新 review 路径 + 决策 + fix.report 状态）或「静默跳过（无报告，本次不写 exec.log）」；变更摘要（added/modified/deleted/untracked 计数） |
+| 阶段 1 门禁走查后 | 走查来源（最新 review 路径 + 决策 + fix.md 状态）或「静默跳过（无报告，本次不写 exec.log）」；变更摘要（added/modified/deleted/untracked 计数） |
 | 阶段 2 暂存后 | 输入解读 → 匹配文件与理由、`git diff --cached --stat` 关键行 |
 | 阶段 3 提交后 | commit 哈希、消息、文件数（指针） |
 

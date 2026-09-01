@@ -42,7 +42,7 @@ argument-hint: [PRD路径] [--max-phases N] [--dry-run] [--no-pr]
 - `reviews(name)` = `docs/PRPs/reviews/` 下匹配 `{name}-*.review.md` 的报告，按文件名内嵌时间戳 `yyyymmdd-HHMM` 排序（与 /prp-fix Phase 1 同规，不依赖 mtime）。
 - `newest_review(name)` = 其中最新一份；`decision(r)` = 从报告检索决策行 `**决策**: PASS | BLOCK COMMIT` 的结果（容忍冒号后空白差异）。
 - `block_run(name)` = `reviews(name)` 从最新往前数，末尾连续 `BLOCK COMMIT` 的个数（遇到 PASS 或无法解析即停）。
-- `fix_report(r)` = 与 r 同目录的 `<r 文件名去 .review.md>-fix.report.md`。
+- `fix_report(r)` = `docs/PRPs/fixes/<r 文件名去 .review.md>.fix.md`（与 r 同主干同时间戳，跨目录按文件名一一配对，不依赖 mtime）。
 
 ### 1.2 前置检查
 
@@ -190,7 +190,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | A 计划 | `prp-plan` | `<PRD路径>` | 产物列必含 plan 文件路径；关键结论含所选 phase 标识与复杂度 |
 | B 实现 | `prp-implement` | `<plan路径>`（plans/ 未归档路径） | 产物列必含 report + validation.log；关键结论含分支名与各级验证结果；分支决策 STOP → 状态: 需人工 |
 | C 审查 | `code-review` | `--prp <plans/completed/{name}.plan.md>` | 产物列必含新落盘 review 报告路径；关键结论含决策与四级问题计数 |
-| F 修复 | `prp-fix` | `<最新 review 报告路径>` | 产物列必含 fix.report；关键结论注明是否实际触碰代码（决定证据刷新核验） |
+| F 修复 | `prp-fix` | `<最新 review 报告路径>` | 产物列必含 fix.md 路径；关键结论注明是否实际触碰代码（决定证据刷新核验） |
 | D 提交 | `prp-commit` | （空 = 全部变更） | 产物列写 commit 哈希与消息；关键结论含软门禁走查结果 |
 | E PR 出口 | `prp-pr` / `prp-push-gogs`（按 1.2 平台判定） | GitHub: 空（base 默认 main）；Gogs: `--plan <最后闭环 phase 的 completed plan 路径>` | 产物列必含 PR URL（GitHub）或 pr.md 落盘路径 + compare URL（Gogs）；各前置停止 → 状态: 需人工 + 原因 |
 
@@ -205,7 +205,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 | A | plan 落盘 + PRD 状态推进 | Read PRD 该行：状态 = 进行中、PRP 计划列非 `-`；Glob 该路径存在 |
 | B | 三产物 + 归档 + PRD 已完成 | Glob `plans/completed/{name}.plan.md`、`implements/{name}.implement.md`、`implements/{name}.validation.log`；Read PRD 该行状态 = 已完成 |
 | C | 新报告且决策可解析 | 列目录取 `{name}-*.review.md` 中时间戳晚于派发时刻的最新一份；检索决策行 `**决策**: PASS \| BLOCK COMMIT` |
-| F | fix.report + 证据刷新 | Glob `<源名去 .review.md>-fix.report.md`；subagent 自述改码时 Grep validation.log 尾部出现 `round: prp-fix` 新条目 |
+| F | fix.md + 证据刷新 | Glob `docs/PRPs/fixes/<源名去 .review.md>.fix.md`；subagent 自述改码时 Grep validation.log 尾部出现 `round: prp-fix` 新条目 |
 | D | 提交发生且工作区干净 | `git log -1` HEAD 相较派发前已变化，且 `git status --porcelain` 为空 |
 | E | PR 存在（GitHub）；pr.md 落盘 + 分支到达远端（Gogs） | GitHub: `gh pr view --json number,url`（按当前分支）命中；Gogs: Glob `docs/PRPs/prs/{最后闭环 plan-name}-*.pr.md` 存在 + `git ls-remote --heads origin <branch>` 命中 |
 
@@ -217,7 +217,7 @@ if r.状态 == 需人工: STOP(r.需用户决策)                   # rebase 冲
 
 | 触发 | 转述给用户的内容 |
 |---|---|
-| 连续 6 轮 BLOCK（block_run > 5） | 各轮报告与 fix.report 路径；建议人工排查根因 |
+| 连续 6 轮 BLOCK（block_run > 5） | 各轮报告与 fix.md 路径；建议人工排查根因 |
 | subagent 返回「需人工」 | 其「需用户决策」问题原文（prp-plan 歧义门、implement main 脏工作区 STOP、prp-fix 升级项等） |
 | 任一核验失败 | 期望 vs 实际对照；不自行修补 |
 | subagent 异常/超时/未按格式返回 | 失败摘要 + 「重跑 /prp-run <PRD> 幂等续跑；若该步骤实际已完成将自动跳过」 |
